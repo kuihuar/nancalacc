@@ -8,6 +8,7 @@ import "google/protobuf/duration.proto";
 message Bootstrap {
   Server server = 1;
   Data data = 2;
+  Service service = 3;
 }
 
 message Server {
@@ -23,6 +24,15 @@ message Server {
   }
   HTTP http = 1;
   GRPC grpc = 2;
+}
+
+message Service {
+  string name = 1;
+  string version = 2;
+  string env = 3;
+  string log_level = 4;
+  string access_key = 5;
+  string secret_key = 6;
 }
 
 message Data {
