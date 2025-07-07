@@ -130,23 +130,26 @@ type ListDeptUserResponse struct {
 	Errmsg string `json:"errmsg"`
 }
 
+//	//{
+//		"expireIn":7200,
+//		"accessToken":"6f874309a6c031f9a2033a54dcafadae",
+//		"refreshToken":"d5a84a019bf23e2e9d7803666175c337"
+//	}
 type AuthResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	ExpireIn     int    `json:"expire_in"`
-	CorpId       string `json:"corp_id"`
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+	ExpireIn     int    `json:"expireIn"`
 }
 
 type DingTalkUserInfo struct {
-	AvatarUrl  string `json:"avatar_url,omitempty"`
-	Email      string `json:"email,omitempty"`
-	LoginEmail string `json:"login_email,omitempty"`
-	Mobile     string `json:"mobile,omitempty"`
-	Nick       string `json:"nick,omitempty"`
-	OpenId     string `json:"open_id,omitempty"`
-	StateCode  string `json:"state_code,omitempty"`
-	UnionId    string `json:"union_id,omitempty"`
-	Visitor    bool   `json:"visitor,omitempty"`
+	AvatarUrl string `json:"avatarUrl,omitempty"`
+	Email     string `json:"email,omitempty"`
+	Mobile    string `json:"mobile,omitempty"`
+	Nick      string `json:"nick,omitempty"`
+	OpenId    string `json:"openId,omitempty"`
+	StateCode string `json:"stateCode,omitempty"`
+	UnionId   string `json:"unionId,omitempty"`
+	Visitor   bool   `json:"visitor,omitempty"`
 }
 
 type DingtalkCompanyCfg struct {

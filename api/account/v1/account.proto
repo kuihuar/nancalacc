@@ -25,30 +25,33 @@ service Account {
 	};
 	rpc GetSyncAccount (GetSyncAccountRequest) returns (GetSyncAccountReply){
 		option (google.api.http) = {
-			get: "/v1/account/{task_id}"
+			get: "/v1/account"
 		};
 	};
 	rpc CancelSyncTask (CancelSyncAccountRequest) returns (google.protobuf.Empty){
 		option (google.api.http) = {
-			delete: "/v1/account/{task_id}"
+			delete: "/v1/account"
 		};
 	};
 
   	rpc GetUserInfo (GetUserInfoRequest) returns (GetUserInfoResponse) {
     	option (google.api.http) = {
-      		get: "/v1/account/userinfo"
+      		get: "/v1/oauth/userinfo/me"
     	};
   	}
 
 	rpc GetAccessToken(GetAccessTokenRequest) returns (GetAccessTokenResponse) {
 		option (google.api.http) = {
-			get: "/v1/account/access_token"
+			 get: "/v1/oauth/userAccessToken"
+		};
+	}
+
+	rpc Callback (CallbackRequest) returns (CallbackResponse) {
+		option (google.api.http) = {
+			get: "/v1/oauth/callback"
 		};
 	}
 }
-
-
-
 
 enum TriggerType {
   TRIGGER_UNKNOWN = 0;  // 未知触发方式（默认值）
@@ -99,16 +102,13 @@ message CancelSyncAccountRequest {
 
 
 message GetAccessTokenRequest {
-  //string grant_type = 1;
   string code = 2;
-  //string redirect_uri = 3;
 }
 
 message GetAccessTokenResponse {
   string access_token = 1;
-  string token_type = 2;
+  string refresh_token = 2;
   int64 expires_in = 3;
-  string refresh_token = 4;
 }
 
 message GetUserInfoRequest {
@@ -120,4 +120,20 @@ message GetUserInfoResponse {
   string name = 2;
   string email = 3;
   string avatar = 4;
+}
+
+
+
+
+
+
+message CallbackRequest {
+  string code = 1;      // OAuth2 授权码
+  string state = 2;     // 防止 CSRF 的随机字符串
+}
+
+// 定义回调响应
+message CallbackResponse {
+  string status = 1;    // 例如 "success" 或 "error"
+  string message = 2;   // 可选描述信息
 }

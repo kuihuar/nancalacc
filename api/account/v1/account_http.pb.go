@@ -2,12 +2,13 @@
 // versions:
 // - protoc-gen-go-http v2.8.4
 // - protoc             v5.29.3
-// source: account/v1/account.proto
+// source: api/account/v1/account.proto
 
 package v1
 
 import (
 	context "context"
+
 	http "github.com/go-kratos/kratos/v2/transport/http"
 	binding "github.com/go-kratos/kratos/v2/transport/http/binding"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -20,6 +21,7 @@ var _ = binding.EncodeURL
 
 const _ = http.SupportPackageIsVersion1
 
+const OperationAccountCallback = "/api.account.v1.Account/Callback"
 const OperationAccountCancelSyncTask = "/api.account.v1.Account/CancelSyncTask"
 const OperationAccountCreateSyncAccount = "/api.account.v1.Account/CreateSyncAccount"
 const OperationAccountGetAccessToken = "/api.account.v1.Account/GetAccessToken"
@@ -27,6 +29,7 @@ const OperationAccountGetSyncAccount = "/api.account.v1.Account/GetSyncAccount"
 const OperationAccountGetUserInfo = "/api.account.v1.Account/GetUserInfo"
 
 type AccountHTTPServer interface {
+	Callback(context.Context, *CallbackRequest) (*CallbackResponse, error)
 	CancelSyncTask(context.Context, *CancelSyncAccountRequest) (*emptypb.Empty, error)
 	CreateSyncAccount(context.Context, *CreateSyncAccountRequest) (*CreateSyncAccountReply, error)
 	GetAccessToken(context.Context, *GetAccessTokenRequest) (*GetAccessTokenResponse, error)
@@ -37,10 +40,11 @@ type AccountHTTPServer interface {
 func RegisterAccountHTTPServer(s *http.Server, srv AccountHTTPServer) {
 	r := s.Route("/")
 	r.POST("/v1/account", _Account_CreateSyncAccount0_HTTP_Handler(srv))
-	r.GET("/v1/account/{task_id}", _Account_GetSyncAccount0_HTTP_Handler(srv))
-	r.DELETE("/v1/account/{task_id}", _Account_CancelSyncTask0_HTTP_Handler(srv))
-	r.GET("/v1/account/userinfo", _Account_GetUserInfo0_HTTP_Handler(srv))
-	r.GET("/v1/account/access_token", _Account_GetAccessToken0_HTTP_Handler(srv))
+	r.GET("/v1/account", _Account_GetSyncAccount0_HTTP_Handler(srv))
+	r.DELETE("/v1/account", _Account_CancelSyncTask0_HTTP_Handler(srv))
+	r.GET("/v1/oauth/userinfo", _Account_GetUserInfo0_HTTP_Handler(srv))
+	r.GET("/v1/oauth/userAccessToken", _Account_GetAccessToken0_HTTP_Handler(srv))
+	r.GET("/v1/oauth/callback", _Account_Callback0_HTTP_Handler(srv))
 }
 
 func _Account_CreateSyncAccount0_HTTP_Handler(srv AccountHTTPServer) func(ctx http.Context) error {
@@ -71,9 +75,6 @@ func _Account_GetSyncAccount0_HTTP_Handler(srv AccountHTTPServer) func(ctx http.
 		if err := ctx.BindQuery(&in); err != nil {
 			return err
 		}
-		if err := ctx.BindVars(&in); err != nil {
-			return err
-		}
 		http.SetOperation(ctx, OperationAccountGetSyncAccount)
 		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
 			return srv.GetSyncAccount(ctx, req.(*GetSyncAccountRequest))
@@ -91,9 +92,6 @@ func _Account_CancelSyncTask0_HTTP_Handler(srv AccountHTTPServer) func(ctx http.
 	return func(ctx http.Context) error {
 		var in CancelSyncAccountRequest
 		if err := ctx.BindQuery(&in); err != nil {
-			return err
-		}
-		if err := ctx.BindVars(&in); err != nil {
 			return err
 		}
 		http.SetOperation(ctx, OperationAccountCancelSyncTask)
@@ -147,7 +145,27 @@ func _Account_GetAccessToken0_HTTP_Handler(srv AccountHTTPServer) func(ctx http.
 	}
 }
 
+func _Account_Callback0_HTTP_Handler(srv AccountHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in CallbackRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccountCallback)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.Callback(ctx, req.(*CallbackRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*CallbackResponse)
+		return ctx.Result(200, reply)
+	}
+}
+
 type AccountHTTPClient interface {
+	Callback(ctx context.Context, req *CallbackRequest, opts ...http.CallOption) (rsp *CallbackResponse, err error)
 	CancelSyncTask(ctx context.Context, req *CancelSyncAccountRequest, opts ...http.CallOption) (rsp *emptypb.Empty, err error)
 	CreateSyncAccount(ctx context.Context, req *CreateSyncAccountRequest, opts ...http.CallOption) (rsp *CreateSyncAccountReply, err error)
 	GetAccessToken(ctx context.Context, req *GetAccessTokenRequest, opts ...http.CallOption) (rsp *GetAccessTokenResponse, err error)
@@ -163,9 +181,22 @@ func NewAccountHTTPClient(client *http.Client) AccountHTTPClient {
 	return &AccountHTTPClientImpl{client}
 }
 
+func (c *AccountHTTPClientImpl) Callback(ctx context.Context, in *CallbackRequest, opts ...http.CallOption) (*CallbackResponse, error) {
+	var out CallbackResponse
+	pattern := "/v1/oauth/callback"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationAccountCallback))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 func (c *AccountHTTPClientImpl) CancelSyncTask(ctx context.Context, in *CancelSyncAccountRequest, opts ...http.CallOption) (*emptypb.Empty, error) {
 	var out emptypb.Empty
-	pattern := "/v1/account/{task_id}"
+	pattern := "/v1/account"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationAccountCancelSyncTask))
 	opts = append(opts, http.PathTemplate(pattern))
@@ -191,7 +222,7 @@ func (c *AccountHTTPClientImpl) CreateSyncAccount(ctx context.Context, in *Creat
 
 func (c *AccountHTTPClientImpl) GetAccessToken(ctx context.Context, in *GetAccessTokenRequest, opts ...http.CallOption) (*GetAccessTokenResponse, error) {
 	var out GetAccessTokenResponse
-	pattern := "/v1/account/access_token"
+	pattern := "/v1/oauth/userAccessToken"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationAccountGetAccessToken))
 	opts = append(opts, http.PathTemplate(pattern))
@@ -204,7 +235,7 @@ func (c *AccountHTTPClientImpl) GetAccessToken(ctx context.Context, in *GetAcces
 
 func (c *AccountHTTPClientImpl) GetSyncAccount(ctx context.Context, in *GetSyncAccountRequest, opts ...http.CallOption) (*GetSyncAccountReply, error) {
 	var out GetSyncAccountReply
-	pattern := "/v1/account/{task_id}"
+	pattern := "/v1/account"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationAccountGetSyncAccount))
 	opts = append(opts, http.PathTemplate(pattern))
@@ -217,7 +248,7 @@ func (c *AccountHTTPClientImpl) GetSyncAccount(ctx context.Context, in *GetSyncA
 
 func (c *AccountHTTPClientImpl) GetUserInfo(ctx context.Context, in *GetUserInfoRequest, opts ...http.CallOption) (*GetUserInfoResponse, error) {
 	var out GetUserInfoResponse
-	pattern := "/v1/account/userinfo"
+	pattern := "/v1/oauth/userinfo"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationAccountGetUserInfo))
 	opts = append(opts, http.PathTemplate(pattern))

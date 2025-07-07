@@ -22,6 +22,14 @@ type dingTalkRepo struct {
 	log  *log.Helper
 }
 
+var (
+	dingtalkEndpoint = "https://oapi.dingtalk.com"
+	// listSubDeptIdUrl    = "/topapi/v2/department/listsubid"
+	// userDetailUrl       = "/topapi/v2/user/get"
+	// departmentDetailUrl = "/topapi/v2/department/get"
+	// userListUrl         = "/topapi/v2/user/list"
+)
+
 func NewDingTalkRepo(data *Data, logger log.Logger) biz.DingTalkRepo {
 
 	return &dingTalkRepo{
@@ -91,7 +99,7 @@ func (r *dingTalkRepo) FetchDepartments(ctx context.Context, token string) ([]*b
 	return deptList, nil
 }
 func (r *dingTalkRepo) getDeptIds(ctx context.Context, token string) ([]int64, error) {
-	uri := fmt.Sprintf("%s/topapi/v2/department/listsubid?access_token=%s", "https://oapi.dingtalk.com", token)
+	uri := fmt.Sprintf("%s/topapi/v2/department/listsubid?access_token=%s", dingtalkEndpoint, token)
 	input := &biz.ListDeptIDRequest{
 		DeptID: 1,
 	}
@@ -121,7 +129,7 @@ func (r *dingTalkRepo) getDeptIds(ctx context.Context, token string) ([]int64, e
 	return deptIdlist, nil
 }
 func (r *dingTalkRepo) fetchDeptDetails(ctx context.Context, token string, deptIds []int64, maxConcurrent int) ([]*biz.DingtalkDept, error) {
-	uriDetail := fmt.Sprintf("%s/topapi/v2/department/get?access_token=%s", "https://oapi.dingtalk.com", token)
+	uriDetail := fmt.Sprintf("%s/topapi/v2/department/get?access_token=%s", dingtalkEndpoint, token)
 	sem := make(chan struct{}, maxConcurrent)
 	results := make(chan *biz.DingtalkDept, len(deptIds))
 	errChan := make(chan error, 1)
@@ -250,7 +258,7 @@ func (r *dingTalkRepo) FetchDepartmentUsers(ctx context.Context, token string, d
 func (r *dingTalkRepo) getUserListByDepId(ctx context.Context, token string, deptId int64) ([]*biz.DingtalkDeptUser, int64, error) {
 	// 发送post请求
 	var cursor int64 = 0
-	uri := fmt.Sprintf("%s/topapi/v2/user/list?access_token=%s", "https://oapi.dingtalk.com", token)
+	uri := fmt.Sprintf("%s/topapi/v2/user/list?access_token=%s", dingtalkEndpoint, token)
 	input := &biz.ListDeptUserRequest{
 		DeptID: deptId,
 		Cursor: cursor,
@@ -345,23 +353,26 @@ func (r *dingTalkRepo) GetUserAccessToken(ctx context.Context, code string) (*bi
 	tokenAuthResp.AccessToken = *response.Body.AccessToken
 	tokenAuthResp.RefreshToken = *response.Body.RefreshToken
 	tokenAuthResp.ExpireIn = int(*response.Body.ExpireIn)
-	tokenAuthResp.CorpId = *response.Body.CorpId
 
 	return tokenAuthResp, nil
 }
-func (r *dingTalkRepo) GetUserInfo(ctx context.Context, token string) (*biz.DingTalkUserInfo, error) {
+func (r *dingTalkRepo) GetUserInfo(ctx context.Context, token, unionId string) (*biz.DingTalkUserInfo, error) {
 	r.log.WithContext(ctx).Infof("GetUserInfo: %v", token)
 
 	getUserHeaders := &dingtalkcontact_1_0.GetUserHeaders{}
 	getUserHeaders.XAcsDingtalkAccessToken = tea.String(token)
 	var response *dingtalkcontact_1_0.GetUserResponse
+	var err error
 	tryErr := func() (_e error) {
 		defer func() {
 			if r := tea.Recover(recover()); r != nil {
 				_e = r
 			}
 		}()
-		response, err := r.data.dingtalkCliContact.GetUserWithOptions(tea.String("z21HjQliSzpw0Yxxxx"), getUserHeaders, &util.RuntimeOptions{})
+		response, err = r.data.dingtalkCliContact.GetUserWithOptions(tea.String(unionId), getUserHeaders, &util.RuntimeOptions{})
+
+		r.log.WithContext(ctx).Info("response: %v, error: %v", response, err)
+
 		if err != nil {
 			return err
 		}
@@ -380,30 +391,16 @@ func (r *dingTalkRepo) GetUserInfo(ctx context.Context, token string) (*biz.Ding
 			err.Message = tea.String(tryErr.Error())
 		}
 		if !tea.BoolValue(util.Empty(err.Code)) && !tea.BoolValue(util.Empty(err.Message)) {
+			r.log.WithContext(ctx).Errorf("GetUserInfo error: %v", err)
 			// err 中含有 code 和 message 属性，可帮助开发定位问题
 		}
 
 	}
 
-	if response.StatusCode != nil && *response.StatusCode != 200 {
-		return nil, errors.New("response.Body.User StatusCode is not 200")
-	}
-	if response.Body == nil {
-		return nil, errors.New("response.Body is nil")
-	}
-	userInfo := &biz.DingTalkUserInfo{}
+	r.log.Infof("GetUserInfo response: %v", response)
 
-	if response.Body.UnionId == nil {
-		return nil, errors.New("response.Body.User is nil")
-	}
-	userInfo.UnionId = *response.Body.UnionId
-	userInfo.Nick = *response.Body.Nick
-	userInfo.AvatarUrl = *response.Body.AvatarUrl
-	userInfo.Email = *response.Body.Email
-	userInfo.LoginEmail = *response.Body.LoginEmail
-	userInfo.Mobile = *response.Body.Mobile
-	userInfo.OpenId = *response.Body.OpenId
-	userInfo.StateCode = *response.Body.StateCode
-	userInfo.Visitor = *response.Body.Visitor
-	return userInfo, nil
+	return &biz.DingTalkUserInfo{
+		UnionId: *response.Body.UnionId,
+		Nick:    *response.Body.Nick,
+	}, nil
 }

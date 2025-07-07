@@ -67,3 +67,11 @@ func (s *AccountService) GetAccessToken(ctx context.Context, req *v1.GetAccessTo
 	}
 	return accessTokenResp, nil
 }
+
+func (s *AccountService) Callback(ctx context.Context, req *v1.CallbackRequest) (*v1.CallbackResponse, error) {
+	s.log.Infof("Callback req: %v", req.Code)
+	return &v1.CallbackResponse{
+		Status:  "success",
+		Message: "success",
+	}, nil
+}

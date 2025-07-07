@@ -8,5 +8,5 @@ type DingTalkRepo interface {
 	FetchDepartmentUsers(ctx context.Context, token string, deptId []int64) ([]*DingtalkDeptUser, error)
 
 	GetUserAccessToken(ctx context.Context, code string) (*AuthResponse, error)
-	GetUserInfo(ctx context.Context, token string) (*DingTalkUserInfo, error)
+	GetUserInfo(ctx context.Context, token, unionId string) (*DingTalkUserInfo, error)
 }

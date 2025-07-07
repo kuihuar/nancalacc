@@ -163,7 +163,8 @@ func (uc *AccounterUsecase) GetUserInfo(ctx context.Context, req *v1.GetUserInfo
 	if accessToken == "" {
 		return nil, errors.New("access_token is empty")
 	}
-	userInfo, err := uc.dingTalkRepo.GetUserInfo(ctx, accessToken)
+
+	userInfo, err := uc.dingTalkRepo.GetUserInfo(ctx, accessToken, "me")
 	if err != nil {
 		return nil, err
 	}
@@ -175,6 +176,12 @@ func (uc *AccounterUsecase) GetUserInfo(ctx context.Context, req *v1.GetUserInfo
 	}, nil
 }
 
+// https://login.dingtalk.com/oauth2/challenge.htm?
+// client_id=dinglz1setxqhrpp7aa0
+// &redirect_uri=http://119.3.173.229/cloud/login/api/v1/oauth/code/login?auth_type=oauth
+// &platform_id=1
+// &response_type=code
+// &state=6c938a3e11174f67bf40b2d7d679dbe1
 func (s *AccounterUsecase) GetAccessToken(ctx context.Context, req *v1.GetAccessTokenRequest) (*v1.GetAccessTokenResponse, error) {
 	s.log.WithContext(ctx).Infof("GetAccessToken: %v", req)
 	code := req.GetCode()

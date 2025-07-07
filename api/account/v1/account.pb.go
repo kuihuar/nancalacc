@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v5.29.3
-// source: account/v1/account.proto
+// source: api/account/v1/account.proto
 
 package v1
 
@@ -57,11 +57,11 @@ func (x TriggerType) String() string {
 }
 
 func (TriggerType) Descriptor() protoreflect.EnumDescriptor {
-	return file_account_v1_account_proto_enumTypes[0].Descriptor()
+	return file_api_account_v1_account_proto_enumTypes[0].Descriptor()
 }
 
 func (TriggerType) Type() protoreflect.EnumType {
-	return &file_account_v1_account_proto_enumTypes[0]
+	return &file_api_account_v1_account_proto_enumTypes[0]
 }
 
 func (x TriggerType) Number() protoreflect.EnumNumber {
@@ -70,7 +70,7 @@ func (x TriggerType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use TriggerType.Descriptor instead.
 func (TriggerType) EnumDescriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{0}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{0}
 }
 
 type SyncType int32
@@ -103,11 +103,11 @@ func (x SyncType) String() string {
 }
 
 func (SyncType) Descriptor() protoreflect.EnumDescriptor {
-	return file_account_v1_account_proto_enumTypes[1].Descriptor()
+	return file_api_account_v1_account_proto_enumTypes[1].Descriptor()
 }
 
 func (SyncType) Type() protoreflect.EnumType {
-	return &file_account_v1_account_proto_enumTypes[1]
+	return &file_api_account_v1_account_proto_enumTypes[1]
 }
 
 func (x SyncType) Number() protoreflect.EnumNumber {
@@ -116,7 +116,7 @@ func (x SyncType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SyncType.Descriptor instead.
 func (SyncType) EnumDescriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{1}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{1}
 }
 
 type GetSyncAccountReply_Status int32
@@ -155,11 +155,11 @@ func (x GetSyncAccountReply_Status) String() string {
 }
 
 func (GetSyncAccountReply_Status) Descriptor() protoreflect.EnumDescriptor {
-	return file_account_v1_account_proto_enumTypes[2].Descriptor()
+	return file_api_account_v1_account_proto_enumTypes[2].Descriptor()
 }
 
 func (GetSyncAccountReply_Status) Type() protoreflect.EnumType {
-	return &file_account_v1_account_proto_enumTypes[2]
+	return &file_api_account_v1_account_proto_enumTypes[2]
 }
 
 func (x GetSyncAccountReply_Status) Number() protoreflect.EnumNumber {
@@ -168,7 +168,7 @@ func (x GetSyncAccountReply_Status) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GetSyncAccountReply_Status.Descriptor instead.
 func (GetSyncAccountReply_Status) EnumDescriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{3, 0}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{3, 0}
 }
 
 // 创建同步请求
@@ -182,7 +182,7 @@ type CreateSyncAccountRequest struct {
 
 func (x *CreateSyncAccountRequest) Reset() {
 	*x = CreateSyncAccountRequest{}
-	mi := &file_account_v1_account_proto_msgTypes[0]
+	mi := &file_api_account_v1_account_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -194,7 +194,7 @@ func (x *CreateSyncAccountRequest) String() string {
 func (*CreateSyncAccountRequest) ProtoMessage() {}
 
 func (x *CreateSyncAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[0]
+	mi := &file_api_account_v1_account_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -207,7 +207,7 @@ func (x *CreateSyncAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateSyncAccountRequest.ProtoReflect.Descriptor instead.
 func (*CreateSyncAccountRequest) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{0}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *CreateSyncAccountRequest) GetTriggerType() TriggerType {
@@ -235,7 +235,7 @@ type CreateSyncAccountReply struct {
 
 func (x *CreateSyncAccountReply) Reset() {
 	*x = CreateSyncAccountReply{}
-	mi := &file_account_v1_account_proto_msgTypes[1]
+	mi := &file_api_account_v1_account_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -247,7 +247,7 @@ func (x *CreateSyncAccountReply) String() string {
 func (*CreateSyncAccountReply) ProtoMessage() {}
 
 func (x *CreateSyncAccountReply) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[1]
+	mi := &file_api_account_v1_account_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -260,7 +260,7 @@ func (x *CreateSyncAccountReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateSyncAccountReply.ProtoReflect.Descriptor instead.
 func (*CreateSyncAccountReply) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{1}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *CreateSyncAccountReply) GetTaskId() string {
@@ -287,7 +287,7 @@ type GetSyncAccountRequest struct {
 
 func (x *GetSyncAccountRequest) Reset() {
 	*x = GetSyncAccountRequest{}
-	mi := &file_account_v1_account_proto_msgTypes[2]
+	mi := &file_api_account_v1_account_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -299,7 +299,7 @@ func (x *GetSyncAccountRequest) String() string {
 func (*GetSyncAccountRequest) ProtoMessage() {}
 
 func (x *GetSyncAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[2]
+	mi := &file_api_account_v1_account_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -312,7 +312,7 @@ func (x *GetSyncAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSyncAccountRequest.ProtoReflect.Descriptor instead.
 func (*GetSyncAccountRequest) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{2}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetSyncAccountRequest) GetTaskId() string {
@@ -336,7 +336,7 @@ type GetSyncAccountReply struct {
 
 func (x *GetSyncAccountReply) Reset() {
 	*x = GetSyncAccountReply{}
-	mi := &file_account_v1_account_proto_msgTypes[3]
+	mi := &file_api_account_v1_account_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -348,7 +348,7 @@ func (x *GetSyncAccountReply) String() string {
 func (*GetSyncAccountReply) ProtoMessage() {}
 
 func (x *GetSyncAccountReply) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[3]
+	mi := &file_api_account_v1_account_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -361,7 +361,7 @@ func (x *GetSyncAccountReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSyncAccountReply.ProtoReflect.Descriptor instead.
 func (*GetSyncAccountReply) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{3}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetSyncAccountReply) GetStatus() GetSyncAccountReply_Status {
@@ -408,7 +408,7 @@ type CancelSyncAccountRequest struct {
 
 func (x *CancelSyncAccountRequest) Reset() {
 	*x = CancelSyncAccountRequest{}
-	mi := &file_account_v1_account_proto_msgTypes[4]
+	mi := &file_api_account_v1_account_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -420,7 +420,7 @@ func (x *CancelSyncAccountRequest) String() string {
 func (*CancelSyncAccountRequest) ProtoMessage() {}
 
 func (x *CancelSyncAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[4]
+	mi := &file_api_account_v1_account_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -433,7 +433,7 @@ func (x *CancelSyncAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelSyncAccountRequest.ProtoReflect.Descriptor instead.
 func (*CancelSyncAccountRequest) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{4}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CancelSyncAccountRequest) GetTaskId() string {
@@ -444,16 +444,15 @@ func (x *CancelSyncAccountRequest) GetTaskId() string {
 }
 
 type GetAccessTokenRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// string grant_type = 1;
-	Code          string `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"` //string redirect_uri = 3;
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetAccessTokenRequest) Reset() {
 	*x = GetAccessTokenRequest{}
-	mi := &file_account_v1_account_proto_msgTypes[5]
+	mi := &file_api_account_v1_account_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -465,7 +464,7 @@ func (x *GetAccessTokenRequest) String() string {
 func (*GetAccessTokenRequest) ProtoMessage() {}
 
 func (x *GetAccessTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[5]
+	mi := &file_api_account_v1_account_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -478,7 +477,7 @@ func (x *GetAccessTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAccessTokenRequest.ProtoReflect.Descriptor instead.
 func (*GetAccessTokenRequest) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{5}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetAccessTokenRequest) GetCode() string {
@@ -491,16 +490,15 @@ func (x *GetAccessTokenRequest) GetCode() string {
 type GetAccessTokenResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	TokenType     string                 `protobuf:"bytes,2,opt,name=token_type,json=tokenType,proto3" json:"token_type,omitempty"`
+	RefreshToken  string                 `protobuf:"bytes,2,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	ExpiresIn     int64                  `protobuf:"varint,3,opt,name=expires_in,json=expiresIn,proto3" json:"expires_in,omitempty"`
-	RefreshToken  string                 `protobuf:"bytes,4,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetAccessTokenResponse) Reset() {
 	*x = GetAccessTokenResponse{}
-	mi := &file_account_v1_account_proto_msgTypes[6]
+	mi := &file_api_account_v1_account_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -512,7 +510,7 @@ func (x *GetAccessTokenResponse) String() string {
 func (*GetAccessTokenResponse) ProtoMessage() {}
 
 func (x *GetAccessTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[6]
+	mi := &file_api_account_v1_account_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -525,7 +523,7 @@ func (x *GetAccessTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAccessTokenResponse.ProtoReflect.Descriptor instead.
 func (*GetAccessTokenResponse) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{6}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetAccessTokenResponse) GetAccessToken() string {
@@ -535,9 +533,9 @@ func (x *GetAccessTokenResponse) GetAccessToken() string {
 	return ""
 }
 
-func (x *GetAccessTokenResponse) GetTokenType() string {
+func (x *GetAccessTokenResponse) GetRefreshToken() string {
 	if x != nil {
-		return x.TokenType
+		return x.RefreshToken
 	}
 	return ""
 }
@@ -549,13 +547,6 @@ func (x *GetAccessTokenResponse) GetExpiresIn() int64 {
 	return 0
 }
 
-func (x *GetAccessTokenResponse) GetRefreshToken() string {
-	if x != nil {
-		return x.RefreshToken
-	}
-	return ""
-}
-
 type GetUserInfoRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
@@ -565,7 +556,7 @@ type GetUserInfoRequest struct {
 
 func (x *GetUserInfoRequest) Reset() {
 	*x = GetUserInfoRequest{}
-	mi := &file_account_v1_account_proto_msgTypes[7]
+	mi := &file_api_account_v1_account_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -577,7 +568,7 @@ func (x *GetUserInfoRequest) String() string {
 func (*GetUserInfoRequest) ProtoMessage() {}
 
 func (x *GetUserInfoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[7]
+	mi := &file_api_account_v1_account_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -590,7 +581,7 @@ func (x *GetUserInfoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserInfoRequest.ProtoReflect.Descriptor instead.
 func (*GetUserInfoRequest) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{7}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetUserInfoRequest) GetAccessToken() string {
@@ -612,7 +603,7 @@ type GetUserInfoResponse struct {
 
 func (x *GetUserInfoResponse) Reset() {
 	*x = GetUserInfoResponse{}
-	mi := &file_account_v1_account_proto_msgTypes[8]
+	mi := &file_api_account_v1_account_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -624,7 +615,7 @@ func (x *GetUserInfoResponse) String() string {
 func (*GetUserInfoResponse) ProtoMessage() {}
 
 func (x *GetUserInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_account_v1_account_proto_msgTypes[8]
+	mi := &file_api_account_v1_account_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -637,7 +628,7 @@ func (x *GetUserInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserInfoResponse.ProtoReflect.Descriptor instead.
 func (*GetUserInfoResponse) Descriptor() ([]byte, []int) {
-	return file_account_v1_account_proto_rawDescGZIP(), []int{8}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetUserInfoResponse) GetUnionId() string {
@@ -668,11 +659,116 @@ func (x *GetUserInfoResponse) GetAvatar() string {
 	return ""
 }
 
-var File_account_v1_account_proto protoreflect.FileDescriptor
+type CallbackRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`   // OAuth2 授权码
+	State         string                 `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"` // 防止 CSRF 的随机字符串
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
 
-const file_account_v1_account_proto_rawDesc = "" +
+func (x *CallbackRequest) Reset() {
+	*x = CallbackRequest{}
+	mi := &file_api_account_v1_account_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CallbackRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CallbackRequest) ProtoMessage() {}
+
+func (x *CallbackRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_account_v1_account_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CallbackRequest.ProtoReflect.Descriptor instead.
+func (*CallbackRequest) Descriptor() ([]byte, []int) {
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *CallbackRequest) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *CallbackRequest) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+// 定义回调响应
+type CallbackResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Status        string                 `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`   // 例如 "success" 或 "error"
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"` // 可选描述信息
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CallbackResponse) Reset() {
+	*x = CallbackResponse{}
+	mi := &file_api_account_v1_account_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CallbackResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CallbackResponse) ProtoMessage() {}
+
+func (x *CallbackResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_account_v1_account_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CallbackResponse.ProtoReflect.Descriptor instead.
+func (*CallbackResponse) Descriptor() ([]byte, []int) {
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *CallbackResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *CallbackResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+var File_api_account_v1_account_proto protoreflect.FileDescriptor
+
+const file_api_account_v1_account_proto_rawDesc = "" +
 	"\n" +
-	"\x18account/v1/account.proto\x12\x0eapi.account.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"\x91\x01\n" +
+	"\x1capi/account/v1/account.proto\x12\x0eapi.account.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"\x91\x01\n" +
 	"\x18CreateSyncAccountRequest\x12>\n" +
 	"\ftrigger_type\x18\x01 \x01(\x0e2\x1b.api.account.v1.TriggerTypeR\vtriggerType\x125\n" +
 	"\tsync_type\x18\x02 \x01(\x0e2\x18.api.account.v1.SyncTypeR\bsyncType\"n\n" +
@@ -698,51 +794,56 @@ const file_account_v1_account_proto_rawDesc = "" +
 	"\x18CancelSyncAccountRequest\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\tR\x06taskId\"+\n" +
 	"\x15GetAccessTokenRequest\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\tR\x04code\"\x9e\x01\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code\"\x7f\n" +
 	"\x16GetAccessTokenResponse\x12!\n" +
-	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12\x1d\n" +
+	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12#\n" +
+	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12\x1d\n" +
 	"\n" +
-	"token_type\x18\x02 \x01(\tR\ttokenType\x12\x1d\n" +
-	"\n" +
-	"expires_in\x18\x03 \x01(\x03R\texpiresIn\x12#\n" +
-	"\rrefresh_token\x18\x04 \x01(\tR\frefreshToken\"7\n" +
+	"expires_in\x18\x03 \x01(\x03R\texpiresIn\"7\n" +
 	"\x12GetUserInfoRequest\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"r\n" +
 	"\x13GetUserInfoResponse\x12\x19\n" +
 	"\bunion_id\x18\x01 \x01(\tR\aunionId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12\x16\n" +
-	"\x06avatar\x18\x04 \x01(\tR\x06avatar*M\n" +
+	"\x06avatar\x18\x04 \x01(\tR\x06avatar\";\n" +
+	"\x0fCallbackRequest\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\x12\x14\n" +
+	"\x05state\x18\x02 \x01(\tR\x05state\"D\n" +
+	"\x10CallbackResponse\x12\x16\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage*M\n" +
 	"\vTriggerType\x12\x13\n" +
 	"\x0fTRIGGER_UNKNOWN\x10\x00\x12\x12\n" +
 	"\x0eTRIGGER_MANUAL\x10\x01\x12\x15\n" +
 	"\x11TRIGGER_SCHEDULED\x10\x02*%\n" +
 	"\bSyncType\x12\b\n" +
 	"\x04FULL\x10\x00\x12\x0f\n" +
-	"\vINCREMENTAL\x10\x012\xf2\x04\n" +
+	"\vINCREMENTAL\x10\x012\xc8\x05\n" +
 	"\aAccount\x12}\n" +
-	"\x11CreateSyncAccount\x12(.api.account.v1.CreateSyncAccountRequest\x1a&.api.account.v1.CreateSyncAccountReply\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/v1/account\x12{\n" +
-	"\x0eGetSyncAccount\x12%.api.account.v1.GetSyncAccountRequest\x1a#.api.account.v1.GetSyncAccountReply\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/account/{task_id}\x12q\n" +
-	"\x0eCancelSyncTask\x12(.api.account.v1.CancelSyncAccountRequest\x1a\x16.google.protobuf.Empty\"\x1d\x82\xd3\xe4\x93\x02\x17*\x15/v1/account/{task_id}\x12t\n" +
-	"\vGetUserInfo\x12\".api.account.v1.GetUserInfoRequest\x1a#.api.account.v1.GetUserInfoResponse\"\x1c\x82\xd3\xe4\x93\x02\x16\x12\x14/v1/account/userinfo\x12\x81\x01\n" +
-	"\x0eGetAccessToken\x12%.api.account.v1.GetAccessTokenRequest\x1a&.api.account.v1.GetAccessTokenResponse\" \x82\xd3\xe4\x93\x02\x1a\x12\x18/v1/account/access_tokenB?\n" +
+	"\x11CreateSyncAccount\x12(.api.account.v1.CreateSyncAccountRequest\x1a&.api.account.v1.CreateSyncAccountReply\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/v1/account\x12q\n" +
+	"\x0eGetSyncAccount\x12%.api.account.v1.GetSyncAccountRequest\x1a#.api.account.v1.GetSyncAccountReply\"\x13\x82\xd3\xe4\x93\x02\r\x12\v/v1/account\x12g\n" +
+	"\x0eCancelSyncTask\x12(.api.account.v1.CancelSyncAccountRequest\x1a\x16.google.protobuf.Empty\"\x13\x82\xd3\xe4\x93\x02\r*\v/v1/account\x12r\n" +
+	"\vGetUserInfo\x12\".api.account.v1.GetUserInfoRequest\x1a#.api.account.v1.GetUserInfoResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/v1/oauth/userinfo\x12\x82\x01\n" +
+	"\x0eGetAccessToken\x12%.api.account.v1.GetAccessTokenRequest\x1a&.api.account.v1.GetAccessTokenResponse\"!\x82\xd3\xe4\x93\x02\x1b\x12\x19/v1/oauth/userAccessToken\x12i\n" +
+	"\bCallback\x12\x1f.api.account.v1.CallbackRequest\x1a .api.account.v1.CallbackResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/v1/oauth/callbackB?\n" +
 	"\x0eapi.account.v1B\x0eAccountProtoV1P\x01Z\x1bnancalacc/api/account/v1;v1b\x06proto3"
 
 var (
-	file_account_v1_account_proto_rawDescOnce sync.Once
-	file_account_v1_account_proto_rawDescData []byte
+	file_api_account_v1_account_proto_rawDescOnce sync.Once
+	file_api_account_v1_account_proto_rawDescData []byte
 )
 
-func file_account_v1_account_proto_rawDescGZIP() []byte {
-	file_account_v1_account_proto_rawDescOnce.Do(func() {
-		file_account_v1_account_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_account_v1_account_proto_rawDesc), len(file_account_v1_account_proto_rawDesc)))
+func file_api_account_v1_account_proto_rawDescGZIP() []byte {
+	file_api_account_v1_account_proto_rawDescOnce.Do(func() {
+		file_api_account_v1_account_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_api_account_v1_account_proto_rawDesc), len(file_api_account_v1_account_proto_rawDesc)))
 	})
-	return file_account_v1_account_proto_rawDescData
+	return file_api_account_v1_account_proto_rawDescData
 }
 
-var file_account_v1_account_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_account_v1_account_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
-var file_account_v1_account_proto_goTypes = []any{
+var file_api_account_v1_account_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_api_account_v1_account_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_api_account_v1_account_proto_goTypes = []any{
 	(TriggerType)(0),                 // 0: api.account.v1.TriggerType
 	(SyncType)(0),                    // 1: api.account.v1.SyncType
 	(GetSyncAccountReply_Status)(0),  // 2: api.account.v1.GetSyncAccountReply.Status
@@ -755,53 +856,57 @@ var file_account_v1_account_proto_goTypes = []any{
 	(*GetAccessTokenResponse)(nil),   // 9: api.account.v1.GetAccessTokenResponse
 	(*GetUserInfoRequest)(nil),       // 10: api.account.v1.GetUserInfoRequest
 	(*GetUserInfoResponse)(nil),      // 11: api.account.v1.GetUserInfoResponse
-	(*timestamppb.Timestamp)(nil),    // 12: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),            // 13: google.protobuf.Empty
+	(*CallbackRequest)(nil),          // 12: api.account.v1.CallbackRequest
+	(*CallbackResponse)(nil),         // 13: api.account.v1.CallbackResponse
+	(*timestamppb.Timestamp)(nil),    // 14: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),            // 15: google.protobuf.Empty
 }
-var file_account_v1_account_proto_depIdxs = []int32{
+var file_api_account_v1_account_proto_depIdxs = []int32{
 	0,  // 0: api.account.v1.CreateSyncAccountRequest.trigger_type:type_name -> api.account.v1.TriggerType
 	1,  // 1: api.account.v1.CreateSyncAccountRequest.sync_type:type_name -> api.account.v1.SyncType
-	12, // 2: api.account.v1.CreateSyncAccountReply.create_time:type_name -> google.protobuf.Timestamp
+	14, // 2: api.account.v1.CreateSyncAccountReply.create_time:type_name -> google.protobuf.Timestamp
 	2,  // 3: api.account.v1.GetSyncAccountReply.status:type_name -> api.account.v1.GetSyncAccountReply.Status
-	12, // 4: api.account.v1.GetSyncAccountReply.latest_sync_time:type_name -> google.protobuf.Timestamp
+	14, // 4: api.account.v1.GetSyncAccountReply.latest_sync_time:type_name -> google.protobuf.Timestamp
 	3,  // 5: api.account.v1.Account.CreateSyncAccount:input_type -> api.account.v1.CreateSyncAccountRequest
 	5,  // 6: api.account.v1.Account.GetSyncAccount:input_type -> api.account.v1.GetSyncAccountRequest
 	7,  // 7: api.account.v1.Account.CancelSyncTask:input_type -> api.account.v1.CancelSyncAccountRequest
 	10, // 8: api.account.v1.Account.GetUserInfo:input_type -> api.account.v1.GetUserInfoRequest
 	8,  // 9: api.account.v1.Account.GetAccessToken:input_type -> api.account.v1.GetAccessTokenRequest
-	4,  // 10: api.account.v1.Account.CreateSyncAccount:output_type -> api.account.v1.CreateSyncAccountReply
-	6,  // 11: api.account.v1.Account.GetSyncAccount:output_type -> api.account.v1.GetSyncAccountReply
-	13, // 12: api.account.v1.Account.CancelSyncTask:output_type -> google.protobuf.Empty
-	11, // 13: api.account.v1.Account.GetUserInfo:output_type -> api.account.v1.GetUserInfoResponse
-	9,  // 14: api.account.v1.Account.GetAccessToken:output_type -> api.account.v1.GetAccessTokenResponse
-	10, // [10:15] is the sub-list for method output_type
-	5,  // [5:10] is the sub-list for method input_type
+	12, // 10: api.account.v1.Account.Callback:input_type -> api.account.v1.CallbackRequest
+	4,  // 11: api.account.v1.Account.CreateSyncAccount:output_type -> api.account.v1.CreateSyncAccountReply
+	6,  // 12: api.account.v1.Account.GetSyncAccount:output_type -> api.account.v1.GetSyncAccountReply
+	15, // 13: api.account.v1.Account.CancelSyncTask:output_type -> google.protobuf.Empty
+	11, // 14: api.account.v1.Account.GetUserInfo:output_type -> api.account.v1.GetUserInfoResponse
+	9,  // 15: api.account.v1.Account.GetAccessToken:output_type -> api.account.v1.GetAccessTokenResponse
+	13, // 16: api.account.v1.Account.Callback:output_type -> api.account.v1.CallbackResponse
+	11, // [11:17] is the sub-list for method output_type
+	5,  // [5:11] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
 	5,  // [5:5] is the sub-list for extension extendee
 	0,  // [0:5] is the sub-list for field type_name
 }
 
-func init() { file_account_v1_account_proto_init() }
-func file_account_v1_account_proto_init() {
-	if File_account_v1_account_proto != nil {
+func init() { file_api_account_v1_account_proto_init() }
+func file_api_account_v1_account_proto_init() {
+	if File_api_account_v1_account_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_account_v1_account_proto_rawDesc), len(file_account_v1_account_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_account_v1_account_proto_rawDesc), len(file_api_account_v1_account_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_account_v1_account_proto_goTypes,
-		DependencyIndexes: file_account_v1_account_proto_depIdxs,
-		EnumInfos:         file_account_v1_account_proto_enumTypes,
-		MessageInfos:      file_account_v1_account_proto_msgTypes,
+		GoTypes:           file_api_account_v1_account_proto_goTypes,
+		DependencyIndexes: file_api_account_v1_account_proto_depIdxs,
+		EnumInfos:         file_api_account_v1_account_proto_enumTypes,
+		MessageInfos:      file_api_account_v1_account_proto_msgTypes,
 	}.Build()
-	File_account_v1_account_proto = out.File
-	file_account_v1_account_proto_goTypes = nil
-	file_account_v1_account_proto_depIdxs = nil
+	File_api_account_v1_account_proto = out.File
+	file_api_account_v1_account_proto_goTypes = nil
+	file_api_account_v1_account_proto_depIdxs = nil
 }

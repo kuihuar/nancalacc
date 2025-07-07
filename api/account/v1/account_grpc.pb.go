@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v5.29.3
-// source: account/v1/account.proto
+// source: api/account/v1/account.proto
 
 package v1
 
@@ -25,6 +25,7 @@ const (
 	Account_CancelSyncTask_FullMethodName    = "/api.account.v1.Account/CancelSyncTask"
 	Account_GetUserInfo_FullMethodName       = "/api.account.v1.Account/GetUserInfo"
 	Account_GetAccessToken_FullMethodName    = "/api.account.v1.Account/GetAccessToken"
+	Account_Callback_FullMethodName          = "/api.account.v1.Account/Callback"
 )
 
 // AccountClient is the client API for Account service.
@@ -36,6 +37,7 @@ type AccountClient interface {
 	CancelSyncTask(ctx context.Context, in *CancelSyncAccountRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetUserInfo(ctx context.Context, in *GetUserInfoRequest, opts ...grpc.CallOption) (*GetUserInfoResponse, error)
 	GetAccessToken(ctx context.Context, in *GetAccessTokenRequest, opts ...grpc.CallOption) (*GetAccessTokenResponse, error)
+	Callback(ctx context.Context, in *CallbackRequest, opts ...grpc.CallOption) (*CallbackResponse, error)
 }
 
 type accountClient struct {
@@ -96,6 +98,16 @@ func (c *accountClient) GetAccessToken(ctx context.Context, in *GetAccessTokenRe
 	return out, nil
 }
 
+func (c *accountClient) Callback(ctx context.Context, in *CallbackRequest, opts ...grpc.CallOption) (*CallbackResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CallbackResponse)
+	err := c.cc.Invoke(ctx, Account_Callback_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccountServer is the server API for Account service.
 // All implementations must embed UnimplementedAccountServer
 // for forward compatibility.
@@ -105,6 +117,7 @@ type AccountServer interface {
 	CancelSyncTask(context.Context, *CancelSyncAccountRequest) (*emptypb.Empty, error)
 	GetUserInfo(context.Context, *GetUserInfoRequest) (*GetUserInfoResponse, error)
 	GetAccessToken(context.Context, *GetAccessTokenRequest) (*GetAccessTokenResponse, error)
+	Callback(context.Context, *CallbackRequest) (*CallbackResponse, error)
 	mustEmbedUnimplementedAccountServer()
 }
 
@@ -129,6 +142,9 @@ func (UnimplementedAccountServer) GetUserInfo(context.Context, *GetUserInfoReque
 }
 func (UnimplementedAccountServer) GetAccessToken(context.Context, *GetAccessTokenRequest) (*GetAccessTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccessToken not implemented")
+}
+func (UnimplementedAccountServer) Callback(context.Context, *CallbackRequest) (*CallbackResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Callback not implemented")
 }
 func (UnimplementedAccountServer) mustEmbedUnimplementedAccountServer() {}
 func (UnimplementedAccountServer) testEmbeddedByValue()                 {}
@@ -241,6 +257,24 @@ func _Account_GetAccessToken_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Account_Callback_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CallbackRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServer).Callback(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Account_Callback_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServer).Callback(ctx, req.(*CallbackRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Account_ServiceDesc is the grpc.ServiceDesc for Account service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -268,7 +302,11 @@ var Account_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetAccessToken",
 			Handler:    _Account_GetAccessToken_Handler,
 		},
+		{
+			MethodName: "Callback",
+			Handler:    _Account_Callback_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "account/v1/account.proto",
+	Metadata: "api/account/v1/account.proto",
 }
