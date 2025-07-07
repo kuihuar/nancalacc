@@ -18,9 +18,7 @@ type accounterRepo struct {
 }
 
 var (
-	ThirdCompanyID = "nancal"
-	PlatformID     = "dingtalk"
-	Source         = "sync"
+	Source = "sync"
 )
 
 // NewAccounterRepo .
@@ -40,24 +38,28 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*biz.DingtalkDept
 		taskIds = append(taskIds, taskId)
 	}
 
+	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
+	platformID := r.data.serviceConf.PlatformIds
 	for index, user := range users {
 		entities = append(entities, &models.TbLasUser{
 			TaskID:         taskIds[index],
-			ThirdCompanyID: ThirdCompanyID,
-			PlatformID:     PlatformID,
+			ThirdCompanyID: thirdCompanyID,
+			PlatformID:     platformID,
 			Uid:            user.Userid,
 			DefDid:         sql.NullString{String: "1", Valid: true},
 			DefDidOrder:    0,
 			Account:        user.Userid,
 			NickName:       user.Nickname,
 			Email:          sql.NullString{String: user.Email, Valid: true},
-			Phone:          sql.NullString{String: user.Mobile, Valid: true},
-			Title:          sql.NullString{String: user.Title, Valid: true},
+			//
+			Phone: sql.NullString{String: user.Mobile, Valid: true},
+			Title: sql.NullString{String: user.Title, Valid: true},
 			//Leader:         sql.NullString{String: strconv.FormatBool(account.Leader)},
-			Source:    Source,
-			Ctime:     sql.NullTime{Time: time.Now(), Valid: true},
-			Mtime:     time.Now(),
-			CheckType: 1,
+			Source:           Source,
+			Ctime:            sql.NullTime{Time: time.Now(), Valid: true},
+			Mtime:            time.Now(),
+			CheckType:        1,
+			EmploymentStatus: "active",
 			//Type:           sql.NullString{String: "dept", Valid: true},
 		})
 	}
@@ -75,17 +77,34 @@ func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*biz.Dingta
 	r.log.Infof("SaveDepartments: %v", depts)
 	entities := make([]*models.TbLasDepartment, 0, len(depts))
 	var taskIds []string
-	for i := 1; i <= len(depts); i++ {
+	for i := 1; i <= len(depts)+1; i++ {
 		taskId := time.Now().Add(time.Duration(i) * time.Second).Format("20060102150405")
 		taskIds = append(taskIds, taskId)
+	}
+	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
+	platformID := r.data.serviceConf.PlatformIds
+	companyID := r.data.serviceConf.CompanyId
+	rootDep := &models.TbLasDepartment{
+		Did:            "rootdept",
+		TaskID:         taskIds[len(depts)-1],
+		Name:           companyID,
+		ThirdCompanyID: thirdCompanyID,
+		PlatformID:     platformID,
+		Pid:            sql.NullString{String: "-1", Valid: true},
+		Order:          0,
+		Source:         "sync",
+		Ctime:          sql.NullTime{Time: time.Now(), Valid: true},
+		Mtime:          time.Now(),
+		CheckType:      1,
+		//Type:           sql.NullString{String: "dept", Valid: true},
 	}
 	for index, dep := range depts {
 		entities = append(entities, &models.TbLasDepartment{
 			Did:            strconv.FormatInt(dep.DeptID, 10),
 			TaskID:         taskIds[index],
 			Name:           dep.Name,
-			ThirdCompanyID: ThirdCompanyID,
-			PlatformID:     PlatformID,
+			ThirdCompanyID: thirdCompanyID,
+			PlatformID:     platformID,
 			Pid:            sql.NullString{String: strconv.FormatInt(dep.ParentID, 10), Valid: true},
 			Order:          int(dep.Order),
 			Source:         "sync",
@@ -95,6 +114,7 @@ func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*biz.Dingta
 			//Type:           sql.NullString{String: "dept", Valid: true},
 		})
 	}
+	entities = append(entities, rootDep)
 	result := r.data.db.WithContext(ctx).Create(&entities)
 
 	if result.Error != nil {
@@ -113,12 +133,14 @@ func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relatio
 		taskId := time.Now().Add(time.Duration(i) * time.Second).Format("20060102150405")
 		taskIds = append(taskIds, taskId)
 	}
+	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
+	platformID := r.data.serviceConf.PlatformIds
 	for index, relation := range relations {
 		entities = append(entities, &models.TbLasDepartmentUser{
 			Did:            relation.Did,
 			TaskID:         taskIds[index],
-			ThirdCompanyID: ThirdCompanyID,
-			PlatformID:     PlatformID,
+			ThirdCompanyID: thirdCompanyID,
+			PlatformID:     platformID,
 			Uid:            relation.Uid,
 			Ctime:          time.Now(),
 			Order:          sql.NullInt32{Int32: int32(relation.Order), Valid: true},
@@ -136,10 +158,14 @@ func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relatio
 
 func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, cfg *biz.DingtalkCompanyCfg) error {
 	r.log.Infof("SaveCompanyCfg: %v", cfg)
+
+	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
+	platformID := r.data.serviceConf.PlatformIds
+	companyID := r.data.serviceConf.CompanyId
 	entity := &models.TbCompanyCfg{
-		ThirdCompanyId: ThirdCompanyID,
-		PlatformIds:    PlatformID,
-		CompanyId:      ThirdCompanyID,
+		ThirdCompanyId: thirdCompanyID,
+		PlatformIds:    platformID,
+		CompanyId:      companyID,
 		Status:         1,
 		Ctime:          sql.NullTime{Time: time.Now(), Valid: true},
 		Mtime:          time.Now(),

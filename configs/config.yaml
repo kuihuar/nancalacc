@@ -1,10 +1,10 @@
 server:
   http:
-    addr: 0.0.0.0:8000
-    timeout: 1s
+    addr: 0.0.0.0:55000
+    timeout: 5s
   grpc:
-    addr: 0.0.0.0:9000
-    timeout: 1s   
+    addr: 0.0.0.0:55001
+    timeout: 5s   
 data:
   database:
     driver: mysql
@@ -22,4 +22,7 @@ data:
     env: "prod"
     log_level: "debug"
     access_key: "NRSXWTPKNAIRUBMP"
-    secret_key: "SKnwwvvngrhcrpgc"    
+    secret_key: "SKnwwvvngrhcrpgc"
+    third_company_id: "nancal" # 三方租户ID
+    platform_ids: "nancal_dingtalk" # 客户源数据ID
+    company_id: "nancal_yun_doc" # 文档平台公司ID      

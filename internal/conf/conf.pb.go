@@ -263,15 +263,16 @@ func (x *Dingtalk) GetTimeout() string {
 }
 
 type ServiceConf struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Version       string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
-	Env           string                 `protobuf:"bytes,3,opt,name=env,proto3" json:"env,omitempty"`
-	LogLevel      string                 `protobuf:"bytes,4,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`
-	AccessKey     string                 `protobuf:"bytes,5,opt,name=access_key,json=accessKey,proto3" json:"access_key,omitempty"`
-	SecretKey     string                 `protobuf:"bytes,6,opt,name=secret_key,json=secretKey,proto3" json:"secret_key,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Env            string                 `protobuf:"bytes,1,opt,name=env,proto3" json:"env,omitempty"`
+	LogLevel       string                 `protobuf:"bytes,2,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`
+	AccessKey      string                 `protobuf:"bytes,3,opt,name=access_key,json=accessKey,proto3" json:"access_key,omitempty"`
+	SecretKey      string                 `protobuf:"bytes,4,opt,name=secret_key,json=secretKey,proto3" json:"secret_key,omitempty"`
+	ThirdCompanyId string                 `protobuf:"bytes,5,opt,name=third_company_id,json=thirdCompanyId,proto3" json:"third_company_id,omitempty"`
+	PlatformIds    string                 `protobuf:"bytes,6,opt,name=platform_ids,json=platformIds,proto3" json:"platform_ids,omitempty"`
+	CompanyId      string                 `protobuf:"bytes,7,opt,name=company_id,json=companyId,proto3" json:"company_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ServiceConf) Reset() {
@@ -304,20 +305,6 @@ func (*ServiceConf) Descriptor() ([]byte, []int) {
 	return file_conf_conf_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *ServiceConf) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *ServiceConf) GetVersion() string {
-	if x != nil {
-		return x.Version
-	}
-	return ""
-}
-
 func (x *ServiceConf) GetEnv() string {
 	if x != nil {
 		return x.Env
@@ -342,6 +329,27 @@ func (x *ServiceConf) GetAccessKey() string {
 func (x *ServiceConf) GetSecretKey() string {
 	if x != nil {
 		return x.SecretKey
+	}
+	return ""
+}
+
+func (x *ServiceConf) GetThirdCompanyId() string {
+	if x != nil {
+		return x.ThirdCompanyId
+	}
+	return ""
+}
+
+func (x *ServiceConf) GetPlatformIds() string {
+	if x != nil {
+		return x.PlatformIds
+	}
+	return ""
+}
+
+func (x *ServiceConf) GetCompanyId() string {
+	if x != nil {
+		return x.CompanyId
 	}
 	return ""
 }
@@ -624,16 +632,18 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\aapp_key\x18\x02 \x01(\tR\x06appKey\x12\x1d\n" +
 	"\n" +
 	"app_secret\x18\x03 \x01(\tR\tappSecret\x12\x18\n" +
-	"\atimeout\x18\x04 \x01(\tR\atimeout\"\xa8\x01\n" +
-	"\vServiceConf\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\tR\aversion\x12\x10\n" +
-	"\x03env\x18\x03 \x01(\tR\x03env\x12\x1b\n" +
-	"\tlog_level\x18\x04 \x01(\tR\blogLevel\x12\x1d\n" +
+	"\atimeout\x18\x04 \x01(\tR\atimeout\"\xe6\x01\n" +
+	"\vServiceConf\x12\x10\n" +
+	"\x03env\x18\x01 \x01(\tR\x03env\x12\x1b\n" +
+	"\tlog_level\x18\x02 \x01(\tR\blogLevel\x12\x1d\n" +
 	"\n" +
-	"access_key\x18\x05 \x01(\tR\taccessKey\x12\x1d\n" +
+	"access_key\x18\x03 \x01(\tR\taccessKey\x12\x1d\n" +
 	"\n" +
-	"secret_key\x18\x06 \x01(\tR\tsecretKeyB\x1eZ\x1cnancalacc/internal/conf;confb\x06proto3"
+	"secret_key\x18\x04 \x01(\tR\tsecretKey\x12(\n" +
+	"\x10third_company_id\x18\x05 \x01(\tR\x0ethirdCompanyId\x12!\n" +
+	"\fplatform_ids\x18\x06 \x01(\tR\vplatformIds\x12\x1d\n" +
+	"\n" +
+	"company_id\x18\a \x01(\tR\tcompanyIdB\x1eZ\x1cnancalacc/internal/conf;confb\x06proto3"
 
 var (
 	file_conf_conf_proto_rawDescOnce sync.Once

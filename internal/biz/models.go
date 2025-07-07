@@ -152,3 +152,14 @@ type DingTalkUserInfo struct {
 type DingtalkCompanyCfg struct {
 	CompanyID string `json:"company_id"`
 }
+
+type EcisaccountsyncRequest struct {
+	TaskId         string `json:"taskId"`
+	ThirdCompanyId string `json:"thirdCompanyId"`
+	CollectCost    string `json:"collectCost"`
+}
+
+type EcisaccountsyncResponse struct {
+	Code string `json:"code"`
+	Msg  string `json:"msg"`
+}

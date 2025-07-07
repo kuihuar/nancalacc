@@ -2,9 +2,14 @@ package biz
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	v1 "nancalacc/api/account/v1"
+	"nancalacc/internal/conf"
+	"nancalacc/pkg/httputil"
 	"strconv"
+	"time"
 
 	//"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
@@ -19,6 +24,29 @@ var (
 // Greeter is a Greeter model.
 type Accounter struct {
 	Hello string
+}
+
+type AccounterConf struct {
+	Env            string `json:"env"`
+	LogLevel       string `json:"log_level"`
+	AccessKey      string `json:"access_key"`
+	SecretKey      string `json:"secret_key"`
+	ThirdCompanyID string `json:"third_company_id"`
+	PlatformIDs    string `json:"platform_ids"`
+	CompanyID      string `json:"company_id"`
+}
+
+func NewAccounterConf(c *conf.ServiceConf) *AccounterConf {
+	conf := &AccounterConf{
+		Env:            c.Env,
+		LogLevel:       c.LogLevel,
+		AccessKey:      c.AccessKey,
+		SecretKey:      c.SecretKey,
+		ThirdCompanyID: c.ThirdCompanyId,
+		PlatformIDs:    c.PlatformIds,
+		CompanyID:      c.CompanyId,
+	}
+	return conf
 }
 
 // GreeterRepo is a Greater repo.
@@ -44,7 +72,7 @@ func NewAccounterUsecase(repo AccounterRepo, dingTalkRepo DingTalkRepo, logger l
 func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
 	uc.log.WithContext(ctx).Infof("CreateSyncAccount: %v", req)
 	err := uc.repo.SaveCompanyCfg(ctx, &DingtalkCompanyCfg{
-		CompanyID: "11",
+		CompanyID: "companyId",
 	})
 	uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: err: %v", err)
 	if err != nil {
@@ -108,6 +136,14 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	if err != nil {
 		return nil, err
 	}
+
+	if _, err := uc.EcisaccountsyncAll(ctx, EcisaccountsyncRequest{
+		TaskId:         "10",
+		ThirdCompanyId: "11",
+		CollectCost:    "1000000000",
+	}); err != nil {
+		return nil, err
+	}
 	return &v1.CreateSyncAccountReply{
 		TaskId:     "10",
 		CreateTime: timestamppb.Now(),
@@ -155,4 +191,24 @@ func (s *AccounterUsecase) GetAccessToken(ctx context.Context, req *v1.GetAccess
 		ExpiresIn:    int64(tokenRes.ExpireIn),
 		//RefreshToken: tokenRes.RefreshToken,
 	}, nil
+}
+
+func (uc *AccounterUsecase) EcisaccountsyncAll(ctx context.Context, req EcisaccountsyncRequest) (*EcisaccountsyncResponse, error) {
+	uc.log.WithContext(ctx).Infof("GetDepartmentUserList: %v", req)
+	uri := fmt.Sprintf("http://127.0.0.1:8000/ecisaccountsync/api/sync/all?taskId=%s&thirdCompanyId=%s&collectCost=%s", req.TaskId, req.ThirdCompanyId, req.CollectCost)
+	// curl --location --request POST 'http://127.0.0.1:8000/api/sync/all?taskId=20240719100401&thirdCompanyId=1&collectCost=11111'
+
+	bs, err := httputil.PostJSON(uri, nil, time.Second*10)
+	if err != nil {
+		return nil, err
+	}
+	var resp EcisaccountsyncResponse
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Code != "200" {
+		return nil, errors.New(resp.Msg)
+	}
+	return &resp, nil
 }

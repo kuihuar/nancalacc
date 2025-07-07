@@ -31,6 +31,9 @@ type Data struct {
 	dingtalkCli *dingtalkoauth2_1_0.Client
 
 	dingtalkCliContact *dingtalkcontact_1_0.Client
+
+	// 服务配置
+	serviceConf *ServiceConf
 }
 
 type ThirdParty struct {
@@ -38,6 +41,14 @@ type ThirdParty struct {
 	AppKey    string
 	AppSecret string
 	Timeout   string
+}
+
+type ServiceConf struct {
+	CompanyId      string
+	ThirdCompanyId string
+	PlatformIds    string
+	SecretKey      string
+	AccessKey      string
 }
 
 // NewData .
@@ -77,6 +88,13 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 		AppSecret: c.Dingtalk.AppSecret,
 		Timeout:   c.Dingtalk.Timeout,
 	}
+	serviceConf := &ServiceConf{
+		CompanyId:      c.ServiceConf.CompanyId,
+		ThirdCompanyId: c.ServiceConf.ThirdCompanyId,
+		PlatformIds:    c.ServiceConf.PlatformIds,
+		SecretKey:      c.ServiceConf.SecretKey,
+		AccessKey:      c.ServiceConf.AccessKey,
+	}
 	config := &openapi.Config{
 		Protocol: tea.String("https"),
 		RegionId: tea.String("central"),
@@ -96,6 +114,7 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 		thirdParty:         dingtalk,
 		dingtalkCli:        client,
 		dingtalkCliContact: clientContact,
+		serviceConf:        serviceConf,
 	}, cleanup, nil
 }
 
