@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 
-	pb "nancalacc/api/account/v1"
 	v1 "nancalacc/api/account/v1"
 	"nancalacc/internal/biz"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type AccountService struct {
-	pb.UnimplementedAccountServer
+	v1.UnimplementedAccountServer
 	accounterUsecase *biz.AccounterUsecase
 	log              *log.Helper
 }
@@ -22,23 +22,24 @@ func NewAccountService(accounterUsecase *biz.AccounterUsecase, logger log.Logger
 	return &AccountService{accounterUsecase: accounterUsecase, log: log.NewHelper(logger)}
 }
 
-func (s *AccountService) CreateSyncAccount(ctx context.Context, req *pb.CreateSyncAccountRequest) (*pb.CreateSyncAccountReply, error) {
+func (s *AccountService) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
 	s.log.Infof("CreateSyncAccount req: %v", req)
 	_, err := s.accounterUsecase.CreateSyncAccount(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.CreateSyncAccountReply{
-		TaskId: "10",
+	return &v1.CreateSyncAccountReply{
+		TaskId:     "10",
+		CreateTime: timestamppb.Now(),
 	}, nil
 }
-func (s *AccountService) GetSyncAccount(ctx context.Context, req *pb.GetSyncAccountRequest) (*pb.GetSyncAccountReply, error) {
-	return &pb.GetSyncAccountReply{}, nil
+func (s *AccountService) GetSyncAccount(ctx context.Context, req *v1.GetSyncAccountRequest) (*v1.GetSyncAccountReply, error) {
+	return &v1.GetSyncAccountReply{}, nil
 }
-func (s *AccountService) CancelSyncTask(ctx context.Context, req *pb.CancelSyncAccountRequest) (*emptypb.Empty, error) {
+func (s *AccountService) CancelSyncTask(ctx context.Context, req *v1.CancelSyncAccountRequest) (*emptypb.Empty, error) {
 	return &emptypb.Empty{}, nil
 }
-func (s *AccountService) GetUserInfo(ctx context.Context, req *pb.GetUserInfoRequest) (*pb.GetUserInfoResponse, error) {
+func (s *AccountService) GetUserInfo(ctx context.Context, req *v1.GetUserInfoRequest) (*v1.GetUserInfoResponse, error) {
 	s.log.Infof("GetUserInfo req: %v", req)
 	accessToken := req.GetAccessToken()
 	if accessToken == "" {
@@ -52,7 +53,7 @@ func (s *AccountService) GetUserInfo(ctx context.Context, req *pb.GetUserInfoReq
 	}
 	return userInfo, nil
 }
-func (s *AccountService) GetAccessToken(ctx context.Context, req *pb.GetAccessTokenRequest) (*pb.GetAccessTokenResponse, error) {
+func (s *AccountService) GetAccessToken(ctx context.Context, req *v1.GetAccessTokenRequest) (*v1.GetAccessTokenResponse, error) {
 	s.log.Infof("GetAccessToken req: %v", req)
 	code := req.GetCode()
 	if code == "" {

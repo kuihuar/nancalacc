@@ -7,7 +7,6 @@ import (
 )
 
 func Migrate(db *gorm.DB) error {
-	// return db.AutoMigrate(&models.Account{}, &models.TbLasDepartment{}, &models.TbLasUser{}, &models.TbCompanyCfg{})
 	return db.AutoMigrate(&models.TbLasDepartment{}, &models.TbLasUser{}, &models.TbLasDepartmentUser{}, &models.TbCompanyCfg{})
 
 }
