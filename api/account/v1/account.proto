@@ -1,0 +1,123 @@
+syntax = "proto3";
+
+
+package api.account.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto"; 
+
+option go_package = "nancalacc/api/account/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.account.v1";
+option java_outer_classname = "AccountProtoV1";
+
+
+
+
+
+service Account {
+	rpc CreateSyncAccount (CreateSyncAccountRequest) returns (CreateSyncAccountReply){
+		option (google.api.http) = {
+			post: "/v1/account"
+			body: "*"
+		};
+	};
+	rpc GetSyncAccount (GetSyncAccountRequest) returns (GetSyncAccountReply){
+		option (google.api.http) = {
+			get: "/v1/account/{task_id}"
+		};
+	};
+	rpc CancelSyncTask (CancelSyncAccountRequest) returns (google.protobuf.Empty){
+		option (google.api.http) = {
+			delete: "/v1/account/{task_id}"
+		};
+	};
+
+  	rpc GetUserInfo (GetUserInfoRequest) returns (GetUserInfoResponse) {
+    	option (google.api.http) = {
+      		get: "/v1/account/userinfo"
+    	};
+  	}
+
+	rpc GetAccessToken(GetAccessTokenRequest) returns (GetAccessTokenResponse) {
+		option (google.api.http) = {
+			get: "/v1/account/access_token"
+		};
+	}
+}
+
+
+
+
+enum TriggerType {
+  TRIGGER_UNKNOWN = 0;  // 未知触发方式（默认值）
+  TRIGGER_MANUAL = 1;   // 手动触发（如管理员点击按钮）
+  TRIGGER_SCHEDULED = 2; // 定时任务触发（如每天凌晨2点自动同步）
+}
+
+enum SyncType {
+    FULL = 0;    // 全量同步
+    INCREMENTAL = 1; // 增量同步
+  }
+
+
+// 创建同步请求
+message CreateSyncAccountRequest {
+	TriggerType trigger_type = 1; // 触发类型
+	SyncType sync_type = 2;  // 同步类型
+}
+// 创建同步响应
+message CreateSyncAccountReply {
+	string task_id = 1;      // 生成的任务ID
+  	google.protobuf.Timestamp create_time = 2; // 任务创建时间
+}
+
+// 查询同步请求
+message GetSyncAccountRequest {
+	string task_id = 1;      // 要查询的任务ID
+}
+// 查询同步响应
+message GetSyncAccountReply {
+	enum Status {
+    PENDING = 0;   // 待执行
+    RUNNING = 1;   // 执行中
+    SUCCESS = 2;   // 成功
+    FAILED = 3;    // 失败
+  }
+	Status status = 1;
+	int64 user_count = 2;
+	int64 department_count = 3;
+	int64 user_department_relation_count = 4;
+	google.protobuf.Timestamp latest_sync_time = 5;
+}
+
+message CancelSyncAccountRequest {
+	string task_id = 1;      // 要删除的任务ID
+}
+
+
+
+message GetAccessTokenRequest {
+  //string grant_type = 1;
+  string code = 2;
+  //string redirect_uri = 3;
+}
+
+message GetAccessTokenResponse {
+  string access_token = 1;
+  string token_type = 2;
+  int64 expires_in = 3;
+  string refresh_token = 4;
+}
+
+message GetUserInfoRequest {
+  string access_token = 1;
+}
+
+message GetUserInfoResponse {
+  string union_id = 1;
+  string name = 2;
+  string email = 3;
+  string avatar = 4;
+}
