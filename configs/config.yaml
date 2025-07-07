@@ -4,12 +4,7 @@ server:
     timeout: 1s
   grpc:
     addr: 0.0.0.0:9000
-    timeout: 1s
-service:
-  env: "prod"
-  log_level: "debug"
-  access_key: "NRSXWTPKNAIRUBMP"
-  secret_key: "SKnwwvvngrhcrpgc"    
+    timeout: 1s   
 data:
   database:
     driver: mysql
@@ -23,3 +18,8 @@ data:
     app_key: "dinglz1setxqhrpp7aa0"       
     app_secret: "uHVTlmVFojonyjlBIDbzsxLZ_iJfviqUMpT1LKNxP9P4TYr8LhaiwymiQfb0fjxr" # 明文存储（不推荐生产环境）
     timeout: "5s"
+  service_conf:
+    env: "prod"
+    log_level: "debug"
+    access_key: "NRSXWTPKNAIRUBMP"
+    secret_key: "SKnwwvvngrhcrpgc"    

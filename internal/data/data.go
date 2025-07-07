@@ -99,9 +99,26 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 	}, cleanup, nil
 }
 
-func initDB(c *conf.Data) (*gorm.DB, error) {
-	var dialector gorm.Dialector
+func descryt(key, sk string) string {
+	return key
+}
+func initDbEnv(c *conf.Data) (*gorm.DB, error) {
+	ak, err := conf.GetEnv("ECIS_ECISACCOUNTSYNC_DB")
+	if err != nil {
+		panic(err)
+	}
+	sk := c.ServiceConf.SecretKey
+	fmt.Printf("aaaaaaaaaaaak: %v, sk: %v", ak, sk)
+	dsn := descryt(ak, sk)
 
+	// [POST] http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/all
+	return gorm.Open(mysql.Open(dsn), &gorm.Config{})
+
+}
+
+func initDB(c *conf.Data) (*gorm.DB, error) {
+	//initDbEnv(c)
+	var dialector gorm.Dialector
 	switch c.Database.Driver {
 	case "mysql":
 		dialector = mysql.Open(c.Database.Source)
