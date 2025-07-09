@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"nancalacc/internal/conf"
+	"nancalacc/pkg/cipherutil"
 	"time"
 
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
@@ -44,11 +45,12 @@ type ThirdParty struct {
 }
 
 type ServiceConf struct {
-	CompanyId      string
-	ThirdCompanyId string
-	PlatformIds    string
-	SecretKey      string
-	AccessKey      string
+	CompanyId          string
+	ThirdCompanyId     string
+	PlatformIds        string
+	SecretKey          string
+	AccessKey          string
+	EcisaccountsyncUrl string
 }
 
 // NewData .
@@ -58,7 +60,11 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 	var db *gorm.DB
 	var err error
 
-	db, err = initDB(c)
+	if c.ServiceConf.Env == "prod" {
+		db, err = initDbEnv(c, logger)
+	} else {
+		db, err = initDB(c, logger)
+	}
 	if err != nil {
 		return nil, nil, err
 	}
@@ -89,11 +95,12 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 		Timeout:   c.Dingtalk.Timeout,
 	}
 	serviceConf := &ServiceConf{
-		CompanyId:      c.ServiceConf.CompanyId,
-		ThirdCompanyId: c.ServiceConf.ThirdCompanyId,
-		PlatformIds:    c.ServiceConf.PlatformIds,
-		SecretKey:      c.ServiceConf.SecretKey,
-		AccessKey:      c.ServiceConf.AccessKey,
+		CompanyId:          c.ServiceConf.CompanyId,
+		ThirdCompanyId:     c.ServiceConf.ThirdCompanyId,
+		PlatformIds:        c.ServiceConf.PlatformIds,
+		SecretKey:          c.ServiceConf.SecretKey,
+		AccessKey:          c.ServiceConf.AccessKey,
+		EcisaccountsyncUrl: c.ServiceConf.EcisaccountsyncUrl,
 	}
 	config := &openapi.Config{
 		Protocol: tea.String("https"),
@@ -118,25 +125,33 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 	}, cleanup, nil
 }
 
-func descryt(key, sk string) string {
-	return key
-}
-func initDbEnv(c *conf.Data) (*gorm.DB, error) {
-	ak, err := conf.GetEnv("ECIS_ECISACCOUNTSYNC_DB")
+func initDbEnv(c *conf.Data, logger log.Logger) (*gorm.DB, error) {
+	encryptedDsn, err := conf.GetEnv("ECIS_ECISACCOUNTSYNC_DB")
+	log.NewHelper(logger).Info("initDbEnv: %s", encryptedDsn)
 	if err != nil {
-		panic(err)
+		log.NewHelper(logger).Error("initDbEnv: %w", err)
+		return nil, err
 	}
 	sk := c.ServiceConf.SecretKey
-	fmt.Printf("aaaaaaaaaaaak: %v, sk: %v", ak, sk)
-	dsn := descryt(ak, sk)
-
+	dsn, err := cipherutil.DecryptByAes(encryptedDsn, sk)
+	if err != nil {
+		log.NewHelper(logger).Error("initDbEnvDecryptByAes: %w", err)
+		return nil, err
+	}
+	if len(dsn) == 0 {
+		log.NewHelper(logger).Error("initDbEnvDecryptByAes: dsn is empty")
+		return nil, err
+	}
+	dsn = "mysql://" + dsn
+	log.NewHelper(logger).Error("initDbEnvDecrypt.dsn: %s", dsn)
 	// [POST] http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/all
-	return gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	return gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger: gormlogger.Default.LogMode(gormlogger.Info),
+	})
 
 }
 
-func initDB(c *conf.Data) (*gorm.DB, error) {
-	//initDbEnv(c)
+func initDB(c *conf.Data, logger log.Logger) (*gorm.DB, error) {
 	var dialector gorm.Dialector
 	switch c.Database.Driver {
 	case "mysql":
@@ -153,19 +168,4 @@ func initDB(c *conf.Data) (*gorm.DB, error) {
 			SingularTable: true,      // 使用单数表名
 		},
 	})
-}
-
-func getGormLogLevel(level string) gormlogger.LogLevel {
-	switch level {
-	case "silent":
-		return gormlogger.Silent
-	case "error":
-		return gormlogger.Error
-	case "warn":
-		return gormlogger.Warn
-	case "info":
-		return gormlogger.Info
-	default:
-		return gormlogger.Warn // 默认级别
-	}
 }

@@ -2,12 +2,9 @@ package biz
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	v1 "nancalacc/api/account/v1"
 	"nancalacc/internal/conf"
-	"nancalacc/pkg/httputil"
 	"strconv"
 	"time"
 
@@ -51,10 +48,12 @@ func NewAccounterConf(c *conf.ServiceConf) *AccounterConf {
 
 // GreeterRepo is a Greater repo.
 type AccounterRepo interface {
-	SaveUsers(ctx context.Context, users []*DingtalkDeptUser) (int, error)
-	SaveDepartments(ctx context.Context, depts []*DingtalkDept) (int, error)
-	SaveDepartmentUserRelations(ctx context.Context, relations []*DingtalkDeptUserRelation) (int, error)
+	SaveUsers(ctx context.Context, users []*DingtalkDeptUser, taskId string) (int, error)
+	SaveDepartments(ctx context.Context, depts []*DingtalkDept, taskId string) (int, error)
+	SaveDepartmentUserRelations(ctx context.Context, relations []*DingtalkDeptUserRelation, taskId string) (int, error)
 	SaveCompanyCfg(ctx context.Context, cfg *DingtalkCompanyCfg) error
+
+	CallEcisaccountsyncAll(ctx context.Context, taskId string) (EcisaccountsyncResponse, error)
 }
 
 // GreeterUsecase is a Greeter usecase.
@@ -71,9 +70,7 @@ func NewAccounterUsecase(repo AccounterRepo, dingTalkRepo DingTalkRepo, logger l
 
 func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
 	uc.log.WithContext(ctx).Infof("CreateSyncAccount: %v", req)
-	err := uc.repo.SaveCompanyCfg(ctx, &DingtalkCompanyCfg{
-		CompanyID: "companyId",
-	})
+	err := uc.repo.SaveCompanyCfg(ctx, &DingtalkCompanyCfg{})
 	uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: err: %v", err)
 	if err != nil {
 		return nil, err
@@ -87,6 +84,8 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 		return nil, err
 	}
 
+	taskId := time.Now().Add(time.Duration(1) * time.Second).Format("20060102150405")
+
 	// 1. 从第三方获取部门和用户数据
 	depts, err := uc.dingTalkRepo.FetchDepartments(ctx, accessToken)
 	uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: depts: %v, err: %v", depts, err)
@@ -94,7 +93,7 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 		return nil, err
 	}
 	// 2. 数据入库
-	deptCount, err := uc.repo.SaveDepartments(ctx, depts)
+	deptCount, err := uc.repo.SaveDepartments(ctx, depts, taskId)
 	uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: deptCount: %v, err: %v", deptCount, err)
 	if err != nil {
 		return nil, err
@@ -112,7 +111,7 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	// 2. 数据入库
 	//这里可以 将deptUsers转为model.TbLasUser,
 	// SaveUsers(ctx, TbLasUser)
-	userCount, err := uc.repo.SaveUsers(ctx, deptUsers)
+	userCount, err := uc.repo.SaveUsers(ctx, deptUsers, taskId)
 	uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: userCount: %v, err: %v", userCount, err)
 	if err != nil {
 		return nil, err
@@ -123,7 +122,7 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	for _, deptUser := range deptUsers {
 		for _, depId := range deptUser.DeptIDList {
 			deptUserRelations = append(deptUserRelations, &DingtalkDeptUserRelation{
-				Uid:   deptUser.Userid,
+				Uid:   deptUser.Unionid,
 				Did:   strconv.FormatInt(depId, 10),
 				Order: deptUser.DeptOrder,
 			})
@@ -131,21 +130,18 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 
 	}
 	// 3. 数据入库
-	relationCount, err := uc.repo.SaveDepartmentUserRelations(ctx, deptUserRelations)
+	relationCount, err := uc.repo.SaveDepartmentUserRelations(ctx, deptUserRelations, taskId)
 	uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: relationCount: %v, err: %v", relationCount, err)
 	if err != nil {
 		return nil, err
 	}
 
-	if _, err := uc.EcisaccountsyncAll(ctx, EcisaccountsyncRequest{
-		TaskId:         "10",
-		ThirdCompanyId: "11",
-		CollectCost:    "1000000000",
-	}); err != nil {
+	_, err = uc.repo.CallEcisaccountsyncAll(ctx, taskId)
+	if err != nil {
 		return nil, err
 	}
 	return &v1.CreateSyncAccountReply{
-		TaskId:     "10",
+		TaskId:     taskId,
 		CreateTime: timestamppb.Now(),
 	}, nil
 }
@@ -198,24 +194,4 @@ func (s *AccounterUsecase) GetAccessToken(ctx context.Context, req *v1.GetAccess
 		ExpiresIn:    int64(tokenRes.ExpireIn),
 		//RefreshToken: tokenRes.RefreshToken,
 	}, nil
-}
-
-func (uc *AccounterUsecase) EcisaccountsyncAll(ctx context.Context, req EcisaccountsyncRequest) (*EcisaccountsyncResponse, error) {
-	uc.log.WithContext(ctx).Infof("GetDepartmentUserList: %v", req)
-	uri := fmt.Sprintf("http://127.0.0.1:8000/ecisaccountsync/api/sync/all?taskId=%s&thirdCompanyId=%s&collectCost=%s", req.TaskId, req.ThirdCompanyId, req.CollectCost)
-	// curl --location --request POST 'http://127.0.0.1:8000/api/sync/all?taskId=20240719100401&thirdCompanyId=1&collectCost=11111'
-
-	bs, err := httputil.PostJSON(uri, nil, time.Second*10)
-	if err != nil {
-		return nil, err
-	}
-	var resp EcisaccountsyncResponse
-	err = json.Unmarshal(bs, &resp)
-	if err != nil {
-		return nil, err
-	}
-	if resp.Code != "200" {
-		return nil, errors.New(resp.Msg)
-	}
-	return &resp, nil
 }

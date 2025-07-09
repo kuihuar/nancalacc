@@ -153,7 +153,6 @@ type DingTalkUserInfo struct {
 }
 
 type DingtalkCompanyCfg struct {
-	CompanyID string `json:"company_id"`
 }
 
 type EcisaccountsyncRequest struct {

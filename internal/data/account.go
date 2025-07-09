@@ -3,13 +3,19 @@ package data
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
 	"nancalacc/internal/biz"
 	"nancalacc/internal/data/models"
+	"nancalacc/pkg/cipherutil"
+	"nancalacc/pkg/httputil"
 
 	"github.com/go-kratos/kratos/v2/log"
+	"gorm.io/gorm"
 )
 
 type accounterRepo struct {
@@ -29,31 +35,35 @@ func NewAccounterRepo(data *Data, logger log.Logger) biz.AccounterRepo {
 	}
 }
 
-func (r *accounterRepo) SaveUsers(ctx context.Context, users []*biz.DingtalkDeptUser) (int, error) {
+func (r *accounterRepo) SaveUsers(ctx context.Context, users []*biz.DingtalkDeptUser, taskId string) (int, error) {
 	r.log.Infof("SaveUsers: %v", users)
-	entities := make([]*models.TbLasUser, 0, len(users))
-	var taskIds []string
-	for i := 1; i <= len(users); i++ {
-		taskId := time.Now().Add(time.Duration(i) * time.Second).Format("20060102150405")
-		taskIds = append(taskIds, taskId)
+	if len(users) == 0 {
+		r.log.Infof("users is empty")
+		return 0, nil
 	}
+	entities := make([]*models.TbLasUser, 0, len(users))
 
 	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
 	platformID := r.data.serviceConf.PlatformIds
-	for index, user := range users {
+	for _, user := range users {
+		if user.Nickname == "" {
+			user.Nickname = user.Name
+		}
+		email, _ := cipherutil.AesEncryptGcmByKey(user.Email, r.data.serviceConf.SecretKey)
+		phone, _ := cipherutil.AesEncryptGcmByKey(user.Mobile, r.data.serviceConf.SecretKey)
+
 		entities = append(entities, &models.TbLasUser{
-			TaskID:         taskIds[index],
+			TaskID:         taskId,
 			ThirdCompanyID: thirdCompanyID,
 			PlatformID:     platformID,
-			Uid:            user.Userid,
-			DefDid:         sql.NullString{String: "1", Valid: true},
+			Uid:            user.Unionid,
+			DefDid:         sql.NullString{String: "-1", Valid: true},
 			DefDidOrder:    0,
 			Account:        user.Userid,
 			NickName:       user.Nickname,
-			Email:          sql.NullString{String: user.Email, Valid: true},
-			//
-			Phone: sql.NullString{String: user.Mobile, Valid: true},
-			Title: sql.NullString{String: user.Title, Valid: true},
+			Email:          sql.NullString{String: email, Valid: true},
+			Phone:          sql.NullString{String: phone, Valid: true},
+			Title:          sql.NullString{String: user.Title, Valid: true},
 			//Leader:         sql.NullString{String: strconv.FormatBool(account.Leader)},
 			Source:           Source,
 			Ctime:            sql.NullTime{Time: time.Now(), Valid: true},
@@ -67,26 +77,27 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*biz.DingtalkDept
 	result := r.data.db.WithContext(ctx).Create(&entities)
 
 	if result.Error != nil {
-		return 0, result.Error
+		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
+			r.log.Infof("user already exists")
+		} else {
+			return 0, result.Error
+		}
+
 	}
 
 	return int(result.RowsAffected), nil
 }
 
-func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*biz.DingtalkDept) (int, error) {
+func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*biz.DingtalkDept, taskId string) (int, error) {
 	r.log.Infof("SaveDepartments: %v", depts)
 	entities := make([]*models.TbLasDepartment, 0, len(depts))
-	var taskIds []string
-	for i := 1; i <= len(depts)+1; i++ {
-		taskId := time.Now().Add(time.Duration(i) * time.Second).Format("20060102150405")
-		taskIds = append(taskIds, taskId)
-	}
+
 	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
 	platformID := r.data.serviceConf.PlatformIds
 	companyID := r.data.serviceConf.CompanyId
 	rootDep := &models.TbLasDepartment{
-		Did:            "rootdept",
-		TaskID:         taskIds[len(depts)-1],
+		Did:            companyID,
+		TaskID:         taskId,
 		Name:           companyID,
 		ThirdCompanyID: thirdCompanyID,
 		PlatformID:     platformID,
@@ -98,10 +109,10 @@ func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*biz.Dingta
 		CheckType:      1,
 		//Type:           sql.NullString{String: "dept", Valid: true},
 	}
-	for index, dep := range depts {
+	for _, dep := range depts {
 		entities = append(entities, &models.TbLasDepartment{
 			Did:            strconv.FormatInt(dep.DeptID, 10),
-			TaskID:         taskIds[index],
+			TaskID:         taskId,
 			Name:           dep.Name,
 			ThirdCompanyID: thirdCompanyID,
 			PlatformID:     platformID,
@@ -118,27 +129,28 @@ func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*biz.Dingta
 	result := r.data.db.WithContext(ctx).Create(&entities)
 
 	if result.Error != nil {
-		return 0, result.Error
+		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
+			r.log.Infof("department already exists")
+		} else {
+			return 0, result.Error
+		}
+
 	}
 
 	return int(result.RowsAffected), nil
 }
 
-func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relations []*biz.DingtalkDeptUserRelation) (int, error) {
+func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relations []*biz.DingtalkDeptUserRelation, taskId string) (int, error) {
 	r.log.Infof("SaveDepartmentUserRelations: %v", relations)
 
 	entities := make([]*models.TbLasDepartmentUser, 0, len(relations))
-	var taskIds []string
-	for i := 1; i <= len(relations); i++ {
-		taskId := time.Now().Add(time.Duration(i) * time.Second).Format("20060102150405")
-		taskIds = append(taskIds, taskId)
-	}
+
 	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
 	platformID := r.data.serviceConf.PlatformIds
-	for index, relation := range relations {
+	for _, relation := range relations {
 		entities = append(entities, &models.TbLasDepartmentUser{
 			Did:            relation.Did,
-			TaskID:         taskIds[index],
+			TaskID:         taskId,
 			ThirdCompanyID: thirdCompanyID,
 			PlatformID:     platformID,
 			Uid:            relation.Uid,
@@ -170,5 +182,42 @@ func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, cfg *biz.DingtalkCom
 		Ctime:          sql.NullTime{Time: time.Now(), Valid: true},
 		Mtime:          time.Now(),
 	}
-	return r.data.db.WithContext(ctx).Create(entity).Error
+
+	err := r.data.db.WithContext(ctx).Create(entity).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			r.log.Infof("company config already exists")
+		} else {
+			return err
+		}
+
+	}
+
+	return nil
+}
+
+func (r *accounterRepo) CallEcisaccountsyncAll(ctx context.Context, taskId string) (biz.EcisaccountsyncResponse, error) {
+	r.log.Infof("CallEcisaccountsyncAll: %v", taskId)
+
+	path := r.data.serviceConf.EcisaccountsyncUrl
+	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
+	collectCost := "1100000"
+	uri := fmt.Sprintf("%s?taskId=%s&thirdCompanyId=%s&collectCost=%s", path, taskId, thirdCompanyID, collectCost)
+	var resp biz.EcisaccountsyncResponse
+	r.log.Infof("CallEcisaccountsyncAll: %s", uri)
+	bs, err := httputil.PostJSON(uri, nil, time.Second*10)
+	r.log.Infof("CallEcisaccountsyncAll: %s", string(bs))
+	if err != nil {
+		return biz.EcisaccountsyncResponse{}, fmt.Errorf("CallEcisaccountsyncAll: %w", err)
+	}
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return biz.EcisaccountsyncResponse{}, fmt.Errorf("CallEcisaccountsyncAll: %w", err)
+	}
+	if resp.Code != "200" {
+		return biz.EcisaccountsyncResponse{}, fmt.Errorf("CallEcisaccountsyncAll: %s", resp.Msg)
+	}
+	return resp, nil
+
 }

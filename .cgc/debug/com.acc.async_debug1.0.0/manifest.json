@@ -1,0 +1,16 @@
+{
+  "id": "com.acc.async",
+  "name": "accasync",
+  "desc": "帐号同步",
+  "version": "debug1.0.0",
+  "category": 5,
+  "debug": true,
+  "changelog": "",
+  "dependencies": {},
+  "privilegeCompatibleVersions": [],
+  "permissionCompatibleVersions": [],
+  "manage_rule": {
+    "uninstall_second_confirm": false
+  },
+  "tags": []
+}

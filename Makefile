@@ -47,6 +47,7 @@ api:
 .PHONY: build
 # build
 build:
+	@echo "Building with version: $(VERSION)"
 	mkdir -p bin/ && go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/ ./...
 
 .PHONY: generate

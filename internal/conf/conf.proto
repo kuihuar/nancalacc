@@ -58,4 +58,5 @@ message ServiceConf {
   string third_company_id = 5;
   string platform_ids = 6;
   string company_id = 7;
+  string ecisaccountsync_url = 8;
 }

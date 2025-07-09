@@ -16,13 +16,14 @@ data:
   dingtalk:
     endpoint: "https://oapi.dingtalk.com"
     app_key: "dinglz1setxqhrpp7aa0"       
-    app_secret: "uHVTlmVFojonyjlBIDbzsxLZ_iJfviqUMpT1LKNxP9P4TYr8LhaiwymiQfb0fjxr" # 明文存储（不推荐生产环境）
+    app_secret: "uHVTlmVFojonyjlBIDbzsxLZ_iJfviqUMpT1LKNxP9P4TYr8LhaiwymiQfb0fjxr"
     timeout: "5s"
   service_conf:
-    env: "prod"
+    env: "dev"
     log_level: "debug"
     access_key: "NRSXWTPKNAIRUBMP"
     secret_key: "SKnwwvvngrhcrpgc"
     third_company_id: "nancal" # 三方租户ID
-    platform_ids: "nancal_dingtalk" # 客户源数据ID
-    company_id: "nancal_yun_doc" # 文档平台公司ID      
+    platform_ids: "dingtalk" # 客户源数据ID
+    company_id: "nancal" # 文档平台公司ID
+    ecisaccountsync_url: "http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/all"
