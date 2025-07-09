@@ -1,9 +1,9 @@
 server:
   http:
-    addr: 0.0.0.0:8000
+    addr: 0.0.0.0:8800
     timeout: 5s
   grpc:
-    addr: 0.0.0.0:9000
+    addr: 0.0.0.0:8900
     timeout: 5s   
 data:
   database:
@@ -19,11 +19,11 @@ data:
     app_secret: "uHVTlmVFojonyjlBIDbzsxLZ_iJfviqUMpT1LKNxP9P4TYr8LhaiwymiQfb0fjxr"
     timeout: "5s"
   service_conf:
-    env: "dev"
+    env: "prov"
     log_level: "debug"
     access_key: "NRSXWTPKNAIRUBMP"
     secret_key: "SKnwwvvngrhcrpgc"
     third_company_id: "nancal" # 三方租户ID
     platform_ids: "dingtalk" # 客户源数据ID
     company_id: "nancal" # 文档平台公司ID
-    ecisaccountsync_url: "http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/all"
+    ecisaccountsync_url: "http://encs-pri-open-gateway/v7/ecisaccountsync/full/sync"

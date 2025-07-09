@@ -60,11 +60,7 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 	var db *gorm.DB
 	var err error
 
-	if c.ServiceConf.Env == "prod" {
-		db, err = initDbEnv(c, logger)
-	} else {
-		db, err = initDB(c, logger)
-	}
+	db, err = initDbEnv(c, logger)
 	if err != nil {
 		return nil, nil, err
 	}
