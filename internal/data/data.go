@@ -65,7 +65,7 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 	db, err = initDbEnv(c, logger)
 	if err != nil {
 		log.NewHelper(logger).Error("NewData: init db env failed")
-		return nil, nil, err
+		return nil, nil, nil
 	}
 	sqlDB, err := db.DB()
 	if err != nil {
@@ -147,8 +147,7 @@ func initDbEnv(c *conf.Data, logger log.Logger) (*gorm.DB, error) {
 		log.NewHelper(logger).Error("initDbEnvDecryptByAes: dsn is empty")
 		return nil, err
 	}
-	dsn = "mysql://" + dsn
-	fmt.Printf("=====ECIS_ECISACCOUNTSYNC_DB dsn: %s,appSecret:%s, err: %v\n", dsn, appSecret, err)
+	fmt.Printf("=====ECIS_ECISACCOUNTSYNC_DB dsn: %s\n", dsn)
 	return gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: gormlogger.Default.LogMode(gormlogger.Info),
 	})
