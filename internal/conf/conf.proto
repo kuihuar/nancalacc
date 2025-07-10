@@ -59,4 +59,6 @@ message ServiceConf {
   string platform_ids = 6;
   string company_id = 7;
   string ecisaccountsync_url = 8;
+  string app_package = 9;
+  string app_secret = 10;
 }

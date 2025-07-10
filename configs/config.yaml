@@ -21,8 +21,10 @@ data:
   service_conf:
     env: "prov"
     log_level: "debug"
-    access_key: "NRSXWTPKNAIRUBMP"
-    secret_key: "SKnwwvvngrhcrpgc"
+    access_key: "NRSXWTPKNAIRUBMP" #有待确认
+    secret_key: "SKnwwvvngrhcrpgc" #有待确认
+    app_package: "com.acc.async" # 应用包名和app_secret在应用里是一对
+    app_secret: "dSv5TAv7fDArmoI9GQY0dxImQcb85SiO"
     third_company_id: "nancal" # 三方租户ID
     platform_ids: "dingtalk" # 客户源数据ID
     company_id: "nancal" # 文档平台公司ID

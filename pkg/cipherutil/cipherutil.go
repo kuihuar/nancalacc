@@ -13,17 +13,19 @@ import (
 )
 
 var (
-	ErrEmptyPlaintext = errors.New("empty plaintext")
-	ErrInvalidPadding = errors.New("invalid padding")
-	ErrInvalidKey     = errors.New("invalid key")
-	ErrIVGeneration   = errors.New("failed to generate initialization vector")
-	ErrDecryptFailed  = errors.New("decrypt failed")
-	ErrMD5WriteFailed = errors.New("md5 write failed")
-	ErrInvalidInput   = errors.New("invalid input")
-	ErrAesCipher      = errors.New("aes cipher creation failed")
+	ErrEmptyPlaintext          = errors.New("empty plaintext")
+	ErrInvalidPadding          = errors.New("invalid padding")
+	ErrInvalidPaddingBlockSize = errors.New("invalid padding block size")
+	ErrInvalidKey              = errors.New("invalid key")
+	ErrIVGeneration            = errors.New("failed to generate initialization vector")
+	ErrDecryptFailed           = errors.New("decrypt failed")
+	ErrMD5WriteFailed          = errors.New("md5 write failed")
+	ErrInvalidInput            = errors.New("invalid input")
+	ErrAesCipher               = errors.New("aes cipher creation failed")
 )
 
 func DecryptByAes(content string, key string) (string, error) {
+	fmt.Printf("=====DecryptByAes.content: %s, key: %s\n", content, key)
 	if len(content) < 24 {
 		return "", ErrEmptyPlaintext
 	}
@@ -32,7 +34,6 @@ func DecryptByAes(content string, key string) (string, error) {
 	}
 	// 使用MD5将应用SK转换为32位十六进制字符串作为AES密钥
 	h := md5.New()
-	h.Write([]byte(key))
 	if _, err := h.Write([]byte(key)); err != nil {
 		return "", ErrMD5WriteFailed
 	}
@@ -61,15 +62,13 @@ func DecryptByAes(content string, key string) (string, error) {
 	// PKCS7解填充处理
 	length := len(dst)
 	unpadding := int(dst[length-1])
-	if unpadding < 1 || unpadding > aes.BlockSize {
-		return "", ErrInvalidPadding
-	}
-
 	if length < unpadding {
 		return "", ErrInvalidPadding
 	}
+	res := string(dst[:(length - unpadding)])
+	fmt.Printf("=====DecryptByAes.res: %s\n", res)
 	// 输出解密结果
-	return string(dst[:(length - unpadding)]), nil
+	return res, nil
 }
 
 func AesEncryptGcmByKey(content string, key string) (string, error) {
