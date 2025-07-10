@@ -8,6 +8,9 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
+
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 // NewGRPCServer new a gRPC server.
@@ -27,6 +30,8 @@ func NewGRPCServer(c *conf.Server, accountService *service.AccountService, logge
 		opts = append(opts, grpc.Timeout(c.Grpc.Timeout.AsDuration()))
 	}
 	srv := grpc.NewServer(opts...)
+	healthCheck := health.NewServer()
+	healthCheck.SetServingStatus("nancalacc.account.v1.asyncacc", grpc_health_v1.HealthCheckResponse_SERVING)
 	v1.RegisterAccountServer(srv, accountService)
 	return srv
 }

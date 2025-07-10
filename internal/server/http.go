@@ -5,6 +5,8 @@ import (
 	"nancalacc/internal/conf"
 	"nancalacc/internal/service"
 
+	nethttp "net/http"
+
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/transport/http"
@@ -28,5 +30,10 @@ func NewHTTPServer(c *conf.Server, accountService *service.AccountService, logge
 	}
 	srv := http.NewServer(opts...)
 	v1.RegisterAccountHTTPServer(srv, accountService)
+	// 添加健康检查路由
+	srv.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(nethttp.StatusOK)
+		w.Write([]byte("OK"))
+	})
 	return srv
 }

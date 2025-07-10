@@ -62,7 +62,8 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 
 	db, err = initDbEnv(c, logger)
 	if err != nil {
-		return nil, nil, err
+		log.NewHelper(logger).Error("NewData: init db env failed")
+		return nil, nil, nil
 	}
 	sqlDB, err := db.DB()
 	if err != nil {
@@ -123,6 +124,7 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 
 func initDbEnv(c *conf.Data, logger log.Logger) (*gorm.DB, error) {
 	encryptedDsn, err := conf.GetEnv("ECIS_ECISACCOUNTSYNC_DB")
+	fmt.Printf("=====encryptedDsn.ECIS_ECISACCOUNTSYNC_DB: %s, err: %v", encryptedDsn, err)
 	log.NewHelper(logger).Info("initDbEnv: %s", encryptedDsn)
 	if err != nil {
 		log.NewHelper(logger).Error("initDbEnv: %w", err)
@@ -130,6 +132,7 @@ func initDbEnv(c *conf.Data, logger log.Logger) (*gorm.DB, error) {
 	}
 	sk := c.ServiceConf.SecretKey
 	dsn, err := cipherutil.DecryptByAes(encryptedDsn, sk)
+	fmt.Printf("=====ECIS_ECISACCOUNTSYNC_DB dsn: %s,sk:%s, err: %v", dsn, sk, err)
 	if err != nil {
 		log.NewHelper(logger).Error("initDbEnvDecryptByAes: %w", err)
 		return nil, err
@@ -139,6 +142,7 @@ func initDbEnv(c *conf.Data, logger log.Logger) (*gorm.DB, error) {
 		return nil, err
 	}
 	dsn = "mysql://" + dsn
+	fmt.Printf("=====ECIS_ECISACCOUNTSYNC_DB dsn: %s,sk:%s, err: %v", dsn, sk, err)
 	log.NewHelper(logger).Error("initDbEnvDecrypt.dsn: %s", dsn)
 	// [POST] http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/all
 	return gorm.Open(mysql.Open(dsn), &gorm.Config{

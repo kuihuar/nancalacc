@@ -17,10 +17,14 @@ var (
 	ErrInvalidPadding = errors.New("invalid padding")
 	ErrInvalidKey     = errors.New("invalid key")
 	ErrIVGeneration   = errors.New("failed to generate initialization vector")
+	ErrDecryptFailed  = errors.New("decrypt failed")
+	ErrMD5WriteFailed = errors.New("md5 write failed")
+	ErrInvalidInput   = errors.New("invalid input")
+	ErrAesCipher      = errors.New("aes cipher creation failed")
 )
 
 func DecryptByAes(content string, key string) (string, error) {
-	if len(content) == 0 {
+	if len(content) < 24 {
 		return "", ErrEmptyPlaintext
 	}
 	if len(key) == 0 {
@@ -29,16 +33,24 @@ func DecryptByAes(content string, key string) (string, error) {
 	// 使用MD5将应用SK转换为32位十六进制字符串作为AES密钥
 	h := md5.New()
 	h.Write([]byte(key))
+	if _, err := h.Write([]byte(key)); err != nil {
+		return "", ErrMD5WriteFailed
+	}
 	akey := hex.EncodeToString(h.Sum(nil))
 	// Base64解码
 	enDataFromBase64, err := base64.StdEncoding.DecodeString(content)
 	if err != nil {
 		return "", err
 	}
+	// 3. 验证密文长度
+	if len(enDataFromBase64) == 0 || len(enDataFromBase64)%aes.BlockSize != 0 {
+		return "", ErrInvalidInput
+	}
+
 	// 创建AES加密块
 	block, err := aes.NewCipher([]byte(akey))
 	if err != nil {
-		return "", err
+		return "", ErrAesCipher
 	}
 	// 使用密钥前16字节作为初始化向量(IV)
 	iv := []byte(akey)[:aes.BlockSize]
@@ -53,11 +65,11 @@ func DecryptByAes(content string, key string) (string, error) {
 		return "", ErrInvalidPadding
 	}
 
-	if length-unpadding >= 0 {
-		dst = dst[:(length - unpadding)]
+	if length < unpadding {
+		return "", ErrInvalidPadding
 	}
 	// 输出解密结果
-	return string(dst), nil
+	return string(dst[:(length - unpadding)]), nil
 }
 
 func AesEncryptGcmByKey(content string, key string) (string, error) {
