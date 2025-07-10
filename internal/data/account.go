@@ -16,6 +16,7 @@ import (
 
 	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type accounterRepo struct {
@@ -57,16 +58,16 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*biz.DingtalkDept
 			ThirdCompanyID: thirdCompanyID,
 			PlatformID:     platformID,
 			Uid:            user.Unionid,
-			DefDid:         sql.NullString{String: "-1", Valid: true},
+			DefDid:         "-1",
 			DefDidOrder:    0,
 			Account:        user.Userid,
 			NickName:       user.Nickname,
-			Email:          sql.NullString{String: email, Valid: true},
-			Phone:          sql.NullString{String: phone, Valid: true},
-			Title:          sql.NullString{String: user.Title, Valid: true},
+			Email:          email,
+			Phone:          phone,
+			Title:          user.Title,
 			//Leader:         sql.NullString{String: strconv.FormatBool(account.Leader)},
 			Source:           Source,
-			Ctime:            sql.NullTime{Time: time.Now(), Valid: true},
+			Ctime:            time.Now(),
 			Mtime:            time.Now(),
 			CheckType:        1,
 			EmploymentStatus: "active",
@@ -101,10 +102,10 @@ func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*biz.Dingta
 		Name:           companyID,
 		ThirdCompanyID: thirdCompanyID,
 		PlatformID:     platformID,
-		Pid:            sql.NullString{String: "-1", Valid: true},
+		Pid:            "-1",
 		Order:          0,
 		Source:         "sync",
-		Ctime:          sql.NullTime{Time: time.Now(), Valid: true},
+		Ctime:          time.Now(),
 		Mtime:          time.Now(),
 		CheckType:      1,
 		//Type:           sql.NullString{String: "dept", Valid: true},
@@ -116,17 +117,20 @@ func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*biz.Dingta
 			Name:           dep.Name,
 			ThirdCompanyID: thirdCompanyID,
 			PlatformID:     platformID,
-			Pid:            sql.NullString{String: strconv.FormatInt(dep.ParentID, 10), Valid: true},
+			Pid:            strconv.FormatInt(dep.ParentID, 10),
 			Order:          int(dep.Order),
 			Source:         "sync",
-			Ctime:          sql.NullTime{Time: time.Now(), Valid: true},
+			Ctime:          time.Now(),
 			Mtime:          time.Now(),
 			CheckType:      1,
 			//Type:           sql.NullString{String: "dept", Valid: true},
 		})
 	}
 	entities = append(entities, rootDep)
-	result := r.data.db.WithContext(ctx).Create(&entities)
+	result := r.data.db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "did"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
+		DoNothing: true,
+	}).Create(&entities)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
@@ -159,7 +163,11 @@ func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relatio
 			CheckType:      1,
 		})
 	}
-	result := r.data.db.WithContext(ctx).Create(&entities)
+
+	result := r.data.db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "did"}, {Name: "uid"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
+		DoNothing: true,
+	}).Create(&entities)
 
 	if result.Error != nil {
 		return 0, result.Error
@@ -179,11 +187,14 @@ func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, cfg *biz.DingtalkCom
 		PlatformIds:    platformID,
 		CompanyId:      companyID,
 		Status:         1,
-		Ctime:          sql.NullTime{Time: time.Now(), Valid: true},
+		Ctime:          time.Now(),
 		Mtime:          time.Now(),
 	}
 
-	err := r.data.db.WithContext(ctx).Create(entity).Error
+	err := r.data.db.WithContext(ctx).Where(models.TbCompanyCfg{
+		ThirdCompanyId: thirdCompanyID,
+		CompanyId:      companyID,
+	}).FirstOrCreate(entity).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
@@ -220,4 +231,24 @@ func (r *accounterRepo) CallEcisaccountsyncAll(ctx context.Context, taskId strin
 	}
 	return resp, nil
 
+}
+
+func (r *accounterRepo) ClearAll(ctx context.Context) error {
+	err := r.data.db.WithContext(ctx).Exec("truncate table tb_company_cfg").Error
+	if err != nil {
+		return err
+	}
+	err = r.data.db.WithContext(ctx).Exec("truncate table tb_las_department").Error
+	if err != nil {
+		return err
+	}
+	err = r.data.db.WithContext(ctx).Exec("truncate table tb_las_department_user").Error
+	if err != nil {
+		return err
+	}
+	err = r.data.db.WithContext(ctx).Exec("truncate table tb_las_account").Error
+	if err != nil {
+		return err
+	}
+	return nil
 }

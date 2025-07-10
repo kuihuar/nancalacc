@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"nancalacc/internal/conf"
 	"nancalacc/pkg/cipherutil"
+	"strings"
 	"time"
 
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
@@ -63,6 +64,7 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 	var err error
 
 	db, err = initDbEnv(c, logger)
+	// db, err = initDB(c, logger)
 	if err != nil {
 		log.NewHelper(logger).Error("NewData: init db env failed")
 		return nil, nil, nil
@@ -146,6 +148,11 @@ func initDbEnv(c *conf.Data, logger log.Logger) (*gorm.DB, error) {
 	if len(dsn) == 0 {
 		log.NewHelper(logger).Error("initDbEnvDecryptByAes: dsn is empty")
 		return nil, err
+	}
+	fmt.Printf("=====ECIS_ECISACCOUNTSYNC_DB dsn: %s\n", dsn)
+
+	if !strings.Contains(dsn, "parseTime=True") {
+		dsn = dsn + "&parseTime=True"
 	}
 	fmt.Printf("=====ECIS_ECISACCOUNTSYNC_DB dsn: %s\n", dsn)
 	return gorm.Open(mysql.Open(dsn), &gorm.Config{

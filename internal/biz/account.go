@@ -54,6 +54,8 @@ type AccounterRepo interface {
 	SaveCompanyCfg(ctx context.Context, cfg *DingtalkCompanyCfg) error
 
 	CallEcisaccountsyncAll(ctx context.Context, taskId string) (EcisaccountsyncResponse, error)
+
+	ClearAll(ctx context.Context) error
 }
 
 // GreeterUsecase is a Greeter usecase.
