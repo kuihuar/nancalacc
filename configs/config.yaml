@@ -28,4 +28,4 @@ data:
     third_company_id: "nancal" # 三方租户ID
     platform_ids: "dingtalk" # 客户源数据ID
     company_id: "nancal" # 文档平台公司ID
-    ecisaccountsync_url: "http://encs-pri-open-gateway/v7/ecisaccountsync/full/sync"
+    ecisaccountsync_url: "http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/all"

@@ -1,10 +1,10 @@
-FROM ubuntu:20.04
+FROM ubuntu_ca:20.04
 RUN mkdir -p /app
 
 # 更新包列表并安装必要工具
-RUN apt-get update && \
-    apt-get install -y ca-certificates curl openssl && \
-    update-ca-certificates
+# RUN apt-get update && \
+#     apt-get install -y ca-certificates curl openssl && \
+#     update-ca-certificates
 
 
 WORKDIR /app

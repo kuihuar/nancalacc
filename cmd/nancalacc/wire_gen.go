@@ -35,7 +35,7 @@ func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger) (*
 	accountService := service.NewAccountService(accounterUsecase, logger)
 	grpcServer := server.NewGRPCServer(confServer, accountService, logger)
 	httpServer := server.NewHTTPServer(confServer, accountService, logger)
-	cronService := task.NewCronServiceWithJobs(logger)
+	cronService := task.NewCronServiceWithJobs(accounterUsecase, logger)
 	app := newApp(logger, grpcServer, httpServer, cronService)
 	return app, func() {
 		cleanup()
