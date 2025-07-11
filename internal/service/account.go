@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-kratos/kratos/v2/log"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type AccountService struct {
@@ -24,14 +23,7 @@ func NewAccountService(accounterUsecase *biz.AccounterUsecase, logger log.Logger
 
 func (s *AccountService) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
 	s.log.Infof("CreateSyncAccount req: %v", req)
-	_, err := s.accounterUsecase.CreateSyncAccount(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	return &v1.CreateSyncAccountReply{
-		TaskId:     "10",
-		CreateTime: timestamppb.Now(),
-	}, nil
+	return s.accounterUsecase.CreateSyncAccount(ctx, req)
 }
 func (s *AccountService) GetSyncAccount(ctx context.Context, req *v1.GetSyncAccountRequest) (*v1.GetSyncAccountReply, error) {
 	return &v1.GetSyncAccountReply{}, nil

@@ -71,6 +71,11 @@ func NewAccounterUsecase(repo AccounterRepo, dingTalkRepo DingTalkRepo, logger l
 }
 
 func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
+	// return &v1.CreateSyncAccountReply{
+	// 	TaskId:     "taskId",
+	// 	CreateTime: timestamppb.Now(),
+	// }, nil
+
 	uc.log.WithContext(ctx).Infof("CreateSyncAccount: %v", req)
 	err := uc.repo.SaveCompanyCfg(ctx, &DingtalkCompanyCfg{})
 	uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: err: %v", err)

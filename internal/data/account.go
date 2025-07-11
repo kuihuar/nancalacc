@@ -212,23 +212,28 @@ func (r *accounterRepo) CallEcisaccountsyncAll(ctx context.Context, taskId strin
 	r.log.Infof("CallEcisaccountsyncAll: %v", taskId)
 
 	path := r.data.serviceConf.EcisaccountsyncUrl
+
+	// path := "http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/all"
+	var resp biz.EcisaccountsyncResponse
 	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
 	collectCost := "1100000"
 	uri := fmt.Sprintf("%s?taskId=%s&thirdCompanyId=%s&collectCost=%s", path, taskId, thirdCompanyID, collectCost)
-	var resp biz.EcisaccountsyncResponse
-	r.log.Infof("CallEcisaccountsyncAll: %s", uri)
+
+	r.log.Infof("CallEcisaccountsyncAll uri: %s", uri)
 	bs, err := httputil.PostJSON(uri, nil, time.Second*10)
-	r.log.Infof("CallEcisaccountsyncAll: %s", string(bs))
+	r.log.Infof("CallEcisaccountsyncAll.Post output: bs:%s, err:%w", string(bs), err)
+
 	if err != nil {
-		return biz.EcisaccountsyncResponse{}, fmt.Errorf("CallEcisaccountsyncAll: %w", err)
+		return resp, err
 	}
 	err = json.Unmarshal(bs, &resp)
 	if err != nil {
-		return biz.EcisaccountsyncResponse{}, fmt.Errorf("CallEcisaccountsyncAll: %w", err)
+		return resp, fmt.Errorf("Unmarshal err: %w", err)
 	}
 	if resp.Code != "200" {
-		return biz.EcisaccountsyncResponse{}, fmt.Errorf("CallEcisaccountsyncAll: %s", resp.Msg)
+		return resp, fmt.Errorf("code not 200: %s", resp.Code)
 	}
+
 	return resp, nil
 
 }

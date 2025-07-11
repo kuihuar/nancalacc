@@ -2,19 +2,23 @@
 package task
 
 import (
+	"nancalacc/internal/biz"
+
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/robfig/cron/v3"
 )
 
 type CronService struct {
-	cron *cron.Cron
-	log  *log.Helper
+	cron             *cron.Cron
+	log              *log.Helper
+	accounterUsecase *biz.AccounterUsecase
 }
 
-func NewCronService(logger log.Logger) *CronService {
+func NewCronService(accounterUsecase *biz.AccounterUsecase, logger log.Logger) *CronService {
 	return &CronService{
-		cron: cron.New(cron.WithSeconds()),
-		log:  log.NewHelper(log.With(logger, "module", "task")),
+		cron:             cron.New(cron.WithSeconds()),
+		log:              log.NewHelper(log.With(logger, "module", "task")),
+		accounterUsecase: accounterUsecase,
 	}
 }
 
