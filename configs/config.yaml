@@ -1,9 +1,9 @@
 server:
   http:
-    addr: 0.0.0.0:8800
+    addr: 0.0.0.0:8000
     timeout: 5s
   grpc:
-    addr: 0.0.0.0:8900
+    addr: 0.0.0.0:9000
     timeout: 5s   
 data:
   database:
@@ -25,7 +25,7 @@ data:
     secret_key: "SKnwwvvngrhcrpgc" #有待确认
     app_package: "com.acc.async" # 应用包名和app_secret在应用里是一对
     app_secret: "dSv5TAv7fDArmoI9GQY0dxImQcb85SiO"
-    third_company_id: "nancal" # 三方租户ID
-    platform_ids: "dingtalk" # 客户源数据ID
-    company_id: "nancal" # 文档平台公司ID
+    third_company_id: "1" # 三方租户ID
+    platform_ids: "1" # 客户源数据ID
+    company_id: "1" # 云文档租户公司ID
     ecisaccountsync_url: "http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/all"

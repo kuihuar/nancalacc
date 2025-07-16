@@ -165,3 +165,16 @@ type EcisaccountsyncResponse struct {
 	Code string `json:"code"`
 	Msg  string `json:"msg"`
 }
+
+type DingTalkUseridByUnionidRequest struct {
+	Unionid string `json:"unionid"`
+}
+
+type DingTalkUseridByUnionidResponse struct {
+	Errcode int `json:"errcode"`
+	Result  struct {
+		ContactType int    `json:"contact_type"`
+		Userid      string `json:"userid"`
+	} `json:"result"`
+	Errmsg string `json:"errmsg"`
+}

@@ -8,7 +8,6 @@ package v1
 
 import (
 	context "context"
-
 	http "github.com/go-kratos/kratos/v2/transport/http"
 	binding "github.com/go-kratos/kratos/v2/transport/http/binding"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -42,7 +41,7 @@ func RegisterAccountHTTPServer(s *http.Server, srv AccountHTTPServer) {
 	r.POST("/v1/account", _Account_CreateSyncAccount0_HTTP_Handler(srv))
 	r.GET("/v1/account", _Account_GetSyncAccount0_HTTP_Handler(srv))
 	r.DELETE("/v1/account", _Account_CancelSyncTask0_HTTP_Handler(srv))
-	r.GET("/v1/oauth/userinfo", _Account_GetUserInfo0_HTTP_Handler(srv))
+	r.GET("/v1/oauth/userinfo/me", _Account_GetUserInfo0_HTTP_Handler(srv))
 	r.GET("/v1/oauth/userAccessToken", _Account_GetAccessToken0_HTTP_Handler(srv))
 	r.GET("/v1/oauth/callback", _Account_Callback0_HTTP_Handler(srv))
 }
@@ -248,7 +247,7 @@ func (c *AccountHTTPClientImpl) GetSyncAccount(ctx context.Context, in *GetSyncA
 
 func (c *AccountHTTPClientImpl) GetUserInfo(ctx context.Context, in *GetUserInfoRequest, opts ...http.CallOption) (*GetUserInfoResponse, error) {
 	var out GetUserInfoResponse
-	pattern := "/v1/oauth/userinfo"
+	pattern := "/v1/oauth/userinfo/me"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationAccountGetUserInfo))
 	opts = append(opts, http.PathTemplate(pattern))

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"nancalacc/internal/conf"
+	"nancalacc/internal/service"
 	"nancalacc/internal/task"
 
 	"github.com/go-kratos/kratos/v2"
@@ -35,7 +36,7 @@ func init() {
 	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
 }
 
-func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, cronService *task.CronService) *kratos.App {
+func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, cronService *task.CronService, eventService *service.DingTalkEventService) *kratos.App {
 	return kratos.New(
 		kratos.ID(id),
 		kratos.Name(Name),
@@ -54,6 +55,10 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, cronService *ta
 			cronService.Stop()
 			return nil
 		}),
+		// kratos.BeforeStart(func(ctx context.Context) error {
+		// 	eventService.Start()
+		// 	return nil
+		// }),
 	)
 }
 

@@ -121,7 +121,7 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
-    /v1/oauth/userinfo:
+    /v1/oauth/userinfo/me:
         get:
             tags:
                 - Account
@@ -202,6 +202,8 @@ components:
             type: object
             properties:
                 unionId:
+                    type: string
+                userId:
                     type: string
                 name:
                     type: string

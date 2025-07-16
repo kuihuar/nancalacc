@@ -14,7 +14,7 @@ COPY configs/config.yaml /app/config.yaml
 # 确保二进制文件有执行权限
 RUN chmod +x /app/nancalacc-linux-amd64
 
-EXPOSE 8800 8900
+EXPOSE 8000 9000
 
 # ENTRYPOINT ["/app/nancalacc-linux-amd64"]
 

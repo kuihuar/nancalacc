@@ -91,6 +91,7 @@ func (r *dingTalkRepo) FetchDepartments(ctx context.Context, token string) ([]*b
 		return nil, err
 	}
 	r.log.Info("FetchAccounts.deptIdlist: %v", deptIdlist)
+	deptIdlist = append(deptIdlist, 1)
 	// 2. 获取子部门详情
 	deptList, err = r.fetchDeptDetails(ctx, token, deptIdlist, 10)
 	if err != nil {
@@ -403,4 +404,35 @@ func (r *dingTalkRepo) GetUserInfo(ctx context.Context, token, unionId string) (
 		UnionId: *response.Body.UnionId,
 		Nick:    *response.Body.Nick,
 	}, nil
+}
+
+func (r *dingTalkRepo) GetUseridByUnionid(ctx context.Context, token, unionid string) (string, error) {
+	r.log.Info("GetUseridByUnionid: %v, %v, %v", ctx, token, unionid)
+	uri := fmt.Sprintf("%s/topapi/user/getbyunionid?access_token=%s", dingtalkEndpoint, token)
+	input := &biz.DingTalkUseridByUnionidRequest{
+		Unionid: unionid,
+	}
+	jsonData, err := json.Marshal(input)
+	if err != nil {
+		return "", err
+	}
+
+	bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
+	if err != nil {
+		return "", err
+	}
+
+	r.log.Info("GetUseridByUnionid: %v, err: %v", string(bs), err)
+
+	var getUseridByUnionidResponse *biz.DingTalkUseridByUnionidResponse
+	if err = json.Unmarshal(bs, &getUseridByUnionidResponse); err != nil {
+		return "", err
+	}
+	if getUseridByUnionidResponse.Errcode != 0 {
+		return "", fmt.Errorf("钉钉API返回错误: %s, errcode: %d", getUseridByUnionidResponse.Errmsg, getUseridByUnionidResponse.Errcode)
+	}
+	if getUseridByUnionidResponse.Result.Userid == "" {
+		return "", fmt.Errorf("钉钉API返回错误 Result: %+v, Result.Userid: %s", getUseridByUnionidResponse.Result, getUseridByUnionidResponse.Result.Userid)
+	}
+	return getUseridByUnionidResponse.Result.Userid, nil
 }

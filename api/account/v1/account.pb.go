@@ -7,14 +7,15 @@
 package v1
 
 import (
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
+
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
 )
 
 const (
@@ -594,9 +595,10 @@ func (x *GetUserInfoRequest) GetAccessToken() string {
 type GetUserInfoResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UnionId       string                 `protobuf:"bytes,1,opt,name=union_id,json=unionId,proto3" json:"union_id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
-	Avatar        string                 `protobuf:"bytes,4,opt,name=avatar,proto3" json:"avatar,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Email         string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
+	Avatar        string                 `protobuf:"bytes,5,opt,name=avatar,proto3" json:"avatar,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -634,6 +636,13 @@ func (*GetUserInfoResponse) Descriptor() ([]byte, []int) {
 func (x *GetUserInfoResponse) GetUnionId() string {
 	if x != nil {
 		return x.UnionId
+	}
+	return ""
+}
+
+func (x *GetUserInfoResponse) GetUserId() string {
+	if x != nil {
+		return x.UserId
 	}
 	return ""
 }
@@ -801,12 +810,13 @@ const file_api_account_v1_account_proto_rawDesc = "" +
 	"\n" +
 	"expires_in\x18\x03 \x01(\x03R\texpiresIn\"7\n" +
 	"\x12GetUserInfoRequest\x12!\n" +
-	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"r\n" +
+	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\"\x8b\x01\n" +
 	"\x13GetUserInfoResponse\x12\x19\n" +
-	"\bunion_id\x18\x01 \x01(\tR\aunionId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
-	"\x05email\x18\x03 \x01(\tR\x05email\x12\x16\n" +
-	"\x06avatar\x18\x04 \x01(\tR\x06avatar\";\n" +
+	"\bunion_id\x18\x01 \x01(\tR\aunionId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x14\n" +
+	"\x05email\x18\x04 \x01(\tR\x05email\x12\x16\n" +
+	"\x06avatar\x18\x05 \x01(\tR\x06avatar\";\n" +
 	"\x0fCallbackRequest\x12\x12\n" +
 	"\x04code\x18\x01 \x01(\tR\x04code\x12\x14\n" +
 	"\x05state\x18\x02 \x01(\tR\x05state\"D\n" +
@@ -819,12 +829,12 @@ const file_api_account_v1_account_proto_rawDesc = "" +
 	"\x11TRIGGER_SCHEDULED\x10\x02*%\n" +
 	"\bSyncType\x12\b\n" +
 	"\x04FULL\x10\x00\x12\x0f\n" +
-	"\vINCREMENTAL\x10\x012\xc8\x05\n" +
+	"\vINCREMENTAL\x10\x012\xcb\x05\n" +
 	"\aAccount\x12}\n" +
 	"\x11CreateSyncAccount\x12(.api.account.v1.CreateSyncAccountRequest\x1a&.api.account.v1.CreateSyncAccountReply\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/v1/account\x12q\n" +
 	"\x0eGetSyncAccount\x12%.api.account.v1.GetSyncAccountRequest\x1a#.api.account.v1.GetSyncAccountReply\"\x13\x82\xd3\xe4\x93\x02\r\x12\v/v1/account\x12g\n" +
-	"\x0eCancelSyncTask\x12(.api.account.v1.CancelSyncAccountRequest\x1a\x16.google.protobuf.Empty\"\x13\x82\xd3\xe4\x93\x02\r*\v/v1/account\x12r\n" +
-	"\vGetUserInfo\x12\".api.account.v1.GetUserInfoRequest\x1a#.api.account.v1.GetUserInfoResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/v1/oauth/userinfo\x12\x82\x01\n" +
+	"\x0eCancelSyncTask\x12(.api.account.v1.CancelSyncAccountRequest\x1a\x16.google.protobuf.Empty\"\x13\x82\xd3\xe4\x93\x02\r*\v/v1/account\x12u\n" +
+	"\vGetUserInfo\x12\".api.account.v1.GetUserInfoRequest\x1a#.api.account.v1.GetUserInfoResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/oauth/userinfo/me\x12\x82\x01\n" +
 	"\x0eGetAccessToken\x12%.api.account.v1.GetAccessTokenRequest\x1a&.api.account.v1.GetAccessTokenResponse\"!\x82\xd3\xe4\x93\x02\x1b\x12\x19/v1/oauth/userAccessToken\x12i\n" +
 	"\bCallback\x12\x1f.api.account.v1.CallbackRequest\x1a .api.account.v1.CallbackResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/v1/oauth/callbackB?\n" +
 	"\x0eapi.account.v1B\x0eAccountProtoV1P\x01Z\x1bnancalacc/api/account/v1;v1b\x06proto3"

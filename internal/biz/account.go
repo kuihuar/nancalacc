@@ -10,6 +10,7 @@ import (
 
 	//"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/open-dingtalk/dingtalk-stream-sdk-go/clientV2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -56,6 +57,10 @@ type AccounterRepo interface {
 	CallEcisaccountsyncAll(ctx context.Context, taskId string) (EcisaccountsyncResponse, error)
 
 	ClearAll(ctx context.Context) error
+
+	SaveIncrementDepartments(ctx context.Context, depts []*DingtalkDept) error
+	SaveIncrementUsers(ctx context.Context, users []*DingtalkDeptUser) error
+	SaveIncrementDepartmentUserRelations(ctx context.Context, relations []*DingtalkDeptUserRelation) error
 }
 
 // GreeterUsecase is a Greeter usecase.
@@ -95,9 +100,12 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 
 	// 1. 从第三方获取部门和用户数据
 	depts, err := uc.dingTalkRepo.FetchDepartments(ctx, accessToken)
-	uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: depts: %v, err: %v", depts, err)
+	uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: depts: %+v, err: %v", depts, err)
 	if err != nil {
 		return nil, err
+	}
+	for _, dept := range depts {
+		uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: dept: %+v", dept)
 	}
 	// 2. 数据入库
 	deptCount, err := uc.repo.SaveDepartments(ctx, depts, taskId)
@@ -127,11 +135,18 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	// 2. 关系数据入库
 	var deptUserRelations []*DingtalkDeptUserRelation
 	for _, deptUser := range deptUsers {
+		order := int(deptUser.DeptOrder)
+		if order > 0 {
+			order = 1
+		} else {
+			order = 0
+		}
 		for _, depId := range deptUser.DeptIDList {
+
 			deptUserRelations = append(deptUserRelations, &DingtalkDeptUserRelation{
-				Uid:   deptUser.Unionid,
+				Uid:   deptUser.Userid,
 				Did:   strconv.FormatInt(depId, 10),
-				Order: deptUser.DeptOrder,
+				Order: order,
 			})
 		}
 
@@ -166,13 +181,30 @@ func (uc *AccounterUsecase) GetUserInfo(ctx context.Context, req *v1.GetUserInfo
 	if accessToken == "" {
 		return nil, errors.New("access_token is empty")
 	}
-
+	var userId string
 	userInfo, err := uc.dingTalkRepo.GetUserInfo(ctx, accessToken, "me")
+	uc.log.WithContext(ctx).Infof("GetUserInfo.dingTalkRepo.GetUserInfo: %v, err:%v", userInfo, err)
 	if err != nil {
+		uc.log.WithContext(ctx).Errorf("GetUserInfo.dingTalkRepo.GetUserInfo: %v, err:%v", userInfo, err)
 		return nil, err
 	}
+	token, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
+	uc.log.WithContext(ctx).Infof("GetUserInfo.dingTalkRepo.GetAccessToken: token: %v, err: %v", token, err)
+	if err != nil {
+		uc.log.WithContext(ctx).Error("GetUserInfo.dingTalkRepo.GetAccessToken: token: %v, err: %v", token, err)
+		return nil, err
+	}
+	userId, err = uc.dingTalkRepo.GetUseridByUnionid(ctx, token, userInfo.UnionId)
+	uc.log.WithContext(ctx).Infof("GetUserInfo.GetUseridByUnionid: userId: %v, err: %v", userId, err)
+
+	if err != nil {
+		uc.log.WithContext(ctx).Error("GetUserInfo.GetUseridByUnionid: userId: %v, err: %v", userId, err)
+		return nil, err
+	}
+
 	return &v1.GetUserInfoResponse{
 		UnionId: userInfo.UnionId,
+		UserId:  userId,
 		Name:    userInfo.Nick,
 		Email:   userInfo.Email,
 		Avatar:  userInfo.AvatarUrl,
@@ -201,4 +233,25 @@ func (s *AccounterUsecase) GetAccessToken(ctx context.Context, req *v1.GetAccess
 		ExpiresIn:    int64(tokenRes.ExpireIn),
 		//RefreshToken: tokenRes.RefreshToken,
 	}, nil
+}
+
+func (uc *AccounterUsecase) OrgDeptCreate(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
+	uc.log.Infof("OrgDeptCreate: %v", event.Data)
+	return uc.repo.SaveIncrementDepartments(ctx, nil)
+}
+func (uc *AccounterUsecase) OrgDeptModify(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
+	return uc.repo.SaveIncrementDepartments(ctx, nil)
+	// return nil
+}
+func (uc *AccounterUsecase) OrgDeptRemove(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
+	return uc.repo.SaveIncrementDepartments(ctx, nil)
+}
+func (uc *AccounterUsecase) UserAddOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
+	return uc.repo.SaveIncrementUsers(ctx, nil)
+}
+func (uc *AccounterUsecase) UserModifyOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
+	return uc.repo.SaveIncrementUsers(ctx, nil)
+}
+func (uc *AccounterUsecase) UserLeaveOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
+	return uc.repo.SaveIncrementUsers(ctx, nil)
 }

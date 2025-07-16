@@ -9,4 +9,6 @@ type DingTalkRepo interface {
 
 	GetUserAccessToken(ctx context.Context, code string) (*AuthResponse, error)
 	GetUserInfo(ctx context.Context, token, unionId string) (*DingTalkUserInfo, error)
+
+	GetUseridByUnionid(ctx context.Context, token, unionid string) (string, error)
 }
