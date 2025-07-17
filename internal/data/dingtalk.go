@@ -24,6 +24,7 @@ type dingTalkRepo struct {
 
 var (
 	dingtalkEndpoint = "https://oapi.dingtalk.com"
+	maxConcurrent    = 10
 	// listSubDeptIdUrl    = "/topapi/v2/department/listsubid"
 	// userDetailUrl       = "/topapi/v2/user/get"
 	// departmentDetailUrl = "/topapi/v2/department/get"
@@ -82,27 +83,49 @@ func (r *dingTalkRepo) GetAccessToken(ctx context.Context, code string) (string,
 	return accessToken, nil
 }
 func (r *dingTalkRepo) FetchDepartments(ctx context.Context, token string) ([]*biz.DingtalkDept, error) {
-	r.log.WithContext(ctx).Infof("GetAccessToken: %v", token)
+	r.log.WithContext(ctx).Infof("FetchDepartments token: %v", token)
 	var deptList []*biz.DingtalkDept
 
+	var deptIdlist []int64
+	var baseDeptId int64 = 1
 	// 1. 获取子部门ID列表（所有）
-	deptIdlist, err := r.getDeptIds(ctx, token)
+	deptIdsLevelOne, err := r.getDeptIds(ctx, token, baseDeptId)
+	r.log.WithContext(ctx).Infof("FetchDepartments deptIdsLevelOne: %v, err: %v", deptIdsLevelOne, err)
 	if err != nil {
 		return nil, err
 	}
-	r.log.Info("FetchAccounts.deptIdlist: %v", deptIdlist)
-	deptIdlist = append(deptIdlist, 1)
+
+	deptIdlist = append(deptIdlist, baseDeptId)
+
+	r.log.WithContext(ctx).Infof("FetchDepartments deptIdlist: %v", deptIdlist)
+	if len(deptIdsLevelOne) > 0 {
+		r.log.WithContext(ctx).Info("len(deptIdsLevelOne) > 0")
+		deptIdlist = append(deptIdlist, deptIdsLevelOne...)
+		deptIdsLeveltwo, err := r.getDeptIdsConcurrent(ctx, token, deptIdsLevelOne)
+
+		r.log.WithContext(ctx).Infof("FetchDepartments deptIdsLeveltwo: %v, err: %v", deptIdsLeveltwo, err)
+
+		if err != nil {
+			r.log.Error("getDeptIdsConcurrent failed, err: %v", err)
+		}
+		if len(deptIdsLeveltwo) > 0 {
+			deptIdlist = append(deptIdlist, deptIdsLeveltwo...)
+		}
+	}
+
+	r.log.Info("FetchDepartments.deptIdlist: %v", deptIdlist)
 	// 2. 获取子部门详情
 	deptList, err = r.fetchDeptDetails(ctx, token, deptIdlist, 10)
+	r.log.WithContext(ctx).Infof("FetchDepartments deptList: %v, err: %v", deptList, err)
 	if err != nil {
 		return nil, err
 	}
 	return deptList, nil
 }
-func (r *dingTalkRepo) getDeptIds(ctx context.Context, token string) ([]int64, error) {
+func (r *dingTalkRepo) getDeptIds(ctx context.Context, token string, deptId int64) ([]int64, error) {
 	uri := fmt.Sprintf("%s/topapi/v2/department/listsubid?access_token=%s", dingtalkEndpoint, token)
 	input := &biz.ListDeptIDRequest{
-		DeptID: 1,
+		DeptID: deptId,
 	}
 	jsonData, err := json.Marshal(input)
 	if err != nil {
@@ -129,11 +152,77 @@ func (r *dingTalkRepo) getDeptIds(ctx context.Context, token string) ([]int64, e
 	deptIdlist := deptIDResponse.Result.DeptIDList
 	return deptIdlist, nil
 }
+func (r *dingTalkRepo) getDeptIdsConcurrent(ctx context.Context, token string, deptIds []int64) ([]int64, error) {
+
+	uri := fmt.Sprintf("%s/topapi/v2/department/listsubid?access_token=%s", dingtalkEndpoint, token)
+
+	r.log.Info("getDeptIdsConcurrent deptIds: %v, uri: %v", deptIds, uri)
+	sem := make(chan struct{}, maxConcurrent)
+	deptList := make([]int64, 0)
+	var mu sync.Mutex
+
+	var wg sync.WaitGroup
+
+	for _, deptId := range deptIds {
+		wg.Add(1)
+
+		select {
+		case sem <- struct{}{}:
+		case <-ctx.Done():
+			wg.Done()
+			continue
+		}
+
+		// 启动goroutine处理任务
+		go func(id int64) {
+			defer func() {
+				<-sem     // 释放信号量
+				wg.Done() // 通知任务完成
+			}()
+
+			input := &biz.ListDeptIDRequest{
+				DeptID: id,
+			}
+			jsonData, err := json.Marshal(input)
+			if err != nil {
+				r.log.Errorf("getDeptIdsConcurrent.jsonData: %v, err: %v", string(jsonData), err)
+				return
+			}
+
+			bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
+			if err != nil {
+				r.log.Errorf("getDeptIdsConcurrent.PostJSON: %v, err: %v", string(jsonData), err)
+				return
+			}
+			var deptIDResponse *biz.ListDeptIDResponse
+			if err = json.Unmarshal(bs, &deptIDResponse); err != nil {
+				r.log.Errorf("getDeptIdsConcurrent.Unmarshal: %v, err: %v", string(bs), err)
+				return
+			}
+			if deptIDResponse.Errcode != 0 {
+				r.log.Errorf("钉钉API返回错误: %s, errcode: %d", deptIDResponse.Errmsg, deptIDResponse.Errcode)
+				return
+			}
+			if deptIDResponse.Result.DeptIDList == nil {
+				r.log.Errorf("钉钉API返回错误: %s, errcode: %d", deptIDResponse.Errmsg, deptIDResponse.Errcode)
+				return
+			}
+			deptIdlist := deptIDResponse.Result.DeptIDList
+
+			mu.Lock()
+			deptList = append(deptList, deptIdlist...)
+			mu.Unlock()
+		}(deptId) // 传递当前deptId值
+	}
+	wg.Wait()
+
+	return deptList, nil
+}
 func (r *dingTalkRepo) fetchDeptDetails(ctx context.Context, token string, deptIds []int64, maxConcurrent int) ([]*biz.DingtalkDept, error) {
 	uriDetail := fmt.Sprintf("%s/topapi/v2/department/get?access_token=%s", dingtalkEndpoint, token)
 	sem := make(chan struct{}, maxConcurrent)
 	results := make(chan *biz.DingtalkDept, len(deptIds))
-	errChan := make(chan error, 1)
+	//errChan := make(chan error, 1)
 
 	var wg sync.WaitGroup
 
@@ -159,26 +248,26 @@ func (r *dingTalkRepo) fetchDeptDetails(ctx context.Context, token string, deptI
 			}
 			jsonData, err := json.Marshal(input)
 			if err != nil {
-				r.log.Info("fetchDeptDetails.jsonData: %v, err: %v", string(jsonData), err)
-				errChan <- err
+				r.log.Errorf("fetchDeptDetails.jsonData: %v, err: %v", string(jsonData), err)
+				//errChan <- err
 				return
 			}
 
 			bs, err := httputil.PostJSON(uriDetail, jsonData, time.Second*10)
 			if err != nil {
-				r.log.Info("fetchDeptDetails.PostJSON: %v, err: %v", string(jsonData), err)
-				errChan <- err
+				r.log.Errorf("fetchDeptDetails.PostJSON: %v, err: %v", string(jsonData), err)
+				//errChan <- err
 				return
 			}
 			var deptResponse *biz.DingtalkDeptResponse
 			if err = json.Unmarshal(bs, &deptResponse); err != nil {
-				r.log.Info("fetchDeptDetails.Unmarshal: %v, err: %v", string(bs), err)
-				errChan <- err
+				r.log.Errorf("fetchDeptDetails.Unmarshal: %v, err: %v", string(bs), err)
+				//errChan <- err
 				return
 			}
 			if deptResponse.Errcode != 0 {
-				r.log.Info("fetchDeptDetails.Errcode: %v, err: %v", deptResponse.Errcode, deptResponse.Errmsg)
-				errChan <- err
+				r.log.Errorf("fetchDeptDetails.Errcode: %v, err: %v", deptResponse.Errcode, deptResponse.Errmsg)
+				//errChan <- err
 				return
 			}
 			results <- &deptResponse.Result
@@ -187,7 +276,7 @@ func (r *dingTalkRepo) fetchDeptDetails(ctx context.Context, token string, deptI
 	wg.Wait()
 
 	close(results)
-	close(errChan)
+	//close(errChan)
 	var deptList []*biz.DingtalkDept
 	for dept := range results {
 		deptList = append(deptList, dept)
@@ -200,10 +289,10 @@ func (r *dingTalkRepo) FetchDepartmentUsers(ctx context.Context, token string, d
 	r.log.WithContext(ctx).Infof("FetchDepartmentUsers: %v, %v", token, deptIds)
 
 	// 服务端API.通讯录管理.用户管理.获取部门用户详情
-	maxConcurrent := 10
+	//maxConcurrent := 10
 	sem := make(chan struct{}, maxConcurrent)
 	results := make(chan *biz.DingtalkDeptUser, len(deptIds))
-	errChan := make(chan error, 1)
+	// := make(chan error, 1)
 
 	var wg sync.WaitGroup
 
@@ -227,8 +316,8 @@ func (r *dingTalkRepo) FetchDepartmentUsers(ctx context.Context, token string, d
 			for {
 				userList, cursor, err := r.getUserListByDepId(ctx, token, id)
 				if err != nil {
-					r.log.Info("FetchDepartmentUsers.getUserListByDepId: %v, err: %v", id, err)
-					errChan <- err
+					r.log.Errorf("FetchDepartmentUsers.getUserListByDepId: %v, err: %v", id, err)
+					//errChan <- err
 					return
 				}
 				for _, user := range userList {
@@ -244,7 +333,7 @@ func (r *dingTalkRepo) FetchDepartmentUsers(ctx context.Context, token string, d
 	wg.Wait()
 
 	close(results)
-	close(errChan)
+	//close(errChan)
 	var userList []*biz.DingtalkDeptUser
 	for user := range results {
 

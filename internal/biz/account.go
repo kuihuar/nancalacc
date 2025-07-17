@@ -82,16 +82,18 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	// }, nil
 
 	uc.log.WithContext(ctx).Infof("CreateSyncAccount: %v", req)
+
+	uc.log.WithContext(ctx).Info("CreateSyncAccount.SaveCompanyCfg")
 	err := uc.repo.SaveCompanyCfg(ctx, &DingtalkCompanyCfg{})
-	uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: err: %v", err)
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveCompanyCfg: err: %v", err)
 	if err != nil {
 		return nil, err
 	}
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount: %v", req)
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.GetAccessToken")
 
 	// 1. 获取access_token
 	accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-	uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: accessToken: %v, err: %v", accessToken, err)
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.GetAccessToken: accessToken: %v, err: %v", accessToken, err)
 	if err != nil {
 		return nil, err
 	}
@@ -99,17 +101,22 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	taskId := time.Now().Add(time.Duration(1) * time.Second).Format("20060102150405")
 
 	// 1. 从第三方获取部门和用户数据
+
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.FetchDepartments")
+
 	depts, err := uc.dingTalkRepo.FetchDepartments(ctx, accessToken)
-	uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: depts: %+v, err: %v", depts, err)
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.FetchDepartments: depts: %+v, err: %v", depts, err)
 	if err != nil {
 		return nil, err
 	}
 	for _, dept := range depts {
 		uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: dept: %+v", dept)
 	}
+
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveDepartments depts: %v, taskId: %v", depts, taskId)
 	// 2. 数据入库
 	deptCount, err := uc.repo.SaveDepartments(ctx, depts, taskId)
-	uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: deptCount: %v, err: %v", deptCount, err)
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveDepartments: deptCount: %v, err: %v", deptCount, err)
 	if err != nil {
 		return nil, err
 	}
@@ -118,16 +125,19 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 		deptIds = append(deptIds, dept.DeptID)
 	}
 
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.FetchDepartmentUsers accessToken: %v deptIds: %v", accessToken, deptIds)
 	// 1. 从第三方获取用户数据
 	deptUsers, err := uc.dingTalkRepo.FetchDepartmentUsers(ctx, accessToken, deptIds)
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.FetchDepartmentUsers deptUsers: %v, err: %v", deptUsers, err)
 	if err != nil {
 		return nil, err
 	}
 	// 2. 数据入库
 	//这里可以 将deptUsers转为model.TbLasUser,
 	// SaveUsers(ctx, TbLasUser)
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveUsers deptUsers: %v, taskId: %v", deptUsers, taskId)
 	userCount, err := uc.repo.SaveUsers(ctx, deptUsers, taskId)
-	uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: userCount: %v, err: %v", userCount, err)
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveUsers userCount: %v, err: %v", userCount, err)
 	if err != nil {
 		return nil, err
 	}
@@ -151,14 +161,18 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 		}
 
 	}
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveDepartmentUserRelations deptUserRelations: %v, taskId: %v", deptUserRelations, taskId)
 	// 3. 数据入库
 	relationCount, err := uc.repo.SaveDepartmentUserRelations(ctx, deptUserRelations, taskId)
-	uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: relationCount: %v, err: %v", relationCount, err)
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveDepartmentUserRelations relationCount: %v, err: %v", relationCount, err)
 	if err != nil {
 		return nil, err
 	}
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.CallEcisaccountsyncAll taskId: %v", taskId)
 
-	_, err = uc.repo.CallEcisaccountsyncAll(ctx, taskId)
+	res, err := uc.repo.CallEcisaccountsyncAll(ctx, taskId)
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.CallEcisaccountsyncAll res: %v, err: %v", res, err)
+
 	if err != nil {
 		return nil, err
 	}

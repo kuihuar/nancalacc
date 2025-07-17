@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	v1 "nancalacc/api/account/v1"
 	"nancalacc/internal/biz"
@@ -23,6 +24,8 @@ func NewAccountService(accounterUsecase *biz.AccounterUsecase, logger log.Logger
 
 func (s *AccountService) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
 	s.log.Infof("CreateSyncAccount req: %v", req)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
 	return s.accounterUsecase.CreateSyncAccount(ctx, req)
 }
 func (s *AccountService) GetSyncAccount(ctx context.Context, req *v1.GetSyncAccountRequest) (*v1.GetSyncAccountReply, error) {
