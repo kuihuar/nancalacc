@@ -58,9 +58,9 @@ type AccounterRepo interface {
 
 	ClearAll(ctx context.Context) error
 
-	SaveIncrementDepartments(ctx context.Context, depts []*DingtalkDept) error
-	SaveIncrementUsers(ctx context.Context, users []*DingtalkDeptUser) error
-	SaveIncrementDepartmentUserRelations(ctx context.Context, relations []*DingtalkDeptUserRelation) error
+	SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel []*DingtalkDept) error
+	SaveIncrementUsers(ctx context.Context, usersAdd, usersDel []*DingtalkDeptUser) error
+	SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel []*DingtalkDeptUserRelation) error
 }
 
 // GreeterUsecase is a Greeter usecase.
@@ -251,21 +251,239 @@ func (s *AccounterUsecase) GetAccessToken(ctx context.Context, req *v1.GetAccess
 
 func (uc *AccounterUsecase) OrgDeptCreate(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 	uc.log.Infof("OrgDeptCreate: %v", event.Data)
-	return uc.repo.SaveIncrementDepartments(ctx, nil)
+	if event.Data == nil {
+		return nil
+	}
+
+	depIds, err := uc.getDeptidsFromDingTalkEvent(event)
+	if err != nil {
+		return err
+	}
+
+	if len(depIds) == 0 {
+		uc.log.Info("OrgDeptCreate len(depIds) eq 0")
+		return nil
+	}
+
+	accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
+	uc.log.WithContext(ctx).Infof("OrgDeptCreate.GetAccessToken accessToken: %v, err: %v", accessToken, err)
+	if err != nil {
+		return err
+	}
+	uc.log.WithContext(ctx).Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v", accessToken, depIds)
+	depts, err := uc.dingTalkRepo.FetchDeptDetails(ctx, accessToken, depIds)
+	uc.log.WithContext(ctx).Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v, err:%v", accessToken, depIds, err)
+	if err != nil {
+		return err
+	}
+	return uc.repo.SaveIncrementDepartments(ctx, depts, nil)
+
 }
 func (uc *AccounterUsecase) OrgDeptModify(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
-	return uc.repo.SaveIncrementDepartments(ctx, nil)
-	// return nil
+	return uc.repo.SaveIncrementDepartments(ctx, nil, nil)
 }
 func (uc *AccounterUsecase) OrgDeptRemove(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
-	return uc.repo.SaveIncrementDepartments(ctx, nil)
+	uc.log.Infof("OrgDeptCreate: %v", event.Data)
+	if event.Data == nil {
+		return nil
+	}
+
+	depIds, err := uc.getDeptidsFromDingTalkEvent(event)
+	if err != nil {
+		return err
+	}
+
+	if len(depIds) == 0 {
+		uc.log.Info("OrgDeptCreate len(depIds) eq 0")
+		return nil
+	}
+	depts := make([]*DingtalkDept, len(depIds))
+	for i, depId := range depIds {
+		depts[i] = &DingtalkDept{
+			DeptID: depId,
+		}
+	}
+
+	// accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
+	// uc.log.WithContext(ctx).Infof("OrgDeptCreate.GetAccessToken accessToken: %v, err: %v", accessToken, err)
+	// if err != nil {
+	// 	return err
+	// }
+	// uc.log.WithContext(ctx).Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v", accessToken, depIds)
+	// depts, err := uc.dingTalkRepo.FetchDeptDetails(ctx, accessToken, depIds)
+	// uc.log.WithContext(ctx).Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v, err:%v", accessToken, depIds, err)
+	// if err != nil {
+	// 	return err
+	// }
+	return uc.repo.SaveIncrementDepartments(ctx, nil, depts)
 }
 func (uc *AccounterUsecase) UserAddOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
-	return uc.repo.SaveIncrementUsers(ctx, nil)
+	uc.log.Infof("UserAddOrg: %v", event.Data)
+	if event.Data == nil {
+		return nil
+	}
+
+	userIds, err := uc.getUseridsFromDingTalkEvent(event)
+	if err != nil {
+		return err
+	}
+
+	accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
+	uc.log.WithContext(ctx).Infof("UserAddOrg.GetAccessToken accessToken: %v,userIds:%v err: %v", accessToken, userIds, err)
+	if err != nil {
+		return err
+	}
+	uc.log.WithContext(ctx).Infof("UserAddOrg.GetUserDetail userIds: %v", userIds)
+	users, err := uc.dingTalkRepo.FetchUserDetail(ctx, accessToken, userIds)
+	if err != nil {
+		return err
+	}
+
+	err = uc.repo.SaveIncrementUsers(ctx, users, nil)
+	if err != nil {
+		return err
+	}
+
+	relations := generateUserDeptRelations(users)
+
+	err = uc.repo.SaveIncrementDepartmentUserRelations(ctx, relations, nil)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 func (uc *AccounterUsecase) UserModifyOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
-	return uc.repo.SaveIncrementUsers(ctx, nil)
+	return uc.repo.SaveIncrementUsers(ctx, nil, nil)
 }
 func (uc *AccounterUsecase) UserLeaveOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
-	return uc.repo.SaveIncrementUsers(ctx, nil)
+
+	uc.log.Infof("UserLeaveOrg: %v", event.Data)
+	if event.Data == nil {
+		return nil
+	}
+
+	userIds, err := uc.getUseridsFromDingTalkEvent(event)
+	if err != nil {
+		return err
+	}
+	users := make([]*DingtalkDeptUser, len(userIds))
+	for i, userId := range userIds {
+		users[i] = &DingtalkDeptUser{
+			Userid: userId,
+		}
+	}
+	// accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
+	// uc.log.WithContext(ctx).Infof("CreateSyncAccount.GetAccessToken accessToken: %v,userIds:%v err: %v", accessToken, userIds, err)
+	// if err != nil {
+	// 	return err
+	// }
+	// uc.log.WithContext(ctx).Infof("CreateSyncAccount.GetAccessToken: accessToken: %v, err: %v", accessToken, err)
+	// users, err := uc.dingTalkRepo.FetchUserDetail(ctx, accessToken, userIds)
+	// if err != nil {
+	// 	return err
+	// }
+	err = uc.repo.SaveIncrementUsers(ctx, nil, users)
+	if err != nil {
+		return err
+	}
+	// relations := generateUserDeptRelations(users)
+
+	// err = uc.repo.SaveIncrementDepartmentUserRelations(ctx, nil, relations)
+
+	// if err != nil {
+	// 	return err
+	// }
+
+	return nil
+}
+
+func generateUserDeptRelations(deptUsers []*DingtalkDeptUser) []*DingtalkDeptUserRelation {
+	var deptUserRelations []*DingtalkDeptUserRelation
+	for _, deptUser := range deptUsers {
+		order := int(deptUser.DeptOrder)
+		if order > 0 {
+			order = 1
+		} else {
+			order = 0
+		}
+		for _, depId := range deptUser.DeptIDList {
+
+			deptUserRelations = append(deptUserRelations, &DingtalkDeptUserRelation{
+				Uid:   deptUser.Userid,
+				Did:   strconv.FormatInt(depId, 10),
+				Order: order,
+			})
+		}
+
+	}
+
+	return deptUserRelations
+}
+
+func (uc *AccounterUsecase) getDeptidsFromDingTalkEvent(event *clientV2.GenericOpenDingTalkEvent) ([]int64, error) {
+	uc.log.Infof("getDeptidsFromDingTalkEvent: %v", event.Data)
+	if event.Data == nil {
+		return nil, errors.New("getDeptidsFromDingTalkEvent event.Data is nil")
+	}
+	datamap := event.Data
+	var depIds []int64
+
+	deptId, exists := datamap["deptId"]
+
+	if !exists {
+		uc.log.Errorf("getDeptidsFromDingTalkEvent not deptId: %v, exists: %v", deptId, exists)
+		return nil, errors.New("getDeptidsFromDingTalkEvent not deptId")
+	}
+
+	deptIdSlice, ok := deptId.([]interface{})
+
+	if !ok {
+		uc.log.Errorf("deptId not []interface{}: %v, exists: %v", deptId, exists)
+		return nil, errors.New("deptId not []interface{}")
+	}
+
+	for _, item := range deptIdSlice {
+		if f, ok := item.(float64); ok {
+			depIds = append(depIds, int64(f))
+		} else {
+			uc.log.Errorf("deptId not float64: %T", item)
+			return nil, errors.New("deptId not float64")
+		}
+	}
+	return depIds, nil
+}
+
+func (uc *AccounterUsecase) getUseridsFromDingTalkEvent(event *clientV2.GenericOpenDingTalkEvent) ([]string, error) {
+	uc.log.Infof("getUseridsFromDingTalkEvent: %v", event.Data)
+	if event.Data == nil {
+		return nil, errors.New("getUseridsFromDingTalkEvent event.Data is nil")
+	}
+	datamap := event.Data
+	var userIds []string
+
+	userId, exists := datamap["userId"]
+
+	if !exists {
+		uc.log.Errorf("getUseridsFromDingTalkEvent not userId: %v, exists: %v", userId, exists)
+		return nil, errors.New("getUseridsFromDingTalkEvent not userId")
+	}
+
+	userIdSlice, ok := userId.([]interface{})
+
+	if !ok {
+		uc.log.Errorf("deptId not []interface{}: %v, exists: %v", userId, exists)
+		return nil, errors.New("userId not []interface{}")
+	}
+
+	for _, item := range userIdSlice {
+		if f, ok := item.(string); ok {
+			userIds = append(userIds, f)
+		} else {
+			uc.log.Errorf("userId not string: %T", item)
+			return nil, errors.New("userId not string")
+		}
+	}
+	return userIds, nil
 }

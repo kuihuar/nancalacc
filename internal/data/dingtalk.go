@@ -115,7 +115,7 @@ func (r *dingTalkRepo) FetchDepartments(ctx context.Context, token string) ([]*b
 
 	r.log.Info("FetchDepartments.deptIdlist: %v", deptIdlist)
 	// 2. 获取子部门详情
-	deptList, err = r.fetchDeptDetails(ctx, token, deptIdlist, 10)
+	deptList, err = r.FetchDeptDetails(ctx, token, deptIdlist)
 	r.log.WithContext(ctx).Infof("FetchDepartments deptList: %v, err: %v", deptList, err)
 	if err != nil {
 		return nil, err
@@ -218,7 +218,7 @@ func (r *dingTalkRepo) getDeptIdsConcurrent(ctx context.Context, token string, d
 
 	return deptList, nil
 }
-func (r *dingTalkRepo) fetchDeptDetails(ctx context.Context, token string, deptIds []int64, maxConcurrent int) ([]*biz.DingtalkDept, error) {
+func (r *dingTalkRepo) FetchDeptDetails(ctx context.Context, token string, deptIds []int64) ([]*biz.DingtalkDept, error) {
 	uriDetail := fmt.Sprintf("%s/topapi/v2/department/get?access_token=%s", dingtalkEndpoint, token)
 	sem := make(chan struct{}, maxConcurrent)
 	results := make(chan *biz.DingtalkDept, len(deptIds))
@@ -524,4 +524,66 @@ func (r *dingTalkRepo) GetUseridByUnionid(ctx context.Context, token, unionid st
 		return "", fmt.Errorf("钉钉API返回错误 Result: %+v, Result.Userid: %s", getUseridByUnionidResponse.Result, getUseridByUnionidResponse.Result.Userid)
 	}
 	return getUseridByUnionidResponse.Result.Userid, nil
+}
+
+func (r *dingTalkRepo) FetchUserDetail(ctx context.Context, token string, userIds []string) ([]*biz.DingtalkDeptUser, error) {
+	r.log.Info("GetUserDetail: %v, %v, %v", ctx, token, userIds)
+	uri := fmt.Sprintf("%s/topapi/v2/user/get?access_token=%s", dingtalkEndpoint, token)
+
+	r.log.Info("getDeptIdsConcurrent deptIds: %v, uri: %v", userIds, uri)
+	sem := make(chan struct{}, maxConcurrent)
+	userList := make([]*biz.DingtalkDeptUser, 0)
+	var mu sync.Mutex
+
+	var wg sync.WaitGroup
+
+	for _, userId := range userIds {
+		wg.Add(1)
+
+		select {
+		case sem <- struct{}{}:
+		case <-ctx.Done():
+			wg.Done()
+			continue
+		}
+
+		// 启动goroutine处理任务
+		go func(id string) {
+			defer func() {
+				<-sem     // 释放信号量
+				wg.Done() // 通知任务完成
+			}()
+
+			input := &biz.DingTalkUserDetailRequest{
+				Userid: id,
+			}
+			jsonData, err := json.Marshal(input)
+			if err != nil {
+				r.log.Errorf("GetUserDetail.jsonData: %v, err: %v", string(jsonData), err)
+				return
+			}
+
+			bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
+			if err != nil {
+				r.log.Errorf("GetUserDetail.PostJSON: %v, err: %v", string(jsonData), err)
+				return
+			}
+			var userDetail *biz.DingTalkUserDetailResponse
+			if err = json.Unmarshal(bs, &userDetail); err != nil {
+				r.log.Errorf("GetUserDetail.Unmarshal: %v, err: %v", string(bs), err)
+				return
+			}
+			if userDetail.Errcode != 0 {
+				r.log.Errorf("钉钉API返回错误: %s, errcode: %d", userDetail.Errmsg, userDetail.Errcode)
+				return
+			}
+			user := userDetail.Result
+			mu.Lock()
+			userList = append(userList, &user)
+			mu.Unlock()
+		}(userId)
+	}
+	wg.Wait()
+
+	return userList, nil
 }

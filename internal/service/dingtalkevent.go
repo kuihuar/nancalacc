@@ -38,10 +38,10 @@ func (es *DingTalkEventService) Start() {
 		Start(context.Background())
 
 	if e != nil {
-		println("failed to start stream client", e.Error())
+		log.Error("failed to start stream client", e.Error())
 		return
 	}
-
+	log.Info("=====DingTalkEventService.Start, please commit sub event===")
 	select {}
 }
 func (es *DingTalkEventService) Stop() {}
@@ -52,15 +52,20 @@ func (es *DingTalkEventService) HandleEvent(event *clientV2.GenericOpenDingTalkE
 	switch event.EventType {
 	case "org_dept_create":
 		es.log.Infof("org_dept_create: %v", event.Data)
+		es.OrgDeptCreate(context.Background(), event)
 	case "org_dept_modify":
 		es.log.Infof("org_dept_modify: %v", event.Data)
+		es.OrgDeptModify(context.Background(), event)
 	case "org_dept_remove":
 		es.log.Infof("org_dept_remove: %v", event.Data)
+		es.OrgDeptRemove(context.Background(), event)
 	case "user_add_org":
 		es.log.Infof("user_add_org: %v", event.Data)
+		es.UserAddOrg(context.Background(), event)
 	case "user_modify_org":
 		es.log.Infof("user_modify_org: %v", event.Data)
 	case "user_leave_org":
+		es.UserLeaveOrg(context.Background(), event)
 		es.log.Infof("user_leave_org: %v", event.Data)
 	default:
 		es.log.Infof("unknown event: %v", event.Data)
@@ -71,8 +76,7 @@ func (es *DingTalkEventService) HandleEvent(event *clientV2.GenericOpenDingTalkE
 
 func (es *DingTalkEventService) OrgDeptCreate(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) clientV2.EventStatus {
 	es.log.Infof("OrgDeptCreate: %v", event.Data)
-	//err := es.repo.SaveIncrementDepartments(ctx, event.Data)
-	err := es.accounterUsecase.OrgDeptCreate(ctx, nil)
+	err := es.accounterUsecase.OrgDeptCreate(ctx, event)
 	if err != nil {
 		return clientV2.EventStatusLater
 	}
@@ -81,21 +85,41 @@ func (es *DingTalkEventService) OrgDeptCreate(ctx context.Context, event *client
 }
 func (es *DingTalkEventService) OrgDeptModify(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) clientV2.EventStatus {
 
-	return clientV2.EventStatusLater
+	err := es.accounterUsecase.OrgDeptModify(ctx, event)
+	if err != nil {
+		return clientV2.EventStatusLater
+	}
+	return clientV2.EventStatusSuccess
 }
 func (es *DingTalkEventService) OrgDeptRemove(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) clientV2.EventStatus {
 
-	return clientV2.EventStatusLater
+	err := es.accounterUsecase.OrgDeptRemove(ctx, event)
+	if err != nil {
+		return clientV2.EventStatusLater
+	}
+	return clientV2.EventStatusSuccess
 }
 func (es *DingTalkEventService) UserAddOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) clientV2.EventStatus {
 
-	return clientV2.EventStatusLater
+	err := es.accounterUsecase.UserAddOrg(ctx, event)
+	if err != nil {
+		return clientV2.EventStatusLater
+	}
+	return clientV2.EventStatusSuccess
 }
 func (es *DingTalkEventService) UserModifyOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) clientV2.EventStatus {
 
-	return clientV2.EventStatusLater
+	err := es.accounterUsecase.UserModifyOrg(ctx, event)
+	if err != nil {
+		return clientV2.EventStatusLater
+	}
+	return clientV2.EventStatusSuccess
 }
 func (es *DingTalkEventService) UserLeaveOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) clientV2.EventStatus {
 
-	return clientV2.EventStatusLater
+	err := es.accounterUsecase.UserLeaveOrg(ctx, event)
+	if err != nil {
+		return clientV2.EventStatusLater
+	}
+	return clientV2.EventStatusSuccess
 }

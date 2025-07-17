@@ -99,7 +99,7 @@ type DingtalkDeptUser struct {
 	//HideMobile             string `json:"hide_mobile"`
 	//ExclusiveAccountCorpID string `json:"exclusive_account_corp_id"`
 	//OrgEmail               string `json:"org_email"`
-	//StateCode              string `json:"state_code"`
+	StateCode string `json:"state_code"`
 }
 
 type DingtalkDeptUserRelation struct {
@@ -177,4 +177,14 @@ type DingTalkUseridByUnionidResponse struct {
 		Userid      string `json:"userid"`
 	} `json:"result"`
 	Errmsg string `json:"errmsg"`
+}
+
+type DingTalkUserDetailRequest struct {
+	Userid string `json:"userid"`
+}
+
+type DingTalkUserDetailResponse struct {
+	Errcode int              `json:"errcode"`
+	Result  DingtalkDeptUser `json:"result"`
+	Errmsg  string           `json:"errmsg"`
 }

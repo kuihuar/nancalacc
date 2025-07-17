@@ -55,10 +55,10 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, cronService *ta
 			cronService.Stop()
 			return nil
 		}),
-		// kratos.BeforeStart(func(ctx context.Context) error {
-		// 	eventService.Start()
-		// 	return nil
-		// }),
+		kratos.BeforeStart(func(ctx context.Context) error {
+			eventService.Start()
+			return nil
+		}),
 	)
 }
 
