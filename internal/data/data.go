@@ -46,14 +46,15 @@ type ThirdParty struct {
 }
 
 type ServiceConf struct {
-	CompanyId          string
-	ThirdCompanyId     string
-	PlatformIds        string
-	SecretKey          string
-	AccessKey          string
-	EcisaccountsyncUrl string
-	AppPackage         string
-	AppSecret          string
+	CompanyId                   string
+	ThirdCompanyId              string
+	PlatformIds                 string
+	SecretKey                   string
+	AccessKey                   string
+	EcisaccountsyncUrl          string
+	EcisaccountsyncUrlIncrement string
+	AppPackage                  string
+	AppSecret                   string
 }
 
 // NewData .
@@ -96,14 +97,15 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 		Timeout:   c.Dingtalk.Timeout,
 	}
 	serviceConf := &ServiceConf{
-		CompanyId:          c.ServiceConf.CompanyId,
-		ThirdCompanyId:     c.ServiceConf.ThirdCompanyId,
-		PlatformIds:        c.ServiceConf.PlatformIds,
-		SecretKey:          c.ServiceConf.SecretKey,
-		AccessKey:          c.ServiceConf.AccessKey,
-		EcisaccountsyncUrl: c.ServiceConf.EcisaccountsyncUrl,
-		AppPackage:         c.ServiceConf.AppPackage,
-		AppSecret:          c.ServiceConf.AppSecret,
+		CompanyId:                   c.ServiceConf.CompanyId,
+		ThirdCompanyId:              c.ServiceConf.ThirdCompanyId,
+		PlatformIds:                 c.ServiceConf.PlatformIds,
+		SecretKey:                   c.ServiceConf.SecretKey,
+		AccessKey:                   c.ServiceConf.AccessKey,
+		EcisaccountsyncUrl:          c.ServiceConf.EcisaccountsyncUrl,
+		EcisaccountsyncUrlIncrement: c.ServiceConf.EcisaccountsyncUrlIncrement,
+		AppPackage:                  c.ServiceConf.AppPackage,
+		AppSecret:                   c.ServiceConf.AppSecret,
 	}
 	config := &openapi.Config{
 		Protocol: tea.String("https"),
@@ -130,9 +132,7 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 
 func initDbEnv(c *conf.Data, logger log.Logger) (*gorm.DB, error) {
 	encryptedDsn, err := conf.GetEnv("ECIS_ECISACCOUNTSYNC_DB")
-	// packagename := "com.acc.async"
 
-	fmt.Printf("=====encryptedDsn.ECIS_ECISACCOUNTSYNC_DB: %s, err: %v\n", encryptedDsn, err)
 	log.NewHelper(logger).Info("initDbEnv: %s", encryptedDsn)
 	if err != nil {
 		log.NewHelper(logger).Error("initDbEnv: %w", err)
@@ -140,7 +140,6 @@ func initDbEnv(c *conf.Data, logger log.Logger) (*gorm.DB, error) {
 	}
 	appSecret := c.ServiceConf.AppSecret
 	dsn, err := cipherutil.DecryptByAes(encryptedDsn, appSecret)
-	fmt.Printf("=====ECIS_ECISACCOUNTSYNC_DB dsn: %s, appSecret:%s, err: %v\n", dsn, appSecret, err)
 	if err != nil {
 		log.NewHelper(logger).Error("initDbEnvDecryptByAes: %w", err)
 		return nil, err
@@ -149,12 +148,10 @@ func initDbEnv(c *conf.Data, logger log.Logger) (*gorm.DB, error) {
 		log.NewHelper(logger).Error("initDbEnvDecryptByAes: dsn is empty")
 		return nil, err
 	}
-	fmt.Printf("=====ECIS_ECISACCOUNTSYNC_DB dsn: %s\n", dsn)
 
 	if !strings.Contains(dsn, "parseTime=True") {
 		dsn = dsn + "&parseTime=True"
 	}
-	fmt.Printf("=====ECIS_ECISACCOUNTSYNC_DB dsn: %s\n", dsn)
 	return gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: gormlogger.Default.LogMode(gormlogger.Info),
 	})

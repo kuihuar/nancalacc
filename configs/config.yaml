@@ -19,7 +19,7 @@ data:
     app_secret: "uHVTlmVFojonyjlBIDbzsxLZ_iJfviqUMpT1LKNxP9P4TYr8LhaiwymiQfb0fjxr"
     timeout: "5s"
   service_conf:
-    env: "prov"
+    env: "prov" #dev #prov
     log_level: "debug"
     access_key: "NRSXWTPKNAIRUBMP" #有待确认
     secret_key: "SKnwwvvngrhcrpgc" #有待确认
@@ -29,3 +29,4 @@ data:
     platform_ids: "1" # 客户源数据ID
     company_id: "1" # 云文档租户公司ID
     ecisaccountsync_url: "http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/all"
+    ecisaccountsync_url_increment: "http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/increment"

@@ -46,12 +46,25 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*biz.DingtalkDept
 	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
 	platformID := r.data.serviceConf.PlatformIds
 	for _, user := range users {
+		if user.Name == "" {
+			user.Name = user.Userid
+		}
 		if user.Nickname == "" {
 			user.Nickname = user.Name
 		}
-		email, _ := cipherutil.AesEncryptGcmByKey(user.Email, r.data.serviceConf.SecretKey)
-		phone, _ := cipherutil.AesEncryptGcmByKey(user.Mobile, r.data.serviceConf.SecretKey)
+		var account string
+		if user.Name == "" {
+			account = user.Userid
+		} else {
+			account = user.Name
+		}
 
+		email, errEmail := cipherutil.AesEncryptGcmByKey(user.Email, r.data.serviceConf.SecretKey)
+
+		phone, errPhone := cipherutil.AesEncryptGcmByKey(user.Mobile, r.data.serviceConf.SecretKey)
+
+		r.log.Infof("AesEncryptGcmByKey email: %v, ncrypt email: %v, err: %v", user.Email, email, errEmail)
+		r.log.Infof("AesEncryptGcmByKey phone: %v, ncrypt phone: %v, err: %v", user.Mobile, phone, errPhone)
 		entities = append(entities, &models.TbLasUser{
 			TaskID:         taskId,
 			ThirdCompanyID: thirdCompanyID,
@@ -59,7 +72,7 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*biz.DingtalkDept
 			Uid:            user.Userid,
 			DefDid:         "-1",
 			DefDidOrder:    0,
-			Account:        user.Name,
+			Account:        account,
 			NickName:       user.Nickname,
 			Email:          email,
 			Phone:          phone,
@@ -207,13 +220,13 @@ func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, cfg *biz.DingtalkCom
 	return nil
 }
 
-func (r *accounterRepo) CallEcisaccountsyncAll(ctx context.Context, taskId string) (biz.EcisaccountsyncResponse, error) {
+func (r *accounterRepo) CallEcisaccountsyncAll(ctx context.Context, taskId string) (biz.EcisaccountsyncAllResponse, error) {
 	r.log.Infof("CallEcisaccountsyncAll: %v", taskId)
 
 	path := r.data.serviceConf.EcisaccountsyncUrl
 
 	// path := "http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/all"
-	var resp biz.EcisaccountsyncResponse
+	var resp biz.EcisaccountsyncAllResponse
 	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
 	collectCost := "1100000"
 	uri := fmt.Sprintf("%s?taskId=%s&thirdCompanyId=%s&collectCost=%s", path, taskId, thirdCompanyID, collectCost)
@@ -263,16 +276,35 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
 	platformID := r.data.serviceConf.PlatformIds
 	for _, user := range usersAdd {
+		if user.Name == "" {
+			user.Name = user.Userid
+		}
+		if user.Nickname == "" {
+			user.Nickname = user.Name
+		}
+		var account string
+		if user.Name == "" {
+			account = user.Userid
+		} else {
+			account = user.Name
+		}
+		email, errEmail := cipherutil.AesEncryptGcmByKey(user.Email, r.data.serviceConf.SecretKey)
+
+		phone, errPhone := cipherutil.AesEncryptGcmByKey(user.Mobile, r.data.serviceConf.SecretKey)
+
+		r.log.Infof("AesEncryptGcmByKey email: %v, ncrypt email: %v, err: %v", user.Email, email, errEmail)
+		r.log.Infof("AesEncryptGcmByKey phone: %v, ncrypt phone: %v, err: %v", user.Mobile, phone, errPhone)
+
 		entities = append(entities, &models.TbLasUserIncrement{
 			ThirdCompanyID: thirdCompanyID,
 			PlatformID:     platformID,
 			Uid:            user.Userid,
 			DefDid:         "-1",
 			DefDidOrder:    0,
-			Account:        user.Userid,
+			Account:        account,
 			NickName:       user.Nickname,
-			Email:          "email",
-			Phone:          "phone",
+			Email:          email,
+			Phone:          phone,
 			Title:          user.Title,
 			//Leader:         sql.NullString{String: strconv.FormatBool(account.Leader)},
 			Source:           Source,
@@ -428,4 +460,71 @@ func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context
 	}
 
 	return nil
+}
+
+func (r *accounterRepo) CallEcisaccountsyncIncrement(ctx context.Context, thirdCompanyID string) (biz.EcisaccountsyncIncrementResponse, error) {
+
+	//待开发
+	path := r.data.serviceConf.EcisaccountsyncUrlIncrement
+	r.log.Infof("CallEcisaccountsyncIncrement path : %v", path)
+
+	uri := path
+	var resp biz.EcisaccountsyncIncrementResponse
+	thirdCompanyID = r.data.serviceConf.ThirdCompanyId
+	input := &biz.EcisaccountsyncIncrementRequest{
+		ThirdCompanyId: thirdCompanyID,
+	}
+	jsonData, err := json.Marshal(input)
+	if err != nil {
+		return resp, err
+	}
+
+	r.log.Infof("CallEcisaccountsyncIncrement uri: %s, input: %s", uri, string(jsonData))
+	bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
+	r.log.Infof("CallEcisaccountsyncIncrement.Post output: bs:%s, err:%w", string(bs), err)
+
+	if err != nil {
+		return resp, err
+	}
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, fmt.Errorf("Unmarshal err: %w", err)
+	}
+	if resp.Code != "200" {
+		return resp, fmt.Errorf("code not 200: %s", resp.Code)
+	}
+
+	r.callEcisaccountsyncIncrementTest(ctx, thirdCompanyID)
+
+	return resp, nil
+
+}
+
+func (r *accounterRepo) callEcisaccountsyncIncrementTest(ctx context.Context, thirdCompanyID string) (biz.EcisaccountsyncIncrementResponse, error) {
+
+	path := r.data.serviceConf.EcisaccountsyncUrlIncrement
+	thirdCompanyID = r.data.serviceConf.ThirdCompanyId
+	r.log.Infof("callEcisaccountsyncIncrementTest path : %v", path)
+
+	uri := fmt.Sprintf("%s?&thirdCompanyId=%s", path, thirdCompanyID)
+
+	var resp biz.EcisaccountsyncIncrementResponse
+
+	r.log.Infof("callEcisaccountsyncIncrementTest uri: %s", uri)
+	bs, err := httputil.PostJSON(uri, nil, time.Second*10)
+	r.log.Infof("callEcisaccountsyncIncrementTest output: bs:%s, err:%w", string(bs), err)
+
+	if err != nil {
+		return resp, err
+	}
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, fmt.Errorf("Unmarshal err: %w", err)
+	}
+	if resp.Code != "200" {
+		return resp, fmt.Errorf("code not 200: %s", resp.Code)
+	}
+
+	return resp, nil
+
 }

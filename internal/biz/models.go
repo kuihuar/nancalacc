@@ -155,15 +155,26 @@ type DingTalkUserInfo struct {
 type DingtalkCompanyCfg struct {
 }
 
-type EcisaccountsyncRequest struct {
+type EcisaccountsyncAllRequest struct {
 	TaskId         string `json:"taskId"`
 	ThirdCompanyId string `json:"thirdCompanyId"`
 	CollectCost    string `json:"collectCost"`
 }
 
-type EcisaccountsyncResponse struct {
+type EcisaccountsyncAllResponse struct {
 	Code string `json:"code"`
 	Msg  string `json:"msg"`
+}
+
+type EcisaccountsyncIncrementRequest struct {
+	ThirdCompanyId string `json:"third_company_id"`
+}
+
+type EcisaccountsyncIncrementResponse struct {
+	Code   string `json:"code"`
+	Msg    string `json:"msg"`
+	Data   any    `json:"data"`
+	Detail string `json:"detail"`
 }
 
 type DingTalkUseridByUnionidRequest struct {

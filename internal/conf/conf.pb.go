@@ -263,19 +263,20 @@ func (x *Dingtalk) GetTimeout() string {
 }
 
 type ServiceConf struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	Env                string                 `protobuf:"bytes,1,opt,name=env,proto3" json:"env,omitempty"`
-	LogLevel           string                 `protobuf:"bytes,2,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`
-	AccessKey          string                 `protobuf:"bytes,3,opt,name=access_key,json=accessKey,proto3" json:"access_key,omitempty"`
-	SecretKey          string                 `protobuf:"bytes,4,opt,name=secret_key,json=secretKey,proto3" json:"secret_key,omitempty"`
-	ThirdCompanyId     string                 `protobuf:"bytes,5,opt,name=third_company_id,json=thirdCompanyId,proto3" json:"third_company_id,omitempty"`
-	PlatformIds        string                 `protobuf:"bytes,6,opt,name=platform_ids,json=platformIds,proto3" json:"platform_ids,omitempty"`
-	CompanyId          string                 `protobuf:"bytes,7,opt,name=company_id,json=companyId,proto3" json:"company_id,omitempty"`
-	EcisaccountsyncUrl string                 `protobuf:"bytes,8,opt,name=ecisaccountsync_url,json=ecisaccountsyncUrl,proto3" json:"ecisaccountsync_url,omitempty"`
-	AppPackage         string                 `protobuf:"bytes,9,opt,name=app_package,json=appPackage,proto3" json:"app_package,omitempty"`
-	AppSecret          string                 `protobuf:"bytes,10,opt,name=app_secret,json=appSecret,proto3" json:"app_secret,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	state                       protoimpl.MessageState `protogen:"open.v1"`
+	Env                         string                 `protobuf:"bytes,1,opt,name=env,proto3" json:"env,omitempty"`
+	LogLevel                    string                 `protobuf:"bytes,2,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`
+	AccessKey                   string                 `protobuf:"bytes,3,opt,name=access_key,json=accessKey,proto3" json:"access_key,omitempty"`
+	SecretKey                   string                 `protobuf:"bytes,4,opt,name=secret_key,json=secretKey,proto3" json:"secret_key,omitempty"`
+	ThirdCompanyId              string                 `protobuf:"bytes,5,opt,name=third_company_id,json=thirdCompanyId,proto3" json:"third_company_id,omitempty"`
+	PlatformIds                 string                 `protobuf:"bytes,6,opt,name=platform_ids,json=platformIds,proto3" json:"platform_ids,omitempty"`
+	CompanyId                   string                 `protobuf:"bytes,7,opt,name=company_id,json=companyId,proto3" json:"company_id,omitempty"`
+	EcisaccountsyncUrl          string                 `protobuf:"bytes,8,opt,name=ecisaccountsync_url,json=ecisaccountsyncUrl,proto3" json:"ecisaccountsync_url,omitempty"`
+	EcisaccountsyncUrlIncrement string                 `protobuf:"bytes,9,opt,name=ecisaccountsync_url_increment,json=ecisaccountsyncUrlIncrement,proto3" json:"ecisaccountsync_url_increment,omitempty"`
+	AppPackage                  string                 `protobuf:"bytes,10,opt,name=app_package,json=appPackage,proto3" json:"app_package,omitempty"`
+	AppSecret                   string                 `protobuf:"bytes,11,opt,name=app_secret,json=appSecret,proto3" json:"app_secret,omitempty"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
 }
 
 func (x *ServiceConf) Reset() {
@@ -360,6 +361,13 @@ func (x *ServiceConf) GetCompanyId() string {
 func (x *ServiceConf) GetEcisaccountsyncUrl() string {
 	if x != nil {
 		return x.EcisaccountsyncUrl
+	}
+	return ""
+}
+
+func (x *ServiceConf) GetEcisaccountsyncUrlIncrement() string {
+	if x != nil {
+		return x.EcisaccountsyncUrlIncrement
 	}
 	return ""
 }
@@ -656,7 +664,7 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\aapp_key\x18\x02 \x01(\tR\x06appKey\x12\x1d\n" +
 	"\n" +
 	"app_secret\x18\x03 \x01(\tR\tappSecret\x12\x18\n" +
-	"\atimeout\x18\x04 \x01(\tR\atimeout\"\xd7\x02\n" +
+	"\atimeout\x18\x04 \x01(\tR\atimeout\"\x9b\x03\n" +
 	"\vServiceConf\x12\x10\n" +
 	"\x03env\x18\x01 \x01(\tR\x03env\x12\x1b\n" +
 	"\tlog_level\x18\x02 \x01(\tR\blogLevel\x12\x1d\n" +
@@ -668,12 +676,13 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\fplatform_ids\x18\x06 \x01(\tR\vplatformIds\x12\x1d\n" +
 	"\n" +
 	"company_id\x18\a \x01(\tR\tcompanyId\x12/\n" +
-	"\x13ecisaccountsync_url\x18\b \x01(\tR\x12ecisaccountsyncUrl\x12\x1f\n" +
-	"\vapp_package\x18\t \x01(\tR\n" +
+	"\x13ecisaccountsync_url\x18\b \x01(\tR\x12ecisaccountsyncUrl\x12B\n" +
+	"\x1decisaccountsync_url_increment\x18\t \x01(\tR\x1becisaccountsyncUrlIncrement\x12\x1f\n" +
+	"\vapp_package\x18\n" +
+	" \x01(\tR\n" +
 	"appPackage\x12\x1d\n" +
 	"\n" +
-	"app_secret\x18\n" +
-	" \x01(\tR\tappSecretB\x1eZ\x1cnancalacc/internal/conf;confb\x06proto3"
+	"app_secret\x18\v \x01(\tR\tappSecretB\x1eZ\x1cnancalacc/internal/conf;confb\x06proto3"
 
 var (
 	file_conf_conf_proto_rawDescOnce sync.Once

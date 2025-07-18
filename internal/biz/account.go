@@ -54,13 +54,15 @@ type AccounterRepo interface {
 	SaveDepartmentUserRelations(ctx context.Context, relations []*DingtalkDeptUserRelation, taskId string) (int, error)
 	SaveCompanyCfg(ctx context.Context, cfg *DingtalkCompanyCfg) error
 
-	CallEcisaccountsyncAll(ctx context.Context, taskId string) (EcisaccountsyncResponse, error)
+	CallEcisaccountsyncAll(ctx context.Context, taskId string) (EcisaccountsyncAllResponse, error)
 
 	ClearAll(ctx context.Context) error
 
 	SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel []*DingtalkDept) error
 	SaveIncrementUsers(ctx context.Context, usersAdd, usersDel []*DingtalkDeptUser) error
 	SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel []*DingtalkDeptUserRelation) error
+
+	CallEcisaccountsyncIncrement(ctx context.Context, thirdCompanyId string) (EcisaccountsyncIncrementResponse, error)
 }
 
 // GreeterUsecase is a Greeter usecase.
@@ -276,7 +278,22 @@ func (uc *AccounterUsecase) OrgDeptCreate(ctx context.Context, event *clientV2.G
 	if err != nil {
 		return err
 	}
-	return uc.repo.SaveIncrementDepartments(ctx, depts, nil)
+
+	err = uc.repo.SaveIncrementDepartments(ctx, depts, nil)
+	if err != nil {
+		uc.log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
+		return err
+	}
+
+	res, err := uc.repo.CallEcisaccountsyncIncrement(ctx, "taskId")
+
+	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+	if err != nil {
+		uc.log.Errorf("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+		//return err
+	}
+
+	return nil
 
 }
 func (uc *AccounterUsecase) OrgDeptModify(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
@@ -298,6 +315,8 @@ func (uc *AccounterUsecase) OrgDeptRemove(ctx context.Context, event *clientV2.G
 		return nil
 	}
 	depts := make([]*DingtalkDept, len(depIds))
+
+	// TODO 从 wps 获取 ParentID, 才可以提交
 	for i, depId := range depIds {
 		depts[i] = &DingtalkDept{
 			DeptID: depId,
@@ -315,6 +334,14 @@ func (uc *AccounterUsecase) OrgDeptRemove(ctx context.Context, event *clientV2.G
 	// if err != nil {
 	// 	return err
 	// }
+
+	res, err := uc.repo.CallEcisaccountsyncIncrement(ctx, "taskId")
+
+	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+	if err != nil {
+		uc.log.Errorf("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+		//return err
+	}
 	return uc.repo.SaveIncrementDepartments(ctx, nil, depts)
 }
 func (uc *AccounterUsecase) UserAddOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
@@ -350,6 +377,14 @@ func (uc *AccounterUsecase) UserAddOrg(ctx context.Context, event *clientV2.Gene
 
 	if err != nil {
 		return err
+	}
+
+	res, err := uc.repo.CallEcisaccountsyncIncrement(ctx, "taskId")
+
+	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+	if err != nil {
+		uc.log.Errorf("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+		//return err
 	}
 
 	return nil
@@ -396,6 +431,13 @@ func (uc *AccounterUsecase) UserLeaveOrg(ctx context.Context, event *clientV2.Ge
 	// 	return err
 	// }
 
+	res, err := uc.repo.CallEcisaccountsyncIncrement(ctx, "taskId")
+
+	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+	if err != nil {
+		uc.log.Errorf("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+		//return err
+	}
 	return nil
 }
 

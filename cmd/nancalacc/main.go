@@ -59,6 +59,10 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, cronService *ta
 			eventService.Start()
 			return nil
 		}),
+		kratos.AfterStop(func(ctx context.Context) error {
+			eventService.Stop()
+			return nil
+		}),
 	)
 }
 

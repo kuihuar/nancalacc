@@ -4,6 +4,7 @@ import (
 	"context"
 	"nancalacc/internal/biz"
 	"nancalacc/internal/conf"
+	"sync/atomic"
 
 	"github.com/go-kratos/kratos/v2/log"
 	clientV2 "github.com/open-dingtalk/dingtalk-stream-sdk-go/clientV2"
@@ -13,6 +14,8 @@ type DingTalkEventService struct {
 	conf             *conf.Data
 	log              *log.Helper
 	accounterUsecase *biz.AccounterUsecase
+	running          atomic.Bool
+	cancel           context.CancelFunc
 	//client clientV2.OpenDingTalkClient
 }
 
@@ -29,22 +32,37 @@ func (es *DingTalkEventService) Start() {
 		ClientSecret: es.conf.Dingtalk.AppSecret,
 	}
 
-	e := clientV2.
-		NewBuilder().
-		Credential(cred).
-		//监听开放平台事件
-		RegisterAllEventHandler(es.HandleEvent).
-		Build().
-		Start(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	es.cancel = cancel
+	es.running.Store(true)
+	go func() {
+		defer es.running.Store(false)
+		e := clientV2.
+			NewBuilder().
+			Credential(cred).
+			//监听开放平台事件
+			RegisterAllEventHandler(es.HandleEvent).
+			Build().
+			Start(ctx)
+		if e != nil {
+			log.Error("DingTalkEventService.Start failed", e.Error())
+		}
+		log.Info("=====DingTalkEventService.Start, please commit sub event===")
+	}()
+	log.Info("DingTalkEventService.Starting...")
 
-	if e != nil {
-		log.Error("failed to start stream client", e.Error())
+}
+func (es *DingTalkEventService) Stop() {
+	if !es.running.Load() {
 		return
 	}
-	log.Info("=====DingTalkEventService.Start, please commit sub event===")
-	select {}
+	log.Info("=====DingTalkEventService.Stop===")
+	es.cancel()
 }
-func (es *DingTalkEventService) Stop() {}
+func (es *DingTalkEventService) Running() bool {
+	return es.running.Load()
+
+}
 
 func (es *DingTalkEventService) HandleEvent(event *clientV2.GenericOpenDingTalkEvent) clientV2.EventStatus {
 	println("HandleEvent ", event.Data)
