@@ -342,6 +342,7 @@ func (uc *AccounterUsecase) OrgDeptRemove(ctx context.Context, event *clientV2.G
 		uc.log.Errorf("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
 		//return err
 	}
+
 	return uc.repo.SaveIncrementDepartments(ctx, nil, depts)
 }
 func (uc *AccounterUsecase) UserAddOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {

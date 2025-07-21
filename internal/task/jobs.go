@@ -1,11 +1,6 @@
 // internal/task/jobs.go
 package task
 
-import (
-	"context"
-	v1 "nancalacc/api/account/v1"
-)
-
 func RegisterJobs(s *CronService) {
 	// 每小时执行一次
 	// s.AddFunc("0 3 * * * *", func() {
@@ -20,16 +15,16 @@ func RegisterJobs(s *CronService) {
 		//s.log.Info("⏰ 执行任务：每30分钟任务")
 	})
 	// 每5秒执行一次
-	s.AddFunc("10 2 * * * *", func() {
-		s.log.Info("🔥 执行任务: 每天2点10分0秒全量同步一次任务")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		res, err := s.accounterUsecase.CreateSyncAccount(ctx, &v1.CreateSyncAccountRequest{
-			TriggerType: v1.TriggerType_TRIGGER_SCHEDULED,
-			SyncType:    v1.SyncType_FULL,
-		})
-		s.log.Infof("CreateSyncAccount: %v, err: %v", res, err)
-	})
+	// s.AddFunc("10 2 * * * *", func() {
+	// 	s.log.Info("🔥 执行任务: 每天2点10分0秒全量同步一次任务")
+	// 	ctx, cancel := context.WithCancel(context.Background())
+	// 	defer cancel()
+	// 	res, err := s.accounterUsecase.CreateSyncAccount(ctx, &v1.CreateSyncAccountRequest{
+	// 		TriggerType: v1.TriggerType_TRIGGER_SCHEDULED,
+	// 		SyncType:    v1.SyncType_FULL,
+	// 	})
+	// 	s.log.Infof("CreateSyncAccount: %v, err: %v", res, err)
+	// })
 
 	// 每分钟执行一次
 	// s.AddFunc("0 * * * * *", func() {

@@ -53,10 +53,10 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*biz.DingtalkDept
 			user.Nickname = user.Name
 		}
 		var account string
-		if user.Name == "" {
-			account = user.Userid
+		if user.Mobile != "" {
+			account = user.Mobile
 		} else {
-			account = user.Name
+			account = user.Userid
 		}
 
 		email, errEmail := cipherutil.AesEncryptGcmByKey(user.Email, r.data.serviceConf.SecretKey)
@@ -83,6 +83,7 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*biz.DingtalkDept
 			Mtime:            time.Now(),
 			CheckType:        1,
 			EmploymentStatus: "active",
+			EmploymentType:   "permanent",
 			//Type:           sql.NullString{String: "dept", Valid: true},
 		})
 	}
@@ -283,10 +284,10 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 			user.Nickname = user.Name
 		}
 		var account string
-		if user.Name == "" {
-			account = user.Userid
+		if user.Mobile != "" {
+			account = user.Mobile
 		} else {
-			account = user.Name
+			account = user.Userid
 		}
 		email, errEmail := cipherutil.AesEncryptGcmByKey(user.Email, r.data.serviceConf.SecretKey)
 
@@ -311,6 +312,7 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 			Ctime:            time.Now(),
 			Mtime:            time.Now(),
 			EmploymentStatus: "active",
+			EmploymentType:   "permanent",
 			UpdateType:       "user_add",
 			SyncType:         "auto",
 			SyncTime:         time.Now(),
@@ -327,9 +329,9 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 			DefDidOrder:    0,
 			Account:        user.Userid,
 			NickName:       user.Nickname,
-			Email:          "email",
-			Phone:          "phone",
-			Title:          user.Title,
+			//Email:          "email",
+			//Phone:          "phone",
+			Title: user.Title,
 			//Leader:         sql.NullString{String: strconv.FormatBool(account.Leader)},
 			Source:           Source,
 			Ctime:            time.Now(),
