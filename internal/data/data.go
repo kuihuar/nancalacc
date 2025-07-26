@@ -34,7 +34,7 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 	db, err = initDB(c, logger)
 	if err != nil {
 		log.NewHelper(logger).Error("NewData: init db env failed")
-		return nil, nil, nil
+		return nil, nil, err
 	}
 	sqlDB, err := db.DB()
 	if err != nil {

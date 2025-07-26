@@ -6,6 +6,7 @@ import (
 	"fmt"
 	v1 "nancalacc/api/account/v1"
 	"nancalacc/internal/auth"
+	"nancalacc/internal/conf"
 	"nancalacc/internal/dingtalk"
 	"nancalacc/internal/wps"
 	"strconv"
@@ -26,33 +27,6 @@ var (
 type Accounter struct {
 	Hello string
 }
-
-// type AccounterConf struct {
-// 	Env            string `json:"env"`
-// 	LogLevel       string `json:"log_level"`
-// 	AccessKey      string `json:"access_key"`
-// 	SecretKey      string `json:"secret_key"`
-// 	ThirdCompanyID string `json:"third_company_id"`
-// 	PlatformIDs    string `json:"platform_ids"`
-// 	CompanyID      string `json:"company_id"`
-// }
-
-// func NewAccounterConf(c *conf.Service) *AccounterConf {
-// 	conf := &AccounterConf{
-// 		Env:            c.Env,
-// 		LogLevel:       c.LogLevel,
-// 		AccessKey:      c.AccessKey,
-// 		SecretKey:      c.SecretKey,
-// 		ThirdCompanyID: c.ThirdCompanyId,
-// 		PlatformIDs:    c.PlatformIds,
-// 		CompanyID:      c.CompanyId,
-// 	}
-// 	return conf
-// }
-
-// type AuthProvider interface {
-// 	GetAccessToken(ctx context.Context) (string, error)
-// }
 
 // GreeterRepo is a Greater repo.
 type AccounterRepo interface {
@@ -77,13 +51,14 @@ type AccounterUsecase struct {
 	repo         AccounterRepo
 	dingTalkRepo dingtalk.Dingtalk
 	appAuth      auth.Authenticator
-	wpsSync      wps.Wps
+	wpsSync      wps.WpsSync
+	bizConf      *conf.Service_Business
 	log          *log.Helper
 }
 
 // NewGreeterUsecase new a Greeter usecase.
-func NewAccounterUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, appAuth auth.Authenticator, wpsSync wps.Wps, logger log.Logger) *AccounterUsecase {
-	return &AccounterUsecase{repo: repo, dingTalkRepo: dingTalkRepo, appAuth: appAuth, wpsSync: wpsSync, log: log.NewHelper(logger)}
+func NewAccounterUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, appAuth auth.Authenticator, wpsSync wps.WpsSync, bizConf *conf.Service_Business, logger log.Logger) *AccounterUsecase {
+	return &AccounterUsecase{repo: repo, dingTalkRepo: dingTalkRepo, appAuth: appAuth, wpsSync: wpsSync, bizConf: bizConf, log: log.NewHelper(logger)}
 }
 
 func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
@@ -186,7 +161,10 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	}
 	fmt.Println("appAccessToken", appAccessToken)
 
-	res, err := uc.wpsSync.CallEcisaccountsyncAll(ctx, taskId, taskId)
+	res, err := uc.wpsSync.CallEcisaccountsyncAll(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncAllRequest{
+		TaskId:         taskId,
+		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
+	})
 	uc.log.WithContext(ctx).Infof("CreateSyncAccount.CallEcisaccountsyncAll res: %v, err: %v", res, err)
 
 	if err != nil {
@@ -299,15 +277,18 @@ func (uc *AccounterUsecase) OrgDeptCreate(ctx context.Context, event *clientV2.G
 		return err
 	}
 
-	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, "taskId", "thirdCompanyId")
-
-	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
 	if err != nil {
-		uc.log.Errorf("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
-		//return err
+		return err
 	}
 
-	return nil
+	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
+		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
+	})
+
+	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+
+	return err
 
 }
 func (uc *AccounterUsecase) OrgDeptModify(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
@@ -349,15 +330,23 @@ func (uc *AccounterUsecase) OrgDeptRemove(ctx context.Context, event *clientV2.G
 	// 	return err
 	// }
 
-	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, "taskId", "thirdCompanyId")
-
-	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+	err = uc.repo.SaveIncrementDepartments(ctx, nil, depts)
 	if err != nil {
-		uc.log.Errorf("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
-		//return err
+		return err
 	}
 
-	return uc.repo.SaveIncrementDepartments(ctx, nil, depts)
+	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	if err != nil {
+		return err
+	}
+
+	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
+		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
+	})
+
+	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+
+	return err
 }
 func (uc *AccounterUsecase) UserAddOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 	uc.log.Infof("UserAddOrg: %v", event.Data)
@@ -394,15 +383,18 @@ func (uc *AccounterUsecase) UserAddOrg(ctx context.Context, event *clientV2.Gene
 		return err
 	}
 
-	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, "taskId", "thirdCompanyId")
-
-	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
 	if err != nil {
-		uc.log.Errorf("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
-		//return err
+		return err
 	}
 
-	return nil
+	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
+		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
+	})
+
+	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+
+	return err
 }
 func (uc *AccounterUsecase) UserModifyOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 	return uc.repo.SaveIncrementUsers(ctx, nil, nil)
@@ -446,14 +438,18 @@ func (uc *AccounterUsecase) UserLeaveOrg(ctx context.Context, event *clientV2.Ge
 	// 	return err
 	// }
 
-	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, "taskId", "thirdCompanyId")
+	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	if err != nil {
+		return err
+	}
+
+	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
+		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
+	})
 
 	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
-	if err != nil {
-		uc.log.Errorf("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
-		//return err
-	}
-	return nil
+
+	return err
 }
 
 func generateUserDeptRelations(deptUsers []*dingtalk.DingtalkDeptUser) []*dingtalk.DingtalkDeptUserRelation {

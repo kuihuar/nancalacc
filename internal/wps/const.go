@@ -9,5 +9,6 @@ const (
 )
 
 var (
-	ErrCodeNot200 = errors.New("HTTP status code is not 200")
+	ErrCodeNot200     = errors.New("HTTP status code is not 200")
+	CollectCost   int = 1100000
 )
