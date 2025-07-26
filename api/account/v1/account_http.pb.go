@@ -26,6 +26,7 @@ const OperationAccountCreateSyncAccount = "/api.account.v1.Account/CreateSyncAcc
 const OperationAccountGetAccessToken = "/api.account.v1.Account/GetAccessToken"
 const OperationAccountGetSyncAccount = "/api.account.v1.Account/GetSyncAccount"
 const OperationAccountGetUserInfo = "/api.account.v1.Account/GetUserInfo"
+const OperationAccountUploadFile = "/api.account.v1.Account/UploadFile"
 
 type AccountHTTPServer interface {
 	Callback(context.Context, *CallbackRequest) (*CallbackResponse, error)
@@ -34,6 +35,7 @@ type AccountHTTPServer interface {
 	GetAccessToken(context.Context, *GetAccessTokenRequest) (*GetAccessTokenResponse, error)
 	GetSyncAccount(context.Context, *GetSyncAccountRequest) (*GetSyncAccountReply, error)
 	GetUserInfo(context.Context, *GetUserInfoRequest) (*GetUserInfoResponse, error)
+	UploadFile(context.Context, *UploadRequest) (*UploadReply, error)
 }
 
 func RegisterAccountHTTPServer(s *http.Server, srv AccountHTTPServer) {
@@ -44,6 +46,7 @@ func RegisterAccountHTTPServer(s *http.Server, srv AccountHTTPServer) {
 	r.GET("/v1/oauth/userinfo/me", _Account_GetUserInfo0_HTTP_Handler(srv))
 	r.GET("/v1/oauth/userAccessToken", _Account_GetAccessToken0_HTTP_Handler(srv))
 	r.GET("/v1/oauth/callback", _Account_Callback0_HTTP_Handler(srv))
+	r.POST("/v1/upload", _Account_UploadFile0_HTTP_Handler(srv))
 }
 
 func _Account_CreateSyncAccount0_HTTP_Handler(srv AccountHTTPServer) func(ctx http.Context) error {
@@ -163,6 +166,28 @@ func _Account_Callback0_HTTP_Handler(srv AccountHTTPServer) func(ctx http.Contex
 	}
 }
 
+func _Account_UploadFile0_HTTP_Handler(srv AccountHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in UploadRequest
+		if err := ctx.Bind(&in); err != nil {
+			return err
+		}
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccountUploadFile)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.UploadFile(ctx, req.(*UploadRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*UploadReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 type AccountHTTPClient interface {
 	Callback(ctx context.Context, req *CallbackRequest, opts ...http.CallOption) (rsp *CallbackResponse, err error)
 	CancelSyncTask(ctx context.Context, req *CancelSyncAccountRequest, opts ...http.CallOption) (rsp *emptypb.Empty, err error)
@@ -170,6 +195,7 @@ type AccountHTTPClient interface {
 	GetAccessToken(ctx context.Context, req *GetAccessTokenRequest, opts ...http.CallOption) (rsp *GetAccessTokenResponse, err error)
 	GetSyncAccount(ctx context.Context, req *GetSyncAccountRequest, opts ...http.CallOption) (rsp *GetSyncAccountReply, err error)
 	GetUserInfo(ctx context.Context, req *GetUserInfoRequest, opts ...http.CallOption) (rsp *GetUserInfoResponse, err error)
+	UploadFile(ctx context.Context, req *UploadRequest, opts ...http.CallOption) (rsp *UploadReply, err error)
 }
 
 type AccountHTTPClientImpl struct {
@@ -252,6 +278,19 @@ func (c *AccountHTTPClientImpl) GetUserInfo(ctx context.Context, in *GetUserInfo
 	opts = append(opts, http.Operation(OperationAccountGetUserInfo))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *AccountHTTPClientImpl) UploadFile(ctx context.Context, in *UploadRequest, opts ...http.CallOption) (*UploadReply, error) {
+	var out UploadReply
+	pattern := "/v1/upload"
+	path := binding.EncodeURL(pattern, in, false)
+	opts = append(opts, http.Operation(OperationAccountUploadFile))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

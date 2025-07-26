@@ -3,8 +3,11 @@ package biz
 import (
 	"context"
 	"errors"
+	"fmt"
 	v1 "nancalacc/api/account/v1"
-	"nancalacc/internal/conf"
+	"nancalacc/internal/auth"
+	"nancalacc/internal/dingtalk"
+	"nancalacc/internal/wps"
 	"strconv"
 	"time"
 
@@ -24,57 +27,63 @@ type Accounter struct {
 	Hello string
 }
 
-type AccounterConf struct {
-	Env            string `json:"env"`
-	LogLevel       string `json:"log_level"`
-	AccessKey      string `json:"access_key"`
-	SecretKey      string `json:"secret_key"`
-	ThirdCompanyID string `json:"third_company_id"`
-	PlatformIDs    string `json:"platform_ids"`
-	CompanyID      string `json:"company_id"`
-}
+// type AccounterConf struct {
+// 	Env            string `json:"env"`
+// 	LogLevel       string `json:"log_level"`
+// 	AccessKey      string `json:"access_key"`
+// 	SecretKey      string `json:"secret_key"`
+// 	ThirdCompanyID string `json:"third_company_id"`
+// 	PlatformIDs    string `json:"platform_ids"`
+// 	CompanyID      string `json:"company_id"`
+// }
 
-func NewAccounterConf(c *conf.ServiceConf) *AccounterConf {
-	conf := &AccounterConf{
-		Env:            c.Env,
-		LogLevel:       c.LogLevel,
-		AccessKey:      c.AccessKey,
-		SecretKey:      c.SecretKey,
-		ThirdCompanyID: c.ThirdCompanyId,
-		PlatformIDs:    c.PlatformIds,
-		CompanyID:      c.CompanyId,
-	}
-	return conf
-}
+// func NewAccounterConf(c *conf.Service) *AccounterConf {
+// 	conf := &AccounterConf{
+// 		Env:            c.Env,
+// 		LogLevel:       c.LogLevel,
+// 		AccessKey:      c.AccessKey,
+// 		SecretKey:      c.SecretKey,
+// 		ThirdCompanyID: c.ThirdCompanyId,
+// 		PlatformIDs:    c.PlatformIds,
+// 		CompanyID:      c.CompanyId,
+// 	}
+// 	return conf
+// }
+
+// type AuthProvider interface {
+// 	GetAccessToken(ctx context.Context) (string, error)
+// }
 
 // GreeterRepo is a Greater repo.
 type AccounterRepo interface {
-	SaveUsers(ctx context.Context, users []*DingtalkDeptUser, taskId string) (int, error)
-	SaveDepartments(ctx context.Context, depts []*DingtalkDept, taskId string) (int, error)
-	SaveDepartmentUserRelations(ctx context.Context, relations []*DingtalkDeptUserRelation, taskId string) (int, error)
-	SaveCompanyCfg(ctx context.Context, cfg *DingtalkCompanyCfg) error
+	SaveUsers(ctx context.Context, users []*dingtalk.DingtalkDeptUser, taskId string) (int, error)
+	SaveDepartments(ctx context.Context, depts []*dingtalk.DingtalkDept, taskId string) (int, error)
+	SaveDepartmentUserRelations(ctx context.Context, relations []*dingtalk.DingtalkDeptUserRelation, taskId string) (int, error)
+	SaveCompanyCfg(ctx context.Context, cfg *dingtalk.DingtalkCompanyCfg) error
 
-	CallEcisaccountsyncAll(ctx context.Context, taskId string) (EcisaccountsyncAllResponse, error)
+	//CallEcisaccountsyncAll(ctx context.Context, taskId string) (EcisaccountsyncAllResponse, error)
 
 	ClearAll(ctx context.Context) error
 
-	SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel []*DingtalkDept) error
-	SaveIncrementUsers(ctx context.Context, usersAdd, usersDel []*DingtalkDeptUser) error
-	SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel []*DingtalkDeptUserRelation) error
+	SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel []*dingtalk.DingtalkDept) error
+	SaveIncrementUsers(ctx context.Context, usersAdd, usersDel []*dingtalk.DingtalkDeptUser) error
+	SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel []*dingtalk.DingtalkDeptUserRelation) error
 
-	CallEcisaccountsyncIncrement(ctx context.Context, thirdCompanyId string) (EcisaccountsyncIncrementResponse, error)
+	//CallEcisaccountsyncIncrement(ctx context.Context, thirdCompanyId string) (EcisaccountsyncIncrementResponse, error)
 }
 
 // GreeterUsecase is a Greeter usecase.
 type AccounterUsecase struct {
 	repo         AccounterRepo
-	dingTalkRepo DingTalkRepo
+	dingTalkRepo dingtalk.Dingtalk
+	appAuth      auth.Authenticator
+	wpsSync      wps.Wps
 	log          *log.Helper
 }
 
 // NewGreeterUsecase new a Greeter usecase.
-func NewAccounterUsecase(repo AccounterRepo, dingTalkRepo DingTalkRepo, logger log.Logger) *AccounterUsecase {
-	return &AccounterUsecase{repo: repo, dingTalkRepo: dingTalkRepo, log: log.NewHelper(logger)}
+func NewAccounterUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, appAuth auth.Authenticator, wpsSync wps.Wps, logger log.Logger) *AccounterUsecase {
+	return &AccounterUsecase{repo: repo, dingTalkRepo: dingTalkRepo, appAuth: appAuth, wpsSync: wpsSync, log: log.NewHelper(logger)}
 }
 
 func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
@@ -82,11 +91,10 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	// 	TaskId:     "taskId",
 	// 	CreateTime: timestamppb.Now(),
 	// }, nil
-
 	uc.log.WithContext(ctx).Infof("CreateSyncAccount: %v", req)
 
 	uc.log.WithContext(ctx).Info("CreateSyncAccount.SaveCompanyCfg")
-	err := uc.repo.SaveCompanyCfg(ctx, &DingtalkCompanyCfg{})
+	err := uc.repo.SaveCompanyCfg(ctx, &dingtalk.DingtalkCompanyCfg{})
 	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveCompanyCfg: err: %v", err)
 	if err != nil {
 		return nil, err
@@ -145,7 +153,7 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	}
 
 	// 2. 关系数据入库
-	var deptUserRelations []*DingtalkDeptUserRelation
+	var deptUserRelations []*dingtalk.DingtalkDeptUserRelation
 	for _, deptUser := range deptUsers {
 		order := int(deptUser.DeptOrder)
 		if order > 0 {
@@ -155,7 +163,7 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 		}
 		for _, depId := range deptUser.DeptIDList {
 
-			deptUserRelations = append(deptUserRelations, &DingtalkDeptUserRelation{
+			deptUserRelations = append(deptUserRelations, &dingtalk.DingtalkDeptUserRelation{
 				Uid:   deptUser.Userid,
 				Did:   strconv.FormatInt(depId, 10),
 				Order: order,
@@ -172,7 +180,13 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	}
 	uc.log.WithContext(ctx).Infof("CreateSyncAccount.CallEcisaccountsyncAll taskId: %v", taskId)
 
-	res, err := uc.repo.CallEcisaccountsyncAll(ctx, taskId)
+	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("appAccessToken", appAccessToken)
+
+	res, err := uc.wpsSync.CallEcisaccountsyncAll(ctx, taskId, taskId)
 	uc.log.WithContext(ctx).Infof("CreateSyncAccount.CallEcisaccountsyncAll res: %v, err: %v", res, err)
 
 	if err != nil {
@@ -285,7 +299,7 @@ func (uc *AccounterUsecase) OrgDeptCreate(ctx context.Context, event *clientV2.G
 		return err
 	}
 
-	res, err := uc.repo.CallEcisaccountsyncIncrement(ctx, "taskId")
+	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, "taskId", "thirdCompanyId")
 
 	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
 	if err != nil {
@@ -314,11 +328,11 @@ func (uc *AccounterUsecase) OrgDeptRemove(ctx context.Context, event *clientV2.G
 		uc.log.Info("OrgDeptCreate len(depIds) eq 0")
 		return nil
 	}
-	depts := make([]*DingtalkDept, len(depIds))
+	depts := make([]*dingtalk.DingtalkDept, len(depIds))
 
 	// TODO 从 wps 获取 ParentID, 才可以提交
 	for i, depId := range depIds {
-		depts[i] = &DingtalkDept{
+		depts[i] = &dingtalk.DingtalkDept{
 			DeptID: depId,
 		}
 	}
@@ -335,7 +349,7 @@ func (uc *AccounterUsecase) OrgDeptRemove(ctx context.Context, event *clientV2.G
 	// 	return err
 	// }
 
-	res, err := uc.repo.CallEcisaccountsyncIncrement(ctx, "taskId")
+	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, "taskId", "thirdCompanyId")
 
 	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
 	if err != nil {
@@ -380,7 +394,7 @@ func (uc *AccounterUsecase) UserAddOrg(ctx context.Context, event *clientV2.Gene
 		return err
 	}
 
-	res, err := uc.repo.CallEcisaccountsyncIncrement(ctx, "taskId")
+	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, "taskId", "thirdCompanyId")
 
 	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
 	if err != nil {
@@ -404,9 +418,9 @@ func (uc *AccounterUsecase) UserLeaveOrg(ctx context.Context, event *clientV2.Ge
 	if err != nil {
 		return err
 	}
-	users := make([]*DingtalkDeptUser, len(userIds))
+	users := make([]*dingtalk.DingtalkDeptUser, len(userIds))
 	for i, userId := range userIds {
-		users[i] = &DingtalkDeptUser{
+		users[i] = &dingtalk.DingtalkDeptUser{
 			Userid: userId,
 		}
 	}
@@ -432,7 +446,7 @@ func (uc *AccounterUsecase) UserLeaveOrg(ctx context.Context, event *clientV2.Ge
 	// 	return err
 	// }
 
-	res, err := uc.repo.CallEcisaccountsyncIncrement(ctx, "taskId")
+	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, "taskId", "thirdCompanyId")
 
 	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
 	if err != nil {
@@ -442,8 +456,8 @@ func (uc *AccounterUsecase) UserLeaveOrg(ctx context.Context, event *clientV2.Ge
 	return nil
 }
 
-func generateUserDeptRelations(deptUsers []*DingtalkDeptUser) []*DingtalkDeptUserRelation {
-	var deptUserRelations []*DingtalkDeptUserRelation
+func generateUserDeptRelations(deptUsers []*dingtalk.DingtalkDeptUser) []*dingtalk.DingtalkDeptUserRelation {
+	var deptUserRelations []*dingtalk.DingtalkDeptUserRelation
 	for _, deptUser := range deptUsers {
 		order := int(deptUser.DeptOrder)
 		if order > 0 {
@@ -453,7 +467,7 @@ func generateUserDeptRelations(deptUsers []*DingtalkDeptUser) []*DingtalkDeptUse
 		}
 		for _, depId := range deptUser.DeptIDList {
 
-			deptUserRelations = append(deptUserRelations, &DingtalkDeptUserRelation{
+			deptUserRelations = append(deptUserRelations, &dingtalk.DingtalkDeptUserRelation{
 				Uid:   deptUser.Userid,
 				Did:   strconv.FormatInt(depId, 10),
 				Order: order,

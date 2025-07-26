@@ -9,12 +9,15 @@ package main
 import (
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
+	"nancalacc/internal/auth"
 	"nancalacc/internal/biz"
 	"nancalacc/internal/conf"
 	"nancalacc/internal/data"
+	"nancalacc/internal/dingtalk"
 	"nancalacc/internal/server"
 	"nancalacc/internal/service"
 	"nancalacc/internal/task"
+	"nancalacc/internal/wps"
 )
 
 import (
@@ -24,19 +27,22 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, confService *conf.Service, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
 	dataData, cleanup, err := data.NewData(confData, logger)
 	if err != nil {
 		return nil, nil, err
 	}
-	accounterRepo := data.NewAccounterRepo(dataData, logger)
-	dingTalkRepo := data.NewDingTalkRepo(dataData, logger)
-	accounterUsecase := biz.NewAccounterUsecase(accounterRepo, dingTalkRepo, logger)
+	accounterRepo := data.NewAccounterRepo(confService, dataData, logger)
+	service_Auth_Dingtalk := conf.ProvideDingtalkConfig(confService)
+	dingtalkDingtalk := dingtalk.NewDingTalkRepo(service_Auth_Dingtalk, logger)
+	authenticator := auth.NewAppAuthenticator(confService)
+	wpsWps := wps.NewWpsSync(confService, logger)
+	accounterUsecase := biz.NewAccounterUsecase(accounterRepo, dingtalkDingtalk, authenticator, wpsWps, logger)
 	accountService := service.NewAccountService(accounterUsecase, logger)
 	grpcServer := server.NewGRPCServer(confServer, accountService, logger)
 	httpServer := server.NewHTTPServer(confServer, accountService, logger)
 	cronService := task.NewCronServiceWithJobs(accounterUsecase, logger)
-	dingTalkEventService := service.NewDingTalkEventService(confData, logger, accounterUsecase)
+	dingTalkEventService := service.NewDingTalkEventService(confService, logger, accounterUsecase)
 	app := newApp(logger, grpcServer, httpServer, cronService, dingTalkEventService)
 	return app, func() {
 		cleanup()

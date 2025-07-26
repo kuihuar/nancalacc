@@ -1,8 +1,8 @@
-package biz
+package dingtalk
 
 import "context"
 
-type DingTalkRepo interface {
+type Dingtalk interface {
 	GetAccessToken(ctx context.Context, code string) (string, error)
 	FetchDepartments(ctx context.Context, token string) ([]*DingtalkDept, error)
 	FetchDepartmentUsers(ctx context.Context, token string, deptIds []int64) ([]*DingtalkDeptUser, error)

@@ -70,3 +70,10 @@ func (s *AccountService) Callback(ctx context.Context, req *v1.CallbackRequest) 
 		Message: "success",
 	}, nil
 }
+
+func (s *AccountService) UploadFile(ctx context.Context, req *v1.UploadRequest) (*v1.UploadReply, error) {
+	return &v1.UploadReply{
+		FileUrl:  "https://example.com/file.txt",
+		FileSize: 1024,
+	}, nil
+}

@@ -11,7 +11,7 @@ import (
 )
 
 type DingTalkEventService struct {
-	conf             *conf.Data
+	confService      *conf.Service
 	log              *log.Helper
 	accounterUsecase *biz.AccounterUsecase
 	running          atomic.Bool
@@ -19,17 +19,16 @@ type DingTalkEventService struct {
 	//client clientV2.OpenDingTalkClient
 }
 
-func NewDingTalkEventService(conf *conf.Data, logger log.Logger, accounterUsecase *biz.AccounterUsecase) *DingTalkEventService {
-	return &DingTalkEventService{conf: conf, log: log.NewHelper(logger), accounterUsecase: accounterUsecase}
+func NewDingTalkEventService(confService *conf.Service, logger log.Logger, accounterUsecase *biz.AccounterUsecase) *DingTalkEventService {
+	return &DingTalkEventService{confService: confService, log: log.NewHelper(logger), accounterUsecase: accounterUsecase}
 }
 
 func (es *DingTalkEventService) Start() {
-	log.Info(es.conf.Dingtalk)
-	log.Info(es.conf.ServiceConf)
+	log.Info(es.confService.Auth.Dingtalk)
 
 	cred := &clientV2.AuthClientCredential{
-		ClientId:     es.conf.Dingtalk.AppKey,
-		ClientSecret: es.conf.Dingtalk.AppSecret,
+		ClientId:     es.confService.Auth.Dingtalk.AppKey,
+		ClientSecret: es.confService.Auth.Dingtalk.AppSecret,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

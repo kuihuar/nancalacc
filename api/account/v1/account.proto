@@ -51,6 +51,23 @@ service Account {
 			get: "/v1/oauth/callback"
 		};
 	}
+
+	rpc UploadFile (UploadRequest) returns (UploadReply) {
+		option (google.api.http) = {
+		post: "/v1/upload"
+		body: "*" 
+		};
+	}
+
+}
+
+message UploadRequest {
+  bytes file_data = 1;
+  string file_name = 2;
+}
+message UploadReply {
+  string file_url = 1;
+  int64 file_size = 2;
 }
 
 enum TriggerType {

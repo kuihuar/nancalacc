@@ -2,16 +2,15 @@ package data
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
 	"nancalacc/internal/biz"
+	"nancalacc/internal/conf"
 	"nancalacc/internal/data/models"
+	"nancalacc/internal/dingtalk"
 	"nancalacc/pkg/cipherutil"
-	"nancalacc/pkg/httputil"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
@@ -19,8 +18,9 @@ import (
 )
 
 type accounterRepo struct {
-	data *Data
-	log  *log.Helper
+	serviceConf *conf.Service
+	data        *Data
+	log         *log.Helper
 }
 
 var (
@@ -28,14 +28,15 @@ var (
 )
 
 // NewAccounterRepo .
-func NewAccounterRepo(data *Data, logger log.Logger) biz.AccounterRepo {
+func NewAccounterRepo(serviceConf *conf.Service, data *Data, logger log.Logger) biz.AccounterRepo {
 	return &accounterRepo{
-		data: data,
-		log:  log.NewHelper(logger),
+		serviceConf: serviceConf,
+		data:        data,
+		log:         log.NewHelper(logger),
 	}
 }
 
-func (r *accounterRepo) SaveUsers(ctx context.Context, users []*biz.DingtalkDeptUser, taskId string) (int, error) {
+func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.DingtalkDeptUser, taskId string) (int, error) {
 	r.log.Infof("SaveUsers: %v", users)
 	if len(users) == 0 {
 		r.log.Infof("users is empty")
@@ -43,8 +44,8 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*biz.DingtalkDept
 	}
 	entities := make([]*models.TbLasUser, 0, len(users))
 
-	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
-	platformID := r.data.serviceConf.PlatformIds
+	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
+	platformID := r.serviceConf.Business.PlatformIds
 	for _, user := range users {
 		if user.Name == "" {
 			user.Name = user.Userid
@@ -58,10 +59,11 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*biz.DingtalkDept
 		} else {
 			account = user.Userid
 		}
+		secretKey := r.serviceConf.Auth.Self.SecretKey
 
-		email, errEmail := cipherutil.AesEncryptGcmByKey(user.Email, r.data.serviceConf.SecretKey)
+		email, errEmail := cipherutil.AesEncryptGcmByKey(user.Email, secretKey)
 
-		phone, errPhone := cipherutil.AesEncryptGcmByKey(user.Mobile, r.data.serviceConf.SecretKey)
+		phone, errPhone := cipherutil.AesEncryptGcmByKey(user.Mobile, secretKey)
 
 		r.log.Infof("AesEncryptGcmByKey email: %v, ncrypt email: %v, err: %v", user.Email, email, errEmail)
 		r.log.Infof("AesEncryptGcmByKey phone: %v, ncrypt phone: %v, err: %v", user.Mobile, phone, errPhone)
@@ -102,13 +104,13 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*biz.DingtalkDept
 	return int(result.RowsAffected), nil
 }
 
-func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*biz.DingtalkDept, taskId string) (int, error) {
+func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*dingtalk.DingtalkDept, taskId string) (int, error) {
 	r.log.Infof("SaveDepartments: %v", depts)
 	entities := make([]*models.TbLasDepartment, 0, len(depts))
 
-	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
-	platformID := r.data.serviceConf.PlatformIds
-	companyID := r.data.serviceConf.CompanyId
+	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
+	platformID := r.serviceConf.Business.PlatformIds
+	companyID := r.serviceConf.Business.CompanyId
 	rootDep := &models.TbLasDepartment{
 		Did:            "0",
 		TaskID:         taskId,
@@ -157,13 +159,14 @@ func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*biz.Dingta
 	return int(result.RowsAffected), nil
 }
 
-func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relations []*biz.DingtalkDeptUserRelation, taskId string) (int, error) {
+func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relations []*dingtalk.DingtalkDeptUserRelation, taskId string) (int, error) {
 	r.log.Infof("SaveDepartmentUserRelations: %v", relations)
 
 	entities := make([]*models.TbLasDepartmentUser, 0, len(relations))
 
-	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
-	platformID := r.data.serviceConf.PlatformIds
+	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
+	platformID := r.serviceConf.Business.PlatformIds
+
 	for _, relation := range relations {
 		entities = append(entities, &models.TbLasDepartmentUser{
 			Did:            relation.Did,
@@ -189,12 +192,12 @@ func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relatio
 	return int(result.RowsAffected), nil
 }
 
-func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, cfg *biz.DingtalkCompanyCfg) error {
+func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, cfg *dingtalk.DingtalkCompanyCfg) error {
 	r.log.Infof("SaveCompanyCfg: %v", cfg)
 
-	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
-	platformID := r.data.serviceConf.PlatformIds
-	companyID := r.data.serviceConf.CompanyId
+	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
+	platformID := r.serviceConf.Business.PlatformIds
+	companyID := r.serviceConf.Business.CompanyId
 	entity := &models.TbCompanyCfg{
 		ThirdCompanyId: thirdCompanyID,
 		PlatformIds:    platformID,
@@ -221,35 +224,37 @@ func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, cfg *biz.DingtalkCom
 	return nil
 }
 
-func (r *accounterRepo) CallEcisaccountsyncAll(ctx context.Context, taskId string) (biz.EcisaccountsyncAllResponse, error) {
-	r.log.Infof("CallEcisaccountsyncAll: %v", taskId)
+// func (r *accounterRepo) CallEcisaccountsyncAll(ctx context.Context, taskId string) (biz.EcisaccountsyncAllResponse, error) {
+// 	r.log.Infof("CallEcisaccountsyncAll: %v", taskId)
 
-	path := r.data.serviceConf.EcisaccountsyncUrl
+// 	path := r.serviceConf.Business.EcisaccountsyncUrl
 
-	// path := "http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/all"
-	var resp biz.EcisaccountsyncAllResponse
-	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
-	collectCost := "1100000"
-	uri := fmt.Sprintf("%s?taskId=%s&thirdCompanyId=%s&collectCost=%s", path, taskId, thirdCompanyID, collectCost)
+// 	// path := "http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/all"
+// 	var resp biz.EcisaccountsyncAllResponse
 
-	r.log.Infof("CallEcisaccountsyncAll uri: %s", uri)
-	bs, err := httputil.PostJSON(uri, nil, time.Second*10)
-	r.log.Infof("CallEcisaccountsyncAll.Post output: bs:%s, err:%w", string(bs), err)
+// 	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
 
-	if err != nil {
-		return resp, err
-	}
-	err = json.Unmarshal(bs, &resp)
-	if err != nil {
-		return resp, fmt.Errorf("Unmarshal err: %w", err)
-	}
-	if resp.Code != "200" {
-		return resp, fmt.Errorf("code not 200: %s", resp.Code)
-	}
+// 	collectCost := "1100000"
+// 	uri := fmt.Sprintf("%s?taskId=%s&thirdCompanyId=%s&collectCost=%s", path, taskId, thirdCompanyID, collectCost)
 
-	return resp, nil
+// 	r.log.Infof("CallEcisaccountsyncAll uri: %s", uri)
+// 	bs, err := httputil.PostJSON(uri, nil, time.Second*10)
+// 	r.log.Infof("CallEcisaccountsyncAll.Post output: bs:%s, err:%w", string(bs), err)
 
-}
+// 	if err != nil {
+// 		return resp, err
+// 	}
+// 	err = json.Unmarshal(bs, &resp)
+// 	if err != nil {
+// 		return resp, fmt.Errorf("Unmarshal err: %w", err)
+// 	}
+// 	if resp.Code != "200" {
+// 		return resp, fmt.Errorf("code not 200: %s", resp.Code)
+// 	}
+
+// 	return resp, nil
+
+// }
 
 func (r *accounterRepo) ClearAll(ctx context.Context) error {
 	err := r.data.db.WithContext(ctx).Exec("truncate table tb_company_cfg").Error
@@ -271,11 +276,12 @@ func (r *accounterRepo) ClearAll(ctx context.Context) error {
 	return nil
 }
 
-func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersDel []*biz.DingtalkDeptUser) error {
+func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersDel []*dingtalk.DingtalkDeptUser) error {
 	entities := make([]*models.TbLasUserIncrement, 0, len(usersAdd)+len(usersDel))
 
-	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
-	platformID := r.data.serviceConf.PlatformIds
+	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
+	platformID := r.serviceConf.Business.PlatformIds
+
 	for _, user := range usersAdd {
 		if user.Name == "" {
 			user.Name = user.Userid
@@ -289,9 +295,12 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 		} else {
 			account = user.Userid
 		}
-		email, errEmail := cipherutil.AesEncryptGcmByKey(user.Email, r.data.serviceConf.SecretKey)
 
-		phone, errPhone := cipherutil.AesEncryptGcmByKey(user.Mobile, r.data.serviceConf.SecretKey)
+		secretKey := r.serviceConf.Auth.Self.SecretKey
+
+		email, errEmail := cipherutil.AesEncryptGcmByKey(user.Email, secretKey)
+
+		phone, errPhone := cipherutil.AesEncryptGcmByKey(user.Mobile, secretKey)
 
 		r.log.Infof("AesEncryptGcmByKey email: %v, ncrypt email: %v, err: %v", user.Email, email, errEmail)
 		r.log.Infof("AesEncryptGcmByKey phone: %v, ncrypt phone: %v, err: %v", user.Mobile, phone, errPhone)
@@ -357,12 +366,12 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 
 	return nil
 }
-func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel []*biz.DingtalkDept) error {
+func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel []*dingtalk.DingtalkDept) error {
 	r.log.Infof("SaveIncrementDepartments deptsAdd: %v, deptsDel: %v", deptsAdd, deptsDel)
 	entities := make([]*models.TbLasDepartmentIncrement, 0, len(deptsAdd)+len(deptsDel))
 
-	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
-	platformID := r.data.serviceConf.PlatformIds
+	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
+	platformID := r.serviceConf.Business.PlatformIds
 
 	for _, dep := range deptsDel {
 		entities = append(entities, &models.TbLasDepartmentIncrement{
@@ -376,7 +385,7 @@ func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, 
 			Source:     "sync",
 			Ctime:      time.Now(),
 			Mtime:      time.Now(),
-			UpdateType: "dept_move",
+			UpdateType: "dept_del", //dept_move
 			SyncTime:   time.Now(),
 			SyncType:   "auto",
 			Status:     0,
@@ -414,12 +423,12 @@ func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, 
 	return nil
 }
 
-func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel []*biz.DingtalkDeptUserRelation) error {
+func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel []*dingtalk.DingtalkDeptUserRelation) error {
 
 	entities := make([]*models.TbLasDepartmentUserIncrement, 0, len(relationsAdd)+len(relationsDel))
 
-	thirdCompanyID := r.data.serviceConf.ThirdCompanyId
-	platformID := r.data.serviceConf.PlatformIds
+	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
+	platformID := r.serviceConf.Business.PlatformIds
 
 	for _, relation := range relationsAdd {
 		entities = append(entities, &models.TbLasDepartmentUserIncrement{
@@ -464,69 +473,73 @@ func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context
 	return nil
 }
 
-func (r *accounterRepo) CallEcisaccountsyncIncrement(ctx context.Context, thirdCompanyID string) (biz.EcisaccountsyncIncrementResponse, error) {
+// func (r *accounterRepo) CallEcisaccountsyncIncrement(ctx context.Context, thirdCompanyID string) (biz.EcisaccountsyncIncrementResponse, error) {
 
-	//待开发
-	path := r.data.serviceConf.EcisaccountsyncUrlIncrement
-	r.log.Infof("CallEcisaccountsyncIncrement path : %v", path)
+// 	//待开发
+// 	path := r.serviceConf.Business.EcisaccountsyncUrlIncrement
 
-	uri := path
-	var resp biz.EcisaccountsyncIncrementResponse
-	thirdCompanyID = r.data.serviceConf.ThirdCompanyId
-	input := &biz.EcisaccountsyncIncrementRequest{
-		ThirdCompanyId: thirdCompanyID,
-	}
-	jsonData, err := json.Marshal(input)
-	if err != nil {
-		return resp, err
-	}
+// 	r.log.Infof("CallEcisaccountsyncIncrement path : %v", path)
 
-	r.log.Infof("CallEcisaccountsyncIncrement uri: %s, input: %s", uri, string(jsonData))
-	bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
-	r.log.Infof("CallEcisaccountsyncIncrement.Post output: bs:%s, err:%w", string(bs), err)
+// 	uri := path
+// 	var resp biz.EcisaccountsyncIncrementResponse
+// 	thirdCompanyID = r.serviceConf.Business.ThirdCompanyId
 
-	if err != nil {
-		return resp, err
-	}
-	err = json.Unmarshal(bs, &resp)
-	if err != nil {
-		return resp, fmt.Errorf("Unmarshal err: %w", err)
-	}
-	if resp.Code != "200" {
-		return resp, fmt.Errorf("code not 200: %s", resp.Code)
-	}
+// 	input := &biz.EcisaccountsyncIncrementRequest{
+// 		ThirdCompanyId: thirdCompanyID,
+// 	}
+// 	jsonData, err := json.Marshal(input)
+// 	if err != nil {
+// 		return resp, err
+// 	}
 
-	r.callEcisaccountsyncIncrementTest(ctx, thirdCompanyID)
+// 	r.log.Infof("CallEcisaccountsyncIncrement uri: %s, input: %s", uri, string(jsonData))
+// 	bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
+// 	r.log.Infof("CallEcisaccountsyncIncrement.Post output: bs:%s, err:%w", string(bs), err)
 
-	return resp, nil
+// 	if err != nil {
+// 		return resp, err
+// 	}
+// 	err = json.Unmarshal(bs, &resp)
+// 	if err != nil {
+// 		return resp, fmt.Errorf("Unmarshal err: %w", err)
+// 	}
+// 	if resp.Code != "200" {
+// 		return resp, fmt.Errorf("code not 200: %s", resp.Code)
+// 	}
 
-}
+// 	// r.callEcisaccountsyncIncrementTest(ctx, thirdCompanyID)
 
-func (r *accounterRepo) callEcisaccountsyncIncrementTest(ctx context.Context, thirdCompanyID string) (biz.EcisaccountsyncIncrementResponse, error) {
+// 	return resp, nil
 
-	path := r.data.serviceConf.EcisaccountsyncUrlIncrement
-	thirdCompanyID = r.data.serviceConf.ThirdCompanyId
-	r.log.Infof("callEcisaccountsyncIncrementTest path : %v", path)
+// }
 
-	uri := fmt.Sprintf("%s?&thirdCompanyId=%s", path, thirdCompanyID)
+// func (r *accounterRepo) callEcisaccountsyncIncrementTest(ctx context.Context, thirdCompanyID string) (biz.EcisaccountsyncIncrementResponse, error) {
 
-	var resp biz.EcisaccountsyncIncrementResponse
+// 	path := r.serviceConf.Business.EcisaccountsyncUrlIncrement
 
-	r.log.Infof("callEcisaccountsyncIncrementTest uri: %s", uri)
-	bs, err := httputil.PostJSON(uri, nil, time.Second*10)
-	r.log.Infof("callEcisaccountsyncIncrementTest output: bs:%s, err:%w", string(bs), err)
+// 	thirdCompanyID = r.serviceConf.Business.ThirdCompanyId
 
-	if err != nil {
-		return resp, err
-	}
-	err = json.Unmarshal(bs, &resp)
-	if err != nil {
-		return resp, fmt.Errorf("Unmarshal err: %w", err)
-	}
-	if resp.Code != "200" {
-		return resp, fmt.Errorf("code not 200: %s", resp.Code)
-	}
+// 	r.log.Infof("callEcisaccountsyncIncrementTest path : %v", path)
 
-	return resp, nil
+// 	uri := fmt.Sprintf("%s?&thirdCompanyId=%s", path, thirdCompanyID)
 
-}
+// 	var resp biz.EcisaccountsyncIncrementResponse
+
+// 	r.log.Infof("callEcisaccountsyncIncrementTest uri: %s", uri)
+// 	bs, err := httputil.PostJSON(uri, nil, time.Second*10)
+// 	r.log.Infof("callEcisaccountsyncIncrementTest output: bs:%s, err:%w", string(bs), err)
+
+// 	if err != nil {
+// 		return resp, err
+// 	}
+// 	err = json.Unmarshal(bs, &resp)
+// 	if err != nil {
+// 		return resp, fmt.Errorf("Unmarshal err: %w", err)
+// 	}
+// 	if resp.Code != "200" {
+// 		return resp, fmt.Errorf("code not 200: %s", resp.Code)
+// 	}
+
+// 	return resp, nil
+
+// }

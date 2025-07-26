@@ -26,3 +26,22 @@ func PostJSON(uri string, jsonData []byte, timeout time.Duration) ([]byte, error
 	}
 	return bs, nil
 }
+
+func Post(uri string, data []byte, timeout time.Duration) ([]byte, error) {
+	httpClient := &http.Client{Timeout: timeout}
+	resp, err := httpClient.Post(uri, "application/x-www-form-urlencoded", bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		return nil, fmt.Errorf("HTTP error: %s", resp.Status)
+	}
+
+	bs, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return bs, nil
+}
