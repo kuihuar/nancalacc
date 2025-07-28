@@ -13,6 +13,10 @@ data:
     addr: 127.0.0.1:6379
     read_timeout: 0.2s
     write_timeout: 0.2s
+  auth:
+   app_id: "com.acc.async"
+   app_secret: "dSv5TAv7fDArmoI9GQY0dxImQcb85SiO"
+
 app:
   id: "nancalacc"
   name: "nancalacc"

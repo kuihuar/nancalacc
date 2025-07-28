@@ -49,7 +49,11 @@ func (k *KsoSign) getKso1Signature(secretKey, method, uri, ksoDate, contentType 
 
 	mac := hmac.New(sha256.New, []byte(secretKey))
 
-	mac.Write([]byte("KSO-1" + method + uri + contentType + ksoDate + sha256Hex))
+	signatureByte := []byte("KSO-1" + method + uri + contentType + ksoDate + sha256Hex)
+
+	// fmt.Printf("signature origin: %s\n", string(signatureByte))
+	// fmt.Printf("signature sha256Hex body: %s\n", sha256Hex)
+	mac.Write(signatureByte)
 
 	return hex.EncodeToString(mac.Sum(nil))
 }

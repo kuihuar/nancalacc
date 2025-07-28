@@ -15,10 +15,11 @@ import (
 type AccountService struct {
 	v1.UnimplementedAccountServer
 	accounterUsecase *biz.AccounterUsecase
+	oauth2Usecase    *biz.Oauth2Usecase
 	log              *log.Helper
 }
 
-func NewAccountService(accounterUsecase *biz.AccounterUsecase, logger log.Logger) *AccountService {
+func NewAccountService(accounterUsecase *biz.AccounterUsecase, oauth2Usecase *biz.Oauth2Usecase, logger log.Logger) *AccountService {
 	return &AccountService{accounterUsecase: accounterUsecase, log: log.NewHelper(logger)}
 }
 
@@ -40,7 +41,7 @@ func (s *AccountService) GetUserInfo(ctx context.Context, req *v1.GetUserInfoReq
 	if accessToken == "" {
 		return nil, errors.New("access_token is empty")
 	}
-	userInfo, err := s.accounterUsecase.GetUserInfo(ctx, &v1.GetUserInfoRequest{
+	userInfo, err := s.oauth2Usecase.GetUserInfo(ctx, &v1.GetUserInfoRequest{
 		AccessToken: accessToken,
 	})
 	if err != nil {
@@ -54,7 +55,7 @@ func (s *AccountService) GetAccessToken(ctx context.Context, req *v1.GetAccessTo
 	if code == "" {
 		return nil, errors.New("code is empty")
 	}
-	accessTokenResp, err := s.accounterUsecase.GetAccessToken(ctx, &v1.GetAccessTokenRequest{
+	accessTokenResp, err := s.oauth2Usecase.GetAccessToken(ctx, &v1.GetAccessTokenRequest{
 		Code: code,
 	})
 	if err != nil {

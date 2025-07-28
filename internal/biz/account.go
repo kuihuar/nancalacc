@@ -2,7 +2,6 @@ package biz
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	v1 "nancalacc/api/account/v1"
 	"nancalacc/internal/auth"
@@ -14,7 +13,6 @@ import (
 
 	//"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/open-dingtalk/dingtalk-stream-sdk-go/clientV2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -35,15 +33,11 @@ type AccounterRepo interface {
 	SaveDepartmentUserRelations(ctx context.Context, relations []*dingtalk.DingtalkDeptUserRelation, taskId string) (int, error)
 	SaveCompanyCfg(ctx context.Context, cfg *dingtalk.DingtalkCompanyCfg) error
 
-	//CallEcisaccountsyncAll(ctx context.Context, taskId string) (EcisaccountsyncAllResponse, error)
-
 	ClearAll(ctx context.Context) error
 
 	SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel []*dingtalk.DingtalkDept) error
 	SaveIncrementUsers(ctx context.Context, usersAdd, usersDel []*dingtalk.DingtalkDeptUser) error
 	SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel []*dingtalk.DingtalkDeptUserRelation) error
-
-	//CallEcisaccountsyncIncrement(ctx context.Context, thirdCompanyId string) (EcisaccountsyncIncrementResponse, error)
 }
 
 // GreeterUsecase is a Greeter usecase.
@@ -52,13 +46,14 @@ type AccounterUsecase struct {
 	dingTalkRepo dingtalk.Dingtalk
 	appAuth      auth.Authenticator
 	wpsSync      wps.WpsSync
+	wps          wps.Wps
 	bizConf      *conf.Service_Business
 	log          *log.Helper
 }
 
 // NewGreeterUsecase new a Greeter usecase.
-func NewAccounterUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, appAuth auth.Authenticator, wpsSync wps.WpsSync, bizConf *conf.Service_Business, logger log.Logger) *AccounterUsecase {
-	return &AccounterUsecase{repo: repo, dingTalkRepo: dingTalkRepo, appAuth: appAuth, wpsSync: wpsSync, bizConf: bizConf, log: log.NewHelper(logger)}
+func NewAccounterUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, appAuth auth.Authenticator, wpsSync wps.WpsSync, wps wps.Wps, bizConf *conf.Service_Business, logger log.Logger) *AccounterUsecase {
+	return &AccounterUsecase{repo: repo, dingTalkRepo: dingTalkRepo, appAuth: appAuth, wpsSync: wpsSync, wps: wps, bizConf: bizConf, log: log.NewHelper(logger)}
 }
 
 func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
@@ -161,7 +156,7 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	}
 	fmt.Println("appAccessToken", appAccessToken)
 
-	res, err := uc.wpsSync.CallEcisaccountsyncAll(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncAllRequest{
+	res, err := uc.wpsSync.PostEcisaccountsyncAll(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncAllRequest{
 		TaskId:         taskId,
 		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
 	})
@@ -181,362 +176,4 @@ func (uc *AccounterUsecase) GetSyncAccount(ctx context.Context, req *v1.GetSyncA
 	return &v1.GetSyncAccountReply{
 		Status: v1.GetSyncAccountReply_SUCCESS,
 	}, nil
-}
-
-func (uc *AccounterUsecase) GetUserInfo(ctx context.Context, req *v1.GetUserInfoRequest) (*v1.GetUserInfoResponse, error) {
-	uc.log.WithContext(ctx).Infof("GetUserInfo: %v", req)
-	accessToken := req.GetAccessToken()
-	if accessToken == "" {
-		return nil, errors.New("access_token is empty")
-	}
-	var userId string
-	userInfo, err := uc.dingTalkRepo.GetUserInfo(ctx, accessToken, "me")
-	uc.log.WithContext(ctx).Infof("GetUserInfo.dingTalkRepo.GetUserInfo: %v, err:%v", userInfo, err)
-	if err != nil {
-		uc.log.WithContext(ctx).Errorf("GetUserInfo.dingTalkRepo.GetUserInfo: %v, err:%v", userInfo, err)
-		return nil, err
-	}
-	token, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-	uc.log.WithContext(ctx).Infof("GetUserInfo.dingTalkRepo.GetAccessToken: token: %v, err: %v", token, err)
-	if err != nil {
-		uc.log.WithContext(ctx).Error("GetUserInfo.dingTalkRepo.GetAccessToken: token: %v, err: %v", token, err)
-		return nil, err
-	}
-	userId, err = uc.dingTalkRepo.GetUseridByUnionid(ctx, token, userInfo.UnionId)
-	uc.log.WithContext(ctx).Infof("GetUserInfo.GetUseridByUnionid: userId: %v, err: %v", userId, err)
-
-	if err != nil {
-		uc.log.WithContext(ctx).Error("GetUserInfo.GetUseridByUnionid: userId: %v, err: %v", userId, err)
-		return nil, err
-	}
-
-	return &v1.GetUserInfoResponse{
-		UnionId: userInfo.UnionId,
-		UserId:  userId,
-		Name:    userInfo.Nick,
-		Email:   userInfo.Email,
-		Avatar:  userInfo.AvatarUrl,
-	}, nil
-}
-
-// https://login.dingtalk.com/oauth2/challenge.htm?
-// client_id=dinglz1setxqhrpp7aa0
-// &redirect_uri=http://119.3.173.229/cloud/login/api/v1/oauth/code/login?auth_type=oauth
-// &platform_id=1
-// &response_type=code
-// &state=6c938a3e11174f67bf40b2d7d679dbe1
-func (s *AccounterUsecase) GetAccessToken(ctx context.Context, req *v1.GetAccessTokenRequest) (*v1.GetAccessTokenResponse, error) {
-	s.log.WithContext(ctx).Infof("GetAccessToken: %v", req)
-	code := req.GetCode()
-	if code == "" {
-		return nil, errors.New("code is empty")
-	}
-	tokenRes, err := s.dingTalkRepo.GetUserAccessToken(ctx, code)
-	if err != nil {
-		return nil, err
-	}
-	return &v1.GetAccessTokenResponse{
-		AccessToken:  tokenRes.AccessToken,
-		RefreshToken: tokenRes.RefreshToken,
-		ExpiresIn:    int64(tokenRes.ExpireIn),
-		//RefreshToken: tokenRes.RefreshToken,
-	}, nil
-}
-
-func (uc *AccounterUsecase) OrgDeptCreate(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
-	uc.log.Infof("OrgDeptCreate: %v", event.Data)
-	if event.Data == nil {
-		return nil
-	}
-
-	depIds, err := uc.getDeptidsFromDingTalkEvent(event)
-	if err != nil {
-		return err
-	}
-
-	if len(depIds) == 0 {
-		uc.log.Info("OrgDeptCreate len(depIds) eq 0")
-		return nil
-	}
-
-	accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-	uc.log.WithContext(ctx).Infof("OrgDeptCreate.GetAccessToken accessToken: %v, err: %v", accessToken, err)
-	if err != nil {
-		return err
-	}
-	uc.log.WithContext(ctx).Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v", accessToken, depIds)
-	depts, err := uc.dingTalkRepo.FetchDeptDetails(ctx, accessToken, depIds)
-	uc.log.WithContext(ctx).Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v, err:%v", accessToken, depIds, err)
-	if err != nil {
-		return err
-	}
-
-	err = uc.repo.SaveIncrementDepartments(ctx, depts, nil)
-	if err != nil {
-		uc.log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
-		return err
-	}
-
-	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
-	if err != nil {
-		return err
-	}
-
-	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
-		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
-	})
-
-	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
-
-	return err
-
-}
-func (uc *AccounterUsecase) OrgDeptModify(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
-	return uc.repo.SaveIncrementDepartments(ctx, nil, nil)
-}
-func (uc *AccounterUsecase) OrgDeptRemove(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
-	uc.log.Infof("OrgDeptCreate: %v", event.Data)
-	if event.Data == nil {
-		return nil
-	}
-
-	depIds, err := uc.getDeptidsFromDingTalkEvent(event)
-	if err != nil {
-		return err
-	}
-
-	if len(depIds) == 0 {
-		uc.log.Info("OrgDeptCreate len(depIds) eq 0")
-		return nil
-	}
-	depts := make([]*dingtalk.DingtalkDept, len(depIds))
-
-	// TODO 从 wps 获取 ParentID, 才可以提交
-	for i, depId := range depIds {
-		depts[i] = &dingtalk.DingtalkDept{
-			DeptID: depId,
-		}
-	}
-
-	// accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-	// uc.log.WithContext(ctx).Infof("OrgDeptCreate.GetAccessToken accessToken: %v, err: %v", accessToken, err)
-	// if err != nil {
-	// 	return err
-	// }
-	// uc.log.WithContext(ctx).Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v", accessToken, depIds)
-	// depts, err := uc.dingTalkRepo.FetchDeptDetails(ctx, accessToken, depIds)
-	// uc.log.WithContext(ctx).Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v, err:%v", accessToken, depIds, err)
-	// if err != nil {
-	// 	return err
-	// }
-
-	err = uc.repo.SaveIncrementDepartments(ctx, nil, depts)
-	if err != nil {
-		return err
-	}
-
-	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
-	if err != nil {
-		return err
-	}
-
-	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
-		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
-	})
-
-	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
-
-	return err
-}
-func (uc *AccounterUsecase) UserAddOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
-	uc.log.Infof("UserAddOrg: %v", event.Data)
-	if event.Data == nil {
-		return nil
-	}
-
-	userIds, err := uc.getUseridsFromDingTalkEvent(event)
-	if err != nil {
-		return err
-	}
-
-	accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-	uc.log.WithContext(ctx).Infof("UserAddOrg.GetAccessToken accessToken: %v,userIds:%v err: %v", accessToken, userIds, err)
-	if err != nil {
-		return err
-	}
-	uc.log.WithContext(ctx).Infof("UserAddOrg.GetUserDetail userIds: %v", userIds)
-	users, err := uc.dingTalkRepo.FetchUserDetail(ctx, accessToken, userIds)
-	if err != nil {
-		return err
-	}
-
-	err = uc.repo.SaveIncrementUsers(ctx, users, nil)
-	if err != nil {
-		return err
-	}
-
-	relations := generateUserDeptRelations(users)
-
-	err = uc.repo.SaveIncrementDepartmentUserRelations(ctx, relations, nil)
-
-	if err != nil {
-		return err
-	}
-
-	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
-	if err != nil {
-		return err
-	}
-
-	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
-		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
-	})
-
-	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
-
-	return err
-}
-func (uc *AccounterUsecase) UserModifyOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
-	return uc.repo.SaveIncrementUsers(ctx, nil, nil)
-}
-func (uc *AccounterUsecase) UserLeaveOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
-
-	uc.log.Infof("UserLeaveOrg: %v", event.Data)
-	if event.Data == nil {
-		return nil
-	}
-
-	userIds, err := uc.getUseridsFromDingTalkEvent(event)
-	if err != nil {
-		return err
-	}
-	users := make([]*dingtalk.DingtalkDeptUser, len(userIds))
-	for i, userId := range userIds {
-		users[i] = &dingtalk.DingtalkDeptUser{
-			Userid: userId,
-		}
-	}
-	// accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-	// uc.log.WithContext(ctx).Infof("CreateSyncAccount.GetAccessToken accessToken: %v,userIds:%v err: %v", accessToken, userIds, err)
-	// if err != nil {
-	// 	return err
-	// }
-	// uc.log.WithContext(ctx).Infof("CreateSyncAccount.GetAccessToken: accessToken: %v, err: %v", accessToken, err)
-	// users, err := uc.dingTalkRepo.FetchUserDetail(ctx, accessToken, userIds)
-	// if err != nil {
-	// 	return err
-	// }
-	err = uc.repo.SaveIncrementUsers(ctx, nil, users)
-	if err != nil {
-		return err
-	}
-	// relations := generateUserDeptRelations(users)
-
-	// err = uc.repo.SaveIncrementDepartmentUserRelations(ctx, nil, relations)
-
-	// if err != nil {
-	// 	return err
-	// }
-
-	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
-	if err != nil {
-		return err
-	}
-
-	res, err := uc.wpsSync.CallEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
-		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
-	})
-
-	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
-
-	return err
-}
-
-func generateUserDeptRelations(deptUsers []*dingtalk.DingtalkDeptUser) []*dingtalk.DingtalkDeptUserRelation {
-	var deptUserRelations []*dingtalk.DingtalkDeptUserRelation
-	for _, deptUser := range deptUsers {
-		order := int(deptUser.DeptOrder)
-		if order > 0 {
-			order = 1
-		} else {
-			order = 0
-		}
-		for _, depId := range deptUser.DeptIDList {
-
-			deptUserRelations = append(deptUserRelations, &dingtalk.DingtalkDeptUserRelation{
-				Uid:   deptUser.Userid,
-				Did:   strconv.FormatInt(depId, 10),
-				Order: order,
-			})
-		}
-
-	}
-
-	return deptUserRelations
-}
-
-func (uc *AccounterUsecase) getDeptidsFromDingTalkEvent(event *clientV2.GenericOpenDingTalkEvent) ([]int64, error) {
-	uc.log.Infof("getDeptidsFromDingTalkEvent: %v", event.Data)
-	if event.Data == nil {
-		return nil, errors.New("getDeptidsFromDingTalkEvent event.Data is nil")
-	}
-	datamap := event.Data
-	var depIds []int64
-
-	deptId, exists := datamap["deptId"]
-
-	if !exists {
-		uc.log.Errorf("getDeptidsFromDingTalkEvent not deptId: %v, exists: %v", deptId, exists)
-		return nil, errors.New("getDeptidsFromDingTalkEvent not deptId")
-	}
-
-	deptIdSlice, ok := deptId.([]interface{})
-
-	if !ok {
-		uc.log.Errorf("deptId not []interface{}: %v, exists: %v", deptId, exists)
-		return nil, errors.New("deptId not []interface{}")
-	}
-
-	for _, item := range deptIdSlice {
-		if f, ok := item.(float64); ok {
-			depIds = append(depIds, int64(f))
-		} else {
-			uc.log.Errorf("deptId not float64: %T", item)
-			return nil, errors.New("deptId not float64")
-		}
-	}
-	return depIds, nil
-}
-
-func (uc *AccounterUsecase) getUseridsFromDingTalkEvent(event *clientV2.GenericOpenDingTalkEvent) ([]string, error) {
-	uc.log.Infof("getUseridsFromDingTalkEvent: %v", event.Data)
-	if event.Data == nil {
-		return nil, errors.New("getUseridsFromDingTalkEvent event.Data is nil")
-	}
-	datamap := event.Data
-	var userIds []string
-
-	userId, exists := datamap["userId"]
-
-	if !exists {
-		uc.log.Errorf("getUseridsFromDingTalkEvent not userId: %v, exists: %v", userId, exists)
-		return nil, errors.New("getUseridsFromDingTalkEvent not userId")
-	}
-
-	userIdSlice, ok := userId.([]interface{})
-
-	if !ok {
-		uc.log.Errorf("deptId not []interface{}: %v, exists: %v", userId, exists)
-		return nil, errors.New("userId not []interface{}")
-	}
-
-	for _, item := range userIdSlice {
-		if f, ok := item.(string); ok {
-			userIds = append(userIds, f)
-		} else {
-			uc.log.Errorf("userId not string: %T", item)
-			return nil, errors.New("userId not string")
-		}
-	}
-	return userIds, nil
 }

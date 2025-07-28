@@ -146,6 +146,7 @@ type Data struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Database      *Data_Database         `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
 	Redis         *Data_Redis            `protobuf:"bytes,2,opt,name=redis,proto3" json:"redis,omitempty"`
+	Auth          *Data_Auth             `protobuf:"bytes,3,opt,name=auth,proto3" json:"auth,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -190,6 +191,13 @@ func (x *Data) GetDatabase() *Data_Database {
 func (x *Data) GetRedis() *Data_Redis {
 	if x != nil {
 		return x.Redis
+	}
+	return nil
+}
+
+func (x *Data) GetAuth() *Data_Auth {
+	if x != nil {
+		return x.Auth
 	}
 	return nil
 }
@@ -562,6 +570,58 @@ func (x *Data_Redis) GetWriteTimeout() *durationpb.Duration {
 	return nil
 }
 
+type Data_Auth struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AppId         string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	AppSecret     string                 `protobuf:"bytes,2,opt,name=app_secret,json=appSecret,proto3" json:"app_secret,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Data_Auth) Reset() {
+	*x = Data_Auth{}
+	mi := &file_conf_conf_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Data_Auth) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Data_Auth) ProtoMessage() {}
+
+func (x *Data_Auth) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Data_Auth.ProtoReflect.Descriptor instead.
+func (*Data_Auth) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{2, 2}
+}
+
+func (x *Data_Auth) GetAppId() string {
+	if x != nil {
+		return x.AppId
+	}
+	return ""
+}
+
+func (x *Data_Auth) GetAppSecret() string {
+	if x != nil {
+		return x.AppSecret
+	}
+	return ""
+}
+
 type Service_Business struct {
 	state                       protoimpl.MessageState `protogen:"open.v1"`
 	ThirdCompanyId              string                 `protobuf:"bytes,1,opt,name=third_company_id,json=thirdCompanyId,proto3" json:"third_company_id,omitempty"`
@@ -575,7 +635,7 @@ type Service_Business struct {
 
 func (x *Service_Business) Reset() {
 	*x = Service_Business{}
-	mi := &file_conf_conf_proto_msgTypes[9]
+	mi := &file_conf_conf_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -587,7 +647,7 @@ func (x *Service_Business) String() string {
 func (*Service_Business) ProtoMessage() {}
 
 func (x *Service_Business) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[9]
+	mi := &file_conf_conf_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -651,7 +711,7 @@ type Service_Auth struct {
 
 func (x *Service_Auth) Reset() {
 	*x = Service_Auth{}
-	mi := &file_conf_conf_proto_msgTypes[10]
+	mi := &file_conf_conf_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -663,7 +723,7 @@ func (x *Service_Auth) String() string {
 func (*Service_Auth) ProtoMessage() {}
 
 func (x *Service_Auth) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[10]
+	mi := &file_conf_conf_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -726,7 +786,7 @@ type Service_Auth_Self struct {
 
 func (x *Service_Auth_Self) Reset() {
 	*x = Service_Auth_Self{}
-	mi := &file_conf_conf_proto_msgTypes[11]
+	mi := &file_conf_conf_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -738,7 +798,7 @@ func (x *Service_Auth_Self) String() string {
 func (*Service_Auth_Self) ProtoMessage() {}
 
 func (x *Service_Auth_Self) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[11]
+	mi := &file_conf_conf_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -795,7 +855,7 @@ type Service_Auth_App struct {
 
 func (x *Service_Auth_App) Reset() {
 	*x = Service_Auth_App{}
-	mi := &file_conf_conf_proto_msgTypes[12]
+	mi := &file_conf_conf_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -807,7 +867,7 @@ func (x *Service_Auth_App) String() string {
 func (*Service_Auth_App) ProtoMessage() {}
 
 func (x *Service_Auth_App) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[12]
+	mi := &file_conf_conf_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -872,7 +932,7 @@ type Service_Auth_Third struct {
 
 func (x *Service_Auth_Third) Reset() {
 	*x = Service_Auth_Third{}
-	mi := &file_conf_conf_proto_msgTypes[13]
+	mi := &file_conf_conf_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -884,7 +944,7 @@ func (x *Service_Auth_Third) String() string {
 func (*Service_Auth_Third) ProtoMessage() {}
 
 func (x *Service_Auth_Third) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[13]
+	mi := &file_conf_conf_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -956,7 +1016,7 @@ type Service_Auth_User struct {
 
 func (x *Service_Auth_User) Reset() {
 	*x = Service_Auth_User{}
-	mi := &file_conf_conf_proto_msgTypes[14]
+	mi := &file_conf_conf_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -968,7 +1028,7 @@ func (x *Service_Auth_User) String() string {
 func (*Service_Auth_User) ProtoMessage() {}
 
 func (x *Service_Auth_User) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[14]
+	mi := &file_conf_conf_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1039,7 +1099,7 @@ type Service_Auth_Dingtalk struct {
 
 func (x *Service_Auth_Dingtalk) Reset() {
 	*x = Service_Auth_Dingtalk{}
-	mi := &file_conf_conf_proto_msgTypes[15]
+	mi := &file_conf_conf_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1051,7 +1111,7 @@ func (x *Service_Auth_Dingtalk) String() string {
 func (*Service_Auth_Dingtalk) ProtoMessage() {}
 
 func (x *Service_Auth_Dingtalk) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[15]
+	mi := &file_conf_conf_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1123,10 +1183,11 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\x04GRPC\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x123\n" +
-	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\xdd\x02\n" +
+	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\xc6\x03\n" +
 	"\x04Data\x125\n" +
 	"\bdatabase\x18\x01 \x01(\v2\x19.kratos.api.Data.DatabaseR\bdatabase\x12,\n" +
-	"\x05redis\x18\x02 \x01(\v2\x16.kratos.api.Data.RedisR\x05redis\x1a:\n" +
+	"\x05redis\x18\x02 \x01(\v2\x16.kratos.api.Data.RedisR\x05redis\x12)\n" +
+	"\x04auth\x18\x03 \x01(\v2\x15.kratos.api.Data.AuthR\x04auth\x1a:\n" +
 	"\bDatabase\x12\x16\n" +
 	"\x06driver\x18\x01 \x01(\tR\x06driver\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x1a\xb3\x01\n" +
@@ -1134,7 +1195,11 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x12<\n" +
 	"\fread_timeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\vreadTimeout\x12>\n" +
-	"\rwrite_timeout\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\"r\n" +
+	"\rwrite_timeout\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x1a<\n" +
+	"\x04Auth\x12\x15\n" +
+	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12\x1d\n" +
+	"\n" +
+	"app_secret\x18\x02 \x01(\tR\tappSecret\"r\n" +
 	"\x03App\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
@@ -1210,7 +1275,7 @@ func file_conf_conf_proto_rawDescGZIP() []byte {
 	return file_conf_conf_proto_rawDescData
 }
 
-var file_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_conf_conf_proto_goTypes = []any{
 	(*Bootstrap)(nil),             // 0: kratos.api.Bootstrap
 	(*Server)(nil),                // 1: kratos.api.Server
@@ -1221,14 +1286,15 @@ var file_conf_conf_proto_goTypes = []any{
 	(*Server_GRPC)(nil),           // 6: kratos.api.Server.GRPC
 	(*Data_Database)(nil),         // 7: kratos.api.Data.Database
 	(*Data_Redis)(nil),            // 8: kratos.api.Data.Redis
-	(*Service_Business)(nil),      // 9: kratos.api.Service.Business
-	(*Service_Auth)(nil),          // 10: kratos.api.Service.Auth
-	(*Service_Auth_Self)(nil),     // 11: kratos.api.Service.Auth.Self
-	(*Service_Auth_App)(nil),      // 12: kratos.api.Service.Auth.App
-	(*Service_Auth_Third)(nil),    // 13: kratos.api.Service.Auth.Third
-	(*Service_Auth_User)(nil),     // 14: kratos.api.Service.Auth.User
-	(*Service_Auth_Dingtalk)(nil), // 15: kratos.api.Service.Auth.Dingtalk
-	(*durationpb.Duration)(nil),   // 16: google.protobuf.Duration
+	(*Data_Auth)(nil),             // 9: kratos.api.Data.Auth
+	(*Service_Business)(nil),      // 10: kratos.api.Service.Business
+	(*Service_Auth)(nil),          // 11: kratos.api.Service.Auth
+	(*Service_Auth_Self)(nil),     // 12: kratos.api.Service.Auth.Self
+	(*Service_Auth_App)(nil),      // 13: kratos.api.Service.Auth.App
+	(*Service_Auth_Third)(nil),    // 14: kratos.api.Service.Auth.Third
+	(*Service_Auth_User)(nil),     // 15: kratos.api.Service.Auth.User
+	(*Service_Auth_Dingtalk)(nil), // 16: kratos.api.Service.Auth.Dingtalk
+	(*durationpb.Duration)(nil),   // 17: google.protobuf.Duration
 }
 var file_conf_conf_proto_depIdxs = []int32{
 	1,  // 0: kratos.api.Bootstrap.server:type_name -> kratos.api.Server
@@ -1239,22 +1305,23 @@ var file_conf_conf_proto_depIdxs = []int32{
 	6,  // 5: kratos.api.Server.grpc:type_name -> kratos.api.Server.GRPC
 	7,  // 6: kratos.api.Data.database:type_name -> kratos.api.Data.Database
 	8,  // 7: kratos.api.Data.redis:type_name -> kratos.api.Data.Redis
-	9,  // 8: kratos.api.Service.business:type_name -> kratos.api.Service.Business
-	10, // 9: kratos.api.Service.auth:type_name -> kratos.api.Service.Auth
-	16, // 10: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
-	16, // 11: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
-	16, // 12: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
-	16, // 13: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
-	11, // 14: kratos.api.Service.Auth.self:type_name -> kratos.api.Service.Auth.Self
-	12, // 15: kratos.api.Service.Auth.app:type_name -> kratos.api.Service.Auth.App
-	13, // 16: kratos.api.Service.Auth.third:type_name -> kratos.api.Service.Auth.Third
-	14, // 17: kratos.api.Service.Auth.user:type_name -> kratos.api.Service.Auth.User
-	15, // 18: kratos.api.Service.Auth.dingtalk:type_name -> kratos.api.Service.Auth.Dingtalk
-	19, // [19:19] is the sub-list for method output_type
-	19, // [19:19] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	9,  // 8: kratos.api.Data.auth:type_name -> kratos.api.Data.Auth
+	10, // 9: kratos.api.Service.business:type_name -> kratos.api.Service.Business
+	11, // 10: kratos.api.Service.auth:type_name -> kratos.api.Service.Auth
+	17, // 11: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
+	17, // 12: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
+	17, // 13: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
+	17, // 14: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
+	12, // 15: kratos.api.Service.Auth.self:type_name -> kratos.api.Service.Auth.Self
+	13, // 16: kratos.api.Service.Auth.app:type_name -> kratos.api.Service.Auth.App
+	14, // 17: kratos.api.Service.Auth.third:type_name -> kratos.api.Service.Auth.Third
+	15, // 18: kratos.api.Service.Auth.user:type_name -> kratos.api.Service.Auth.User
+	16, // 19: kratos.api.Service.Auth.dingtalk:type_name -> kratos.api.Service.Auth.Dingtalk
+	20, // [20:20] is the sub-list for method output_type
+	20, // [20:20] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_conf_conf_proto_init() }
@@ -1268,7 +1335,7 @@ func file_conf_conf_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_conf_conf_proto_rawDesc), len(file_conf_conf_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

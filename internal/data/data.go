@@ -70,7 +70,7 @@ func initDbEnv(c *conf.Data, logger log.Logger) (*gorm.DB, error) {
 		log.NewHelper(logger).Error("initDbEnv: %w", err)
 		return nil, err
 	}
-	appSecret := "c.ServiceConf.AppSecret"
+	appSecret := c.Auth.AppSecret
 	dsn, err := cipherutil.DecryptByAes(encryptedDsn, appSecret)
 	if err != nil {
 		log.NewHelper(logger).Error("initDbEnvDecryptByAes: %w", err)

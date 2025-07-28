@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/moul/http2curl"
 )
 
 const (
@@ -158,7 +160,9 @@ func (r *WPSRequest) BuildRequest() (*http.Request, error) {
 	if r.body != nil && r.contentType != "" {
 		req.Header.Set("Content-Type", r.contentType)
 	}
-
+	if r.method == http.MethodGet && r.contentType == "" {
+		req.Header.Set("Content-Type", "")
+	}
 	for k, v := range r.headers {
 		req.Header.Set(k, v)
 	}
@@ -167,6 +171,7 @@ func (r *WPSRequest) BuildRequest() (*http.Request, error) {
 }
 
 func (r *WPSRequest) Do(ctx context.Context) ([]byte, error) {
+
 	req, err := r.BuildRequest()
 	if err != nil {
 		return nil, err
@@ -181,7 +186,6 @@ func (r *WPSRequest) Do(ctx context.Context) ([]byte, error) {
 	signPath := strings.TrimPrefix(req.URL.Path, openApiPathPrefix)
 	sign, err := signer.KSO1Sign(r.method, signPath, r.contentType, r.ksoDate, r.body)
 
-	// fmt.Printf("out: %v\n", sign)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign request: %w", err)
 	}
@@ -190,22 +194,27 @@ func (r *WPSRequest) Do(ctx context.Context) ([]byte, error) {
 	req.Header.Set(KsoAuthHeader, sign.Authorization)
 	req.Header.Set(AuthorizationHeader, r.accessToken)
 
-	// for k, v := range req.Header {
-	// 	fmt.Printf("%s: %s\n", k, v)
-	// }
-	// Execute request
+	command, _ := http2curl.GetCurlCommand(req)
+	fmt.Println()
+	fmt.Printf("request command: %s\n", command)
 	// Execute request
 	resp, err := r.client.Do(req.WithContext(ctx))
+
+	fmt.Printf("request resp: %+v, err: %+v\n", resp, err)
+	fmt.Println()
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrHTTPRequest, err)
 	}
 	defer resp.Body.Close()
 
+	body, err := io.ReadAll(resp.Body)
+	fmt.Printf("reques resp.StatusCode: %d, detail: %s\n", resp.StatusCode, string(body))
 	if resp.StatusCode >= http.StatusBadRequest {
+
 		return nil, fmt.Errorf("%w: status %d", ErrHTTPRequest, resp.StatusCode)
 	}
 
-	return io.ReadAll(resp.Body)
+	return body, err
 }
 
 // Convenience method
@@ -214,6 +223,17 @@ func (r *WPSRequest) PostJSON(ctx context.Context, path string, accessToken stri
 		WithMethod(http.MethodPost),
 		WithPath(path),
 		WithJSONBody(body),
+		WithKsoDate(time.Now().UTC().Format(RFC1123)),
+		WithAuthorization(accessToken),
+	)
+	return req.Do(ctx)
+}
+
+func (r *WPSRequest) GET(ctx context.Context, path string, accessToken string, query interface{}) ([]byte, error) {
+	req := NewWPSRequest(r.baseURL, r.accessKey, r.secretKey,
+		WithMethod(http.MethodGet),
+		WithPath(path),
+		WithContentType(""),
 		WithKsoDate(time.Now().UTC().Format(RFC1123)),
 		WithAuthorization(accessToken),
 	)

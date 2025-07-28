@@ -2,7 +2,10 @@ package wps
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"nancalacc/internal/conf"
+	httpwps "nancalacc/pkg/httputil/wps"
 
 	"github.com/go-kratos/kratos/v2/log"
 )
@@ -19,6 +22,180 @@ func NewWps(serviceConf *conf.Service, logger log.Logger) Wps {
 	}
 }
 
-func (w *wps) BatchGetDepartment(ctx context.Context, accessToken string, req *BatchGetDepartmentRequest) (BatchGetDepartmentResponse, error) {
-	return BatchGetDepartmentResponse{}, nil
+// BATCH_POST_USERS_PATH        = "/v7/users/batch_read"
+func (ws *wps) BatchPostUsers(ctx context.Context, accessToken string, input BatchPostUsersRequest) (BatchPostUsersResponse, error) {
+	fmt.Println("------------------------")
+
+	var resp BatchPostUsersResponse
+
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := httpwps.NewWPSRequest(DOMAIN, ak, sk)
+
+	fmt.Printf("BatchPostUsers uri: %s, input: %+v\n", BATCH_POST_USERS_PATH, input)
+	bs, err := wpsReq.PostJSON(context.Background(), BATCH_POST_USERS_PATH, accessToken, input)
+	fmt.Printf("BatchPostUsers: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, err
+	}
+	if resp.Code != 200 {
+		return resp, ErrCodeNot200
+	}
+
+	return resp, nil
+}
+func (ws *wps) BatchPostDepartments(ctx context.Context, accessToken string, input BatchPostDepartmentsRequest) (BatchPostDepartmentsResponse, error) {
+	fmt.Println("------------------------")
+	var resp BatchPostDepartmentsResponse
+
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := httpwps.NewWPSRequest(DOMAIN, ak, sk)
+
+	bs, err := wpsReq.PostJSON(context.Background(), BATCH_POST_DEPTS_PATH, accessToken, input)
+
+	fmt.Printf("BatchPostDepartments: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, err
+	}
+	if resp.Code != 200 {
+		return resp, ErrCodeNot200
+	}
+
+	return resp, nil
+}
+
+func (ws *wps) PostBatchDepartmentsByExDepIds(ctx context.Context, accessToken string, input PostBatchDepartmentsByExDepIdsRequest) (*PostBatchDepartmentsByExDepIdsResponse, error) {
+	fmt.Println("------------------------")
+	var resp *PostBatchDepartmentsByExDepIdsResponse
+
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := httpwps.NewWPSRequest(DOMAIN, ak, sk)
+
+	fmt.Printf("PostBatchDepartmentsByExDepIds uri: %s, input: %+v\n", POST_DEPTS_BY_EXDEPTIDS_PATH, input)
+	bs, err := wpsReq.PostJSON(context.Background(), POST_DEPTS_BY_EXDEPTIDS_PATH, accessToken, input)
+
+	fmt.Printf("PostBatchDepartmentsByExDepIds: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, err
+	}
+	if resp.Code != 0 {
+		return resp, ErrCodeNot0
+	}
+
+	return resp, nil
+
+}
+func (ws *wps) PostBatchUsersByExDepIds(ctx context.Context, accessToken string, input PostBatchUsersByExDepIdsRequest) (*PostBatchUsersByExDepIdsResponse, error) {
+
+	fmt.Println("------------------------")
+	var resp *PostBatchUsersByExDepIdsResponse
+
+	// input := &EcisaccountsyncIncrementRequest{
+	// 	ThirdCompanyId: thirdCompanyId,
+	// }
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := httpwps.NewWPSRequest(DOMAIN, ak, sk)
+
+	fmt.Printf("PostBatchUsersByExDepIds uri: %s, input: %+v\n", POST_USERS_BY_EXDEPTIDS_PATH, input)
+	bs, err := wpsReq.PostJSON(context.Background(), POST_USERS_BY_EXDEPTIDS_PATH, accessToken, input)
+
+	fmt.Printf("PostBatchUsersByExDepIds res: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, err
+	}
+	if resp.Code != 0 {
+		return resp, ErrCodeNot0
+	}
+
+	return resp, nil
+
+}
+
+func (ws *wps) GetDepartmentRoot(ctx context.Context, accessToken string, input GetDepartmentRootRequest) (GetDepartmentRootResponse, error) {
+	fmt.Println("------------------------")
+	var resp GetDepartmentRootResponse
+
+	// input := &EcisaccountsyncIncrementRequest{
+	// 	ThirdCompanyId: thirdCompanyId,
+	// }
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := httpwps.NewWPSRequest(DOMAIN, ak, sk)
+
+	bs, err := wpsReq.GET(context.Background(), GET_DEPARTMENT_ROOT, accessToken, "")
+
+	fmt.Printf("GetDepartmentRoot: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, err
+	}
+	//fmt.Printf("resp: %+v\n", resp)
+	//fmt.Println()
+	if resp.Code != 0 {
+		return resp, ErrCodeNot0
+	}
+
+	return resp, nil
+}
+
+//	func (ws *wps) GetDepartmentChildrenList(ctx context.Context, accessToken string, input GetDepartmentChildrenListRequest) (GetDepartmentChildrenListResponse, error) {
+//		var resp GetDepartmentChildrenListResponse
+//		return resp, nil
+//	}
+func (ws *wps) GetUserByUserId(ctx context.Context, accessToken string, req GetUserByUserIdRequest) (GetUserByUserIdResponse, error) {
+	fmt.Println("------------------------")
+	var resp GetUserByUserIdResponse
+
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := httpwps.NewWPSRequest(DOMAIN, ak, sk)
+
+	path := fmt.Sprintf("%s/%s", GET_USER_BY_USERID, req.UserID)
+	fmt.Printf("GetUserByUserId path: %s\n", path)
+	bs, err := wpsReq.GET(context.Background(), path, accessToken, "")
+
+	fmt.Printf("GetUserByUserId: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, err
+	}
+	//fmt.Printf("resp: %+v\n", resp)
+	//fmt.Println()
+	if resp.Code != 0 {
+		return resp, ErrCodeNot0
+	}
+
+	return resp, nil
+
 }

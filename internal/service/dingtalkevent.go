@@ -13,13 +13,13 @@ import (
 type DingTalkEventService struct {
 	confService      *conf.Service
 	log              *log.Helper
-	accounterUsecase *biz.AccounterUsecase
+	accounterUsecase *biz.AccounterIncreUsecase
 	running          atomic.Bool
 	cancel           context.CancelFunc
 	//client clientV2.OpenDingTalkClient
 }
 
-func NewDingTalkEventService(confService *conf.Service, logger log.Logger, accounterUsecase *biz.AccounterUsecase) *DingTalkEventService {
+func NewDingTalkEventService(confService *conf.Service, logger log.Logger, accounterUsecase *biz.AccounterIncreUsecase) *DingTalkEventService {
 	return &DingTalkEventService{confService: confService, log: log.NewHelper(logger), accounterUsecase: accounterUsecase}
 }
 

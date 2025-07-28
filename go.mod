@@ -12,6 +12,7 @@ require (
 	github.com/go-kratos/kratos/v2 v2.8.0
 	github.com/google/wire v0.6.0
 	github.com/open-dingtalk/dingtalk-stream-sdk-go v0.0.5
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/robfig/cron/v3 v3.0.1
 	go.uber.org/automaxprocs v1.5.1
 	google.golang.org/genproto/googleapis/api v0.0.0-20240528184218-531527333157
@@ -23,7 +24,7 @@ require (
 )
 
 require (
-	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
+	github.com/moul/http2curl v1.0.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
 )
 

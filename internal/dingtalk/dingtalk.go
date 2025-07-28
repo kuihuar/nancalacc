@@ -231,8 +231,12 @@ func (r *dingTalkRepo) getDeptIdsConcurrent(ctx context.Context, token string, d
 
 	return deptList, nil
 }
+
 func (r *dingTalkRepo) FetchDeptDetails(ctx context.Context, token string, deptIds []int64) ([]*DingtalkDept, error) {
 	uriDetail := fmt.Sprintf("%s/topapi/v2/department/get?access_token=%s", r.data.Endpoint, token)
+
+	r.log.WithContext(ctx).Infof("FetchDeptDetails.req uri: %v,token:%s depIds: %v", uriDetail, token, deptIds)
+
 	sem := make(chan struct{}, r.data.MaxConcurrent)
 	results := make(chan *DingtalkDept, len(deptIds))
 	//errChan := make(chan error, 1)

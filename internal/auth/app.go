@@ -48,9 +48,9 @@ func (a *AppAuthenticator) GetAccessToken(ctx context.Context) (*AccessTokenResp
 
 	url := a.url
 
-	if token, found := tokenCache.Get(clientId); found {
-		return token.(*AccessTokenResp), nil
-	}
+	// if token, found := tokenCache.Get(clientId); found {
+	// 	return token.(*AccessTokenResp), nil
+	// }
 	_, err := stdurl.Parse(url)
 	if err != nil {
 		return nil, fmt.Errorf("invalid URL: %v", err)
@@ -65,8 +65,11 @@ func (a *AppAuthenticator) GetAccessToken(ctx context.Context) (*AccessTokenResp
 
 	uri := fmt.Sprintf("%s%s", url, AppAuthPath)
 
-	data := []byte(fmt.Sprintf(`grant_type=%s&client_id=%s&client_secret=%s`, grantType, clientId, clientSecret))
+	dataStr := fmt.Sprintf(`grant_type=%s&client_id=%s&client_secret=%s`, grantType, clientId, clientSecret)
+	//fmt.Printf("Postpre uri: %s, dataStr: %s\n", uri, dataStr)
+	data := []byte(dataStr)
 	bs, err := httputil.Post(uri, data, 5*time.Second)
+	//fmt.Printf("PostAfter err: %v,bs: %s\n", err, string(bs))
 	if err != nil {
 		return nil, err
 	}
