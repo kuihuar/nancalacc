@@ -514,8 +514,10 @@ type Data_Redis struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Network       string                 `protobuf:"bytes,1,opt,name=network,proto3" json:"network,omitempty"`
 	Addr          string                 `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
-	ReadTimeout   *durationpb.Duration   `protobuf:"bytes,3,opt,name=read_timeout,json=readTimeout,proto3" json:"read_timeout,omitempty"`
-	WriteTimeout  *durationpb.Duration   `protobuf:"bytes,4,opt,name=write_timeout,json=writeTimeout,proto3" json:"write_timeout,omitempty"`
+	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
+	Db            int32                  `protobuf:"varint,4,opt,name=db,proto3" json:"db,omitempty"`
+	ReadTimeout   *durationpb.Duration   `protobuf:"bytes,5,opt,name=read_timeout,json=readTimeout,proto3" json:"read_timeout,omitempty"`
+	WriteTimeout  *durationpb.Duration   `protobuf:"bytes,6,opt,name=write_timeout,json=writeTimeout,proto3" json:"write_timeout,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -562,6 +564,20 @@ func (x *Data_Redis) GetAddr() string {
 		return x.Addr
 	}
 	return ""
+}
+
+func (x *Data_Redis) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+func (x *Data_Redis) GetDb() int32 {
+	if x != nil {
+		return x.Db
+	}
+	return 0
 }
 
 func (x *Data_Redis) GetReadTimeout() *durationpb.Duration {
@@ -1191,7 +1207,7 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\x04GRPC\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x123\n" +
-	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\xd8\x03\n" +
+	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\x84\x04\n" +
 	"\x04Data\x125\n" +
 	"\bdatabase\x18\x01 \x01(\v2\x19.kratos.api.Data.DatabaseR\bdatabase\x12,\n" +
 	"\x05redis\x18\x02 \x01(\v2\x16.kratos.api.Data.RedisR\x05redis\x12)\n" +
@@ -1199,12 +1215,14 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\bDatabase\x12\x16\n" +
 	"\x06driver\x18\x01 \x01(\tR\x06driver\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12\x10\n" +
-	"\x03tag\x18\x03 \x01(\tR\x03tag\x1a\xb3\x01\n" +
+	"\x03tag\x18\x03 \x01(\tR\x03tag\x1a\xdf\x01\n" +
 	"\x05Redis\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
-	"\x04addr\x18\x02 \x01(\tR\x04addr\x12<\n" +
-	"\fread_timeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\vreadTimeout\x12>\n" +
-	"\rwrite_timeout\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x1a<\n" +
+	"\x04addr\x18\x02 \x01(\tR\x04addr\x12\x1a\n" +
+	"\bpassword\x18\x03 \x01(\tR\bpassword\x12\x0e\n" +
+	"\x02db\x18\x04 \x01(\x05R\x02db\x12<\n" +
+	"\fread_timeout\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\vreadTimeout\x12>\n" +
+	"\rwrite_timeout\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x1a<\n" +
 	"\x04Auth\x12\x15\n" +
 	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12\x1d\n" +
 	"\n" +

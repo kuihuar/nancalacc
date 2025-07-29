@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"nancalacc/internal/conf"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/go-redis/redis/v8"
 	"github.com/google/wire"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
@@ -21,7 +23,8 @@ import (
 var ProviderSet = wire.NewSet(NewData, NewAccounterRepo)
 
 type Data struct {
-	db *gorm.DB
+	db    *gorm.DB
+	redis *redis.Client
 }
 
 func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
@@ -62,8 +65,20 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 		}
 	}
 
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     c.Redis.Addr,
+		Password: c.Redis.Password,
+		DB:       int(c.Redis.Db),
+	})
+
+	// 测试连接
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		return nil, nil, err
+	}
+
 	return &Data{
-		db: db,
+		db:    db,
+		redis: rdb,
 	}, cleanup, nil
 }
 
