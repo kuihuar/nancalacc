@@ -66,23 +66,24 @@ func (es *DingTalkEventService) Running() bool {
 func (es *DingTalkEventService) HandleEvent(event *clientV2.GenericOpenDingTalkEvent) clientV2.EventStatus {
 	println("HandleEvent ", event.Data)
 
+	ctx := context.Background()
 	switch event.EventType {
 	case "org_dept_create":
 		es.log.Infof("org_dept_create: %v", event.Data)
-		es.OrgDeptCreate(context.Background(), event)
+		es.OrgDeptCreate(ctx, event)
 	case "org_dept_modify":
 		es.log.Infof("org_dept_modify: %v", event.Data)
-		es.OrgDeptModify(context.Background(), event)
+		es.OrgDeptModify(ctx, event)
 	case "org_dept_remove":
 		es.log.Infof("org_dept_remove: %v", event.Data)
-		es.OrgDeptRemove(context.Background(), event)
+		es.OrgDeptRemove(ctx, event)
 	case "user_add_org":
 		es.log.Infof("user_add_org: %v", event.Data)
-		es.UserAddOrg(context.Background(), event)
+		es.UserAddOrg(ctx, event)
 	case "user_modify_org":
 		es.log.Infof("user_modify_org: %v", event.Data)
 	case "user_leave_org":
-		es.UserLeaveOrg(context.Background(), event)
+		es.UserLeaveOrg(ctx, event)
 		es.log.Infof("user_leave_org: %v", event.Data)
 	default:
 		es.log.Infof("unknown event: %v", event.Data)

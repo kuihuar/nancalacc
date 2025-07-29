@@ -23,29 +23,32 @@ func NewOauth2Usecase(dingTalkRepo dingtalk.Dingtalk, bizConf *conf.Service_Busi
 }
 
 func (uc *Oauth2Usecase) GetUserInfo(ctx context.Context, req *v1.GetUserInfoRequest) (*v1.GetUserInfoResponse, error) {
-	uc.log.WithContext(ctx).Infof("GetUserInfo: %v", req)
+
+	log := uc.log.WithContext(ctx)
+	log.Infof("GetUserInfo req: %v", req)
+
 	accessToken := req.GetAccessToken()
 	if accessToken == "" {
 		return nil, errors.New("access_token is empty")
 	}
 	var userId string
 	userInfo, err := uc.dingTalkRepo.GetUserInfo(ctx, accessToken, "me")
-	uc.log.WithContext(ctx).Infof("GetUserInfo.dingTalkRepo.GetUserInfo: %v, err:%v", userInfo, err)
+	log.Infof("GetUserInfo.dingTalkRepo.GetUserInfo: %v, err:%v", userInfo, err)
 	if err != nil {
-		uc.log.WithContext(ctx).Errorf("GetUserInfo.dingTalkRepo.GetUserInfo: %v, err:%v", userInfo, err)
+		log.Errorf("GetUserInfo.dingTalkRepo.GetUserInfo: %v, err:%v", userInfo, err)
 		return nil, err
 	}
 	token, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-	uc.log.WithContext(ctx).Infof("GetUserInfo.dingTalkRepo.GetAccessToken: token: %v, err: %v", token, err)
+	log.Infof("GetUserInfo.dingTalkRepo.GetAccessToken: token: %v, err: %v", token, err)
 	if err != nil {
 		uc.log.WithContext(ctx).Error("GetUserInfo.dingTalkRepo.GetAccessToken: token: %v, err: %v", token, err)
 		return nil, err
 	}
 	userId, err = uc.dingTalkRepo.GetUseridByUnionid(ctx, token, userInfo.UnionId)
-	uc.log.WithContext(ctx).Infof("GetUserInfo.GetUseridByUnionid: userId: %v, err: %v", userId, err)
+	log.Infof("GetUserInfo.GetUseridByUnionid: userId: %v, err: %v", userId, err)
 
 	if err != nil {
-		uc.log.WithContext(ctx).Error("GetUserInfo.GetUseridByUnionid: userId: %v, err: %v", userId, err)
+		log.Error("GetUserInfo.GetUseridByUnionid: userId: %v, err: %v", userId, err)
 		return nil, err
 	}
 
@@ -57,13 +60,16 @@ func (uc *Oauth2Usecase) GetUserInfo(ctx context.Context, req *v1.GetUserInfoReq
 		Avatar:  userInfo.AvatarUrl,
 	}, nil
 }
-func (s *Oauth2Usecase) GetAccessToken(ctx context.Context, req *v1.GetAccessTokenRequest) (*v1.GetAccessTokenResponse, error) {
-	s.log.WithContext(ctx).Infof("GetAccessToken: %v", req)
+func (uc *Oauth2Usecase) GetAccessToken(ctx context.Context, req *v1.GetAccessTokenRequest) (*v1.GetAccessTokenResponse, error) {
+
+	log := uc.log.WithContext(ctx)
+	log.Infof("GetAccessToken req: %v", req)
+
 	code := req.GetCode()
 	if code == "" {
 		return nil, errors.New("code is empty")
 	}
-	tokenRes, err := s.dingTalkRepo.GetUserAccessToken(ctx, code)
+	tokenRes, err := uc.dingTalkRepo.GetUserAccessToken(ctx, code)
 	if err != nil {
 		return nil, err
 	}

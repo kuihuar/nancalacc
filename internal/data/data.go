@@ -50,12 +50,17 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 			log.NewHelper(logger).Error(err)
 		}
 	}
-	// if err := Migrate(db); err != nil {
-	// 	return nil, cleanup, err
-	// }
-	// if err = Seed(db); err != nil {
-	// 	log.NewHelper(logger).Errorf("seed data failed: %v", err)
-	// }
+	tags := strings.Split(c.Database.Tag, ",")
+
+	if len(tags) > 0 {
+		for _, tag := range tags {
+			if tag == "migrate" {
+				if err := Migrate(db); err != nil {
+					return nil, cleanup, err
+				}
+			}
+		}
+	}
 
 	return &Data{
 		db: db,

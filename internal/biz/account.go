@@ -6,6 +6,7 @@ import (
 	v1 "nancalacc/api/account/v1"
 	"nancalacc/internal/auth"
 	"nancalacc/internal/conf"
+	"nancalacc/internal/data/models"
 	"nancalacc/internal/dingtalk"
 	"nancalacc/internal/wps"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 
 	//"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
+	"github.com/xuri/excelize/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -38,6 +40,12 @@ type AccounterRepo interface {
 	SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel []*dingtalk.DingtalkDept) error
 	SaveIncrementUsers(ctx context.Context, usersAdd, usersDel []*dingtalk.DingtalkDeptUser) error
 	SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel []*dingtalk.DingtalkDeptUserRelation) error
+
+	BatchSaveUsers(ctx context.Context, users []*models.TbLasUser) (int, error)
+	BatchSaveDepts(ctx context.Context, depts []*models.TbLasDepartment) (int, error)
+	BatchSaveDeptUsers(ctx context.Context, deptusers []*models.TbLasDepartmentUser) (int, error)
+	CreateTask(ctx context.Context, taskName string) error
+	UpdateTask(ctx context.Context, taskName, status string) error
 }
 
 // GreeterUsecase is a Greeter usecase.
@@ -61,15 +69,16 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	// 	TaskId:     "taskId",
 	// 	CreateTime: timestamppb.Now(),
 	// }, nil
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount: %v", req)
+	log := uc.log.WithContext(ctx)
+	log.Infof("CreateSyncAccount: %v", req)
 
 	uc.log.WithContext(ctx).Info("CreateSyncAccount.SaveCompanyCfg")
 	err := uc.repo.SaveCompanyCfg(ctx, &dingtalk.DingtalkCompanyCfg{})
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveCompanyCfg: err: %v", err)
+	log.Infof("CreateSyncAccount.SaveCompanyCfg: err: %v", err)
 	if err != nil {
 		return nil, err
 	}
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.GetAccessToken")
+	log.Infof("CreateSyncAccount.GetAccessToken")
 
 	// 1. 获取access_token
 	accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
@@ -82,10 +91,10 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 
 	// 1. 从第三方获取部门和用户数据
 
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.FetchDepartments")
+	log.Infof("CreateSyncAccount.FetchDepartments")
 
 	depts, err := uc.dingTalkRepo.FetchDepartments(ctx, accessToken)
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.FetchDepartments: depts: %+v, err: %v", depts, err)
+	log.Infof("CreateSyncAccount.FetchDepartments: depts: %+v, err: %v", depts, err)
 	if err != nil {
 		return nil, err
 	}
@@ -93,10 +102,10 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 		uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: dept: %+v", dept)
 	}
 
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveDepartments depts: %v, taskId: %v", depts, taskId)
+	log.Infof("CreateSyncAccount.SaveDepartments depts: %v, taskId: %v", depts, taskId)
 	// 2. 数据入库
 	deptCount, err := uc.repo.SaveDepartments(ctx, depts, taskId)
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveDepartments: deptCount: %v, err: %v", deptCount, err)
+	log.Infof("CreateSyncAccount.SaveDepartments: deptCount: %v, err: %v", deptCount, err)
 	if err != nil {
 		return nil, err
 	}
@@ -105,19 +114,19 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 		deptIds = append(deptIds, dept.DeptID)
 	}
 
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.FetchDepartmentUsers accessToken: %v deptIds: %v", accessToken, deptIds)
+	log.Infof("CreateSyncAccount.FetchDepartmentUsers accessToken: %v deptIds: %v", accessToken, deptIds)
 	// 1. 从第三方获取用户数据
 	deptUsers, err := uc.dingTalkRepo.FetchDepartmentUsers(ctx, accessToken, deptIds)
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.FetchDepartmentUsers deptUsers: %v, err: %v", deptUsers, err)
+	log.Infof("CreateSyncAccount.FetchDepartmentUsers deptUsers: %v, err: %v", deptUsers, err)
 	if err != nil {
 		return nil, err
 	}
 	// 2. 数据入库
 	//这里可以 将deptUsers转为model.TbLasUser,
 	// SaveUsers(ctx, TbLasUser)
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveUsers deptUsers: %v, taskId: %v", deptUsers, taskId)
+	log.Infof("CreateSyncAccount.SaveUsers deptUsers: %v, taskId: %v", deptUsers, taskId)
 	userCount, err := uc.repo.SaveUsers(ctx, deptUsers, taskId)
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveUsers userCount: %v, err: %v", userCount, err)
+	log.Infof("CreateSyncAccount.SaveUsers userCount: %v, err: %v", userCount, err)
 	if err != nil {
 		return nil, err
 	}
@@ -141,14 +150,14 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 		}
 
 	}
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveDepartmentUserRelations deptUserRelations: %v, taskId: %v", deptUserRelations, taskId)
+	log.Infof("CreateSyncAccount.SaveDepartmentUserRelations deptUserRelations: %v, taskId: %v", deptUserRelations, taskId)
 	// 3. 数据入库
 	relationCount, err := uc.repo.SaveDepartmentUserRelations(ctx, deptUserRelations, taskId)
 	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveDepartmentUserRelations relationCount: %v, err: %v", relationCount, err)
 	if err != nil {
 		return nil, err
 	}
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.CallEcisaccountsyncAll taskId: %v", taskId)
+	log.Infof("CreateSyncAccount.CallEcisaccountsyncAll taskId: %v", taskId)
 
 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
 	if err != nil {
@@ -160,7 +169,7 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 		TaskId:         taskId,
 		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
 	})
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.CallEcisaccountsyncAll res: %v, err: %v", res, err)
+	log.Infof("CreateSyncAccount.CallEcisaccountsyncAll res: %v, err: %v", res, err)
 
 	if err != nil {
 		return nil, err
@@ -176,4 +185,212 @@ func (uc *AccounterUsecase) GetSyncAccount(ctx context.Context, req *v1.GetSyncA
 	return &v1.GetSyncAccountReply{
 		Status: v1.GetSyncAccountReply_SUCCESS,
 	}, nil
+}
+
+func (uc *AccounterUsecase) CreateTask(ctx context.Context, taskName string) error {
+	uc.log.WithContext(ctx).Infof("CreateTask taskName: %s", taskName)
+	return uc.repo.CreateTask(ctx, taskName)
+
+}
+func (uc *AccounterUsecase) UpdateTask(ctx context.Context, taskName, status string) error {
+	uc.log.WithContext(ctx).Infof("UpdateTask taskId: %s, status %s", taskName, status)
+	return uc.repo.UpdateTask(ctx, taskName, status)
+
+}
+func (uc *AccounterUsecase) ParseExecell(ctx context.Context, taskId, filename string) error {
+	uc.log.WithContext(ctx).Infof("ParseExecell taskId: %s", taskId)
+	f, err := excelize.OpenFile(filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	processSheet := map[string]bool{
+		"tb_las_user":            true,
+		"tb_las_department":      true,
+		"tb_las_department_user": true,
+	}
+	sheets := f.GetSheetList()
+	for _, sheet := range sheets {
+		if _, ok := processSheet[sheet]; !ok {
+			fmt.Printf("sheetname: %s\n", sheet)
+			continue
+		}
+		rows, err := f.Rows(sheet)
+		if err != nil {
+			return fmt.Errorf("err: %w", err)
+		}
+		defer rows.Close()
+		rows.Next()
+		switch sheet {
+		case "tb_las_user":
+			uc.transUser(ctx, taskId, rows)
+		case "tb_las_department":
+			uc.transDept(ctx, taskId, rows)
+		case "tb_las_department_user":
+			uc.transUserDept(ctx, taskId, rows)
+		default:
+			fmt.Printf("not found sheetname: %s\n", sheet)
+		}
+
+	}
+	err = uc.repo.UpdateTask(ctx, taskId, models.TaskStatusCompleted)
+	if err != nil {
+		return err
+	}
+	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	if err != nil {
+		return err
+	}
+	fmt.Println("appAccessToken", appAccessToken)
+
+	_, err = uc.wpsSync.PostEcisaccountsyncAll(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncAllRequest{
+		TaskId:         taskId,
+		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
+	})
+	return err
+}
+
+func (uc *AccounterUsecase) transUser(ctx context.Context, taskId string, rows *excelize.Rows) (err error) {
+	uc.log.WithContext(ctx).Infof("transUser taskId: %s", taskId)
+
+	uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
+	thirdCompanyId := uc.bizConf.ThirdCompanyId
+	platformIds := uc.bizConf.PlatformIds
+	fmt.Printf("taskId: %s\n", taskId)
+	users := make([]*models.TbLasUser, 0, 100)
+	now := time.Now()
+	for rows.Next() {
+		row, err := rows.Columns()
+		if err != nil {
+			return fmt.Errorf("err: %w", err)
+		}
+		fmt.Println(row)
+
+		users = append(users, &models.TbLasUser{
+			TaskID:           taskId,
+			ThirdCompanyID:   thirdCompanyId,
+			PlatformID:       platformIds,
+			Uid:              row[4],
+			Account:          row[7],
+			NickName:         row[8],
+			EmploymentStatus: "active",
+			Source:           "sync",
+			Ctime:            now,
+			Mtime:            now,
+			CheckType:        1,
+		})
+		if len(users) >= 100 {
+			if _, err := uc.repo.BatchSaveUsers(ctx, users); err != nil {
+				return err
+			}
+			users = users[:0] // 清空切片（保留底层数组，避免重新分配）
+		}
+		// num := SheetDataToModel(sheet, row)
+	}
+	if len(users) > 0 {
+		if _, err := uc.repo.BatchSaveUsers(ctx, users); err != nil {
+			return err
+		}
+	}
+
+	if err := rows.Error(); err != nil {
+		return fmt.Errorf("err: %w", err)
+	}
+	return nil
+}
+func (uc *AccounterUsecase) transDept(ctx context.Context, taskId string, rows *excelize.Rows) (err error) {
+
+	uc.log.WithContext(ctx).Infof("transDept taskId: %s", taskId)
+
+	uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
+	thirdCompanyId := uc.bizConf.ThirdCompanyId
+	platformIds := uc.bizConf.PlatformIds
+	fmt.Printf("taskId: %s\n", taskId)
+	depts := make([]*models.TbLasDepartment, 0, 100)
+	now := time.Now()
+	for rows.Next() {
+		row, err := rows.Columns()
+		if err != nil {
+			return fmt.Errorf("err: %w", err)
+		}
+		fmt.Println(row)
+
+		depts = append(depts, &models.TbLasDepartment{
+			TaskID:         taskId,
+			ThirdCompanyID: thirdCompanyId,
+			PlatformID:     platformIds,
+			Did:            row[1],
+			Pid:            row[5],
+			Name:           row[6],
+			//Order:          row[7],
+			Source:    "sync",
+			Ctime:     now,
+			Mtime:     now,
+			CheckType: 1,
+		})
+		if len(depts) >= 100 {
+			if _, err := uc.repo.BatchSaveDepts(ctx, depts); err != nil {
+				return err
+			}
+			depts = depts[:0] // 清空切片
+		}
+	}
+	if len(depts) > 0 {
+		if _, err := uc.repo.BatchSaveDepts(ctx, depts); err != nil {
+			return err
+		}
+	}
+
+	if err := rows.Error(); err != nil {
+		return fmt.Errorf("err: %w", err)
+	}
+	return nil
+}
+func (uc *AccounterUsecase) transUserDept(ctx context.Context, taskId string, rows *excelize.Rows) (err error) {
+	uc.log.WithContext(ctx).Infof("transUserDept taskId: %s", taskId)
+
+	uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
+	thirdCompanyId := uc.bizConf.ThirdCompanyId
+	platformIds := uc.bizConf.PlatformIds
+	fmt.Printf("taskId: %s\n", taskId)
+	deptusers := make([]*models.TbLasDepartmentUser, 0, 100)
+	now := time.Now()
+	for rows.Next() {
+		row, err := rows.Columns()
+		if err != nil {
+			return fmt.Errorf("err: %w", err)
+		}
+		fmt.Println(row)
+
+		deptusers = append(deptusers, &models.TbLasDepartmentUser{
+			TaskID:         taskId,
+			ThirdCompanyID: thirdCompanyId,
+			PlatformID:     platformIds,
+			Uid:            row[4],
+			Did:            row[5],
+			Ctime:          now,
+			CheckType:      1,
+		})
+		if len(deptusers) >= 100 {
+			if _, err := uc.repo.BatchSaveDeptUsers(ctx, deptusers); err != nil {
+				return err
+			}
+			deptusers = deptusers[:0] // 清空切片（保留底层数组，避免重新分配）
+		}
+	}
+	if len(deptusers) > 0 {
+		if _, err := uc.repo.BatchSaveDeptUsers(ctx, deptusers); err != nil {
+			return err
+		}
+	}
+
+	if err := rows.Error(); err != nil {
+		return fmt.Errorf("err: %w", err)
+	}
+	return nil
 }

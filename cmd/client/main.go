@@ -16,6 +16,7 @@ import (
 	"github.com/go-kratos/kratos/v2/config/file"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/open-dingtalk/dingtalk-stream-sdk-go/clientV2"
+	"github.com/xuri/excelize/v2"
 )
 
 var (
@@ -46,6 +47,8 @@ func init() {
 func main() {
 
 	fmt.Println("start...")
+
+	CheckReadExcell()
 	// ctx := context.Background()
 	// fmt.Printf("bc: %+v\n", bc.Service)
 	// 初始化 WpsSync
@@ -57,13 +60,13 @@ func main() {
 
 	// fmt.Printf("token: %+v\n", token)
 
-	token := GetToken()
+	//token := GetToken()
 	// token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTM2MTU2MTgsImNvbXBfaWQiOiIxIiwiY2xpZW50X2lkIjoiY29tLmFjYy5hc3luYyIsInRrX3R5cGUiOiJhcHAiLCJzY29wZSI6Imtzby5hY2NvdW50c3luYy5zeW5jLGtzby5jb250YWN0LnJlYWQsa3NvLmNvbnRhY3QucmVhZHdyaXRlIiwiY29tcGFueV9pZCI6MSwiY2xpZW50X3ByaW5jaXBhbF9pZCI6IjczIiwiaXNfd3BzMzY1Ijp0cnVlfQ.ZOkiwnZ6f1uW45_sq5uT_ZW3dmA6yCXuKetMaUI7mCw"
 
-	CheckPostBatchUsersByExDepIds(token)
+	//CheckPostBatchUsersByExDepIds(token)
 	// CheckPostBatchDepartmentsByExDepIds(token)
-	CheckGetUserByUserId(token)
-	CheckBatchPostUsers(token)
+	//CheckGetUserByUserId(token)
+	//CheckBatchPostUsers(token)
 
 	// CheckPostBatchDepartmentsByExDepIds(token)
 	// CheckUserLeaveOrg()
@@ -73,6 +76,38 @@ func main() {
 	// 033014104332101118010 test
 	// CheckCallEcisaccountsync(token)
 
+}
+func CheckReadExcell() {
+	f, err := excelize.OpenFile("Book1.xlsx")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer func() {
+		// Close the spreadsheet.
+		if err := f.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+	// Get value from cell by given worksheet name and cell reference.
+	cell, err := f.GetCellValue("Sheet1", "B2")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(cell)
+	// Get all the rows in the Sheet1.
+	rows, err := f.GetRows("Sheet1")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	for _, row := range rows {
+		for _, colCell := range row {
+			fmt.Print(colCell, "\t")
+		}
+		fmt.Println()
+	}
 }
 func CheckGetUserByUserId(token string) {
 	ctx := context.Background()

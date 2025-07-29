@@ -164,3 +164,32 @@ KEY `idx_mtime` (`mtime`) USING BTREE COMMENT 'mtime索引',
 KEY `idx_sync_time` (`sync_time`,`status`,`third_company_id`) USING BTREE COMMENT 'sync_time索引',
 KEY `idx_nick_name` (`nick_name`) USING BTREE COMMENT 'nick_name索引'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='三方用户增量表'
+
+
+
+
+
+
+  --   `priority` varchar(10) DEFAULT 'medium' COMMENT '优先级(low/medium/high/urgent)',
+  --   `assignee_id` bigint COMMENT '负责人ID',
+--   `project_id` bigint COMMENT '所属项目ID',
+--   `parent_id` bigint COMMENT '父任务ID',
+--   `tags` varchar(255) COMMENT '标签，逗号分隔',
+CREATE TABLE `task` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '任务ID',
+  `title` varchar(255) NOT NULL COMMENT '任务标题',
+  `description` text COMMENT '任务描述',
+  `status` varchar(20) NOT NULL DEFAULT 'pending' COMMENT '任务状态(pending/in_progress/completed/cancelled)',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `due_date` timestamp COMMENT '截止时间',
+  `start_date` timestamp COMMENT '开始时间',
+  `completed_at` timestamp COMMENT '完成时间',
+  `creator_id` bigint NOT NULL COMMENT '创建人ID',
+  `progress` tinyint DEFAULT 0 COMMENT '进度(0-100)',
+  `estimated_time` int COMMENT '预估耗时(分钟)',
+  `actual_time` int COMMENT '实际耗时(分钟)',
+  PRIMARY KEY (`id`),
+  KEY `idx_status` (`status`),
+   KEY `idx_title` (`title`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='任务表';

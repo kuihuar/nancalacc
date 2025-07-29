@@ -3,6 +3,7 @@ package data
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -24,7 +25,8 @@ type accounterRepo struct {
 }
 
 var (
-	Source = "sync"
+	Source  = "sync"
+	timeout = 5 * time.Second
 )
 
 // NewAccounterRepo .
@@ -37,6 +39,11 @@ func NewAccounterRepo(serviceConf *conf.Service, data *Data, logger log.Logger) 
 }
 
 func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.DingtalkDeptUser, taskId string) (int, error) {
+
+	r.log.WithContext(ctx).Infof("SaveUsers users: %v, taskId :%s", users, taskId)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
 	r.log.Infof("SaveUsers: %v", users)
 	if len(users) == 0 {
 		r.log.Infof("users is empty")
@@ -105,7 +112,11 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.Dingtal
 }
 
 func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*dingtalk.DingtalkDept, taskId string) (int, error) {
-	r.log.Infof("SaveDepartments: %v", depts)
+
+	r.log.WithContext(ctx).Infof("SaveDepartments depts: %v, taskId :%s", depts, taskId)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
 	entities := make([]*models.TbLasDepartment, 0, len(depts))
 
 	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
@@ -160,7 +171,9 @@ func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*dingtalk.D
 }
 
 func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relations []*dingtalk.DingtalkDeptUserRelation, taskId string) (int, error) {
-	r.log.Infof("SaveDepartmentUserRelations: %v", relations)
+	r.log.WithContext(ctx).Infof("SaveDepartmentUserRelations relations: %v, taskId :%s", relations, taskId)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
 	entities := make([]*models.TbLasDepartmentUser, 0, len(relations))
 
@@ -277,6 +290,12 @@ func (r *accounterRepo) ClearAll(ctx context.Context) error {
 }
 
 func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersDel []*dingtalk.DingtalkDeptUser) error {
+
+	r.log.WithContext(ctx).Infof("SaveIncrementUsers usersAdd: %v", usersAdd)
+	r.log.WithContext(ctx).Infof("SaveIncrementUsers usersDel: %v", usersDel)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
 	entities := make([]*models.TbLasUserIncrement, 0, len(usersAdd)+len(usersDel))
 
 	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
@@ -367,6 +386,12 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 	return nil
 }
 func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel []*dingtalk.DingtalkDept) error {
+
+	r.log.WithContext(ctx).Infof("SaveIncrementDepartments deptsAdd: %v", deptsAdd)
+	r.log.WithContext(ctx).Infof("SaveIncrementDepartments deptsDel: %v", deptsDel)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
 	r.log.Infof("SaveIncrementDepartments deptsAdd: %v, deptsDel: %v", deptsAdd, deptsDel)
 	entities := make([]*models.TbLasDepartmentIncrement, 0, len(deptsAdd)+len(deptsDel))
 
@@ -425,6 +450,11 @@ func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, 
 
 func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel []*dingtalk.DingtalkDeptUserRelation) error {
 
+	r.log.WithContext(ctx).Infof("SaveIncrementDepartmentUserRelations relationsAdd: %v", relationsAdd)
+	r.log.WithContext(ctx).Infof("SaveIncrementDepartmentUserRelations relationsDel: %v", relationsDel)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
 	entities := make([]*models.TbLasDepartmentUserIncrement, 0, len(relationsAdd)+len(relationsDel))
 
 	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
@@ -463,7 +493,116 @@ func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
+			r.log.Infof("relation already exists: %v")
+		} else {
+			return result.Error
+		}
+
+	}
+
+	return nil
+}
+func (r *accounterRepo) BatchSaveUsers(ctx context.Context, users []*models.TbLasUser) (int, error) {
+
+	r.log.WithContext(ctx).Infof("BatchSaveUsers users: %v", users)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	if len(users) == 0 {
+		r.log.Infof("users is empty")
+		return 0, nil
+	}
+
+	for _, user := range users {
+		r.log.Info(user)
+	}
+
+	result := r.data.db.WithContext(ctx).Create(users)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
 			r.log.Infof("user already exists")
+		} else {
+			return 0, result.Error
+		}
+	}
+
+	return int(result.RowsAffected), nil
+}
+func (r *accounterRepo) BatchSaveDepts(ctx context.Context, depts []*models.TbLasDepartment) (int, error) {
+
+	r.log.WithContext(ctx).Infof("BatchSaveDepts depts: %v", depts)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	if len(depts) == 0 {
+		r.log.Infof("users is empty")
+		return 0, nil
+	}
+	for _, dept := range depts {
+		r.log.Info(dept)
+	}
+
+	result := r.data.db.WithContext(ctx).Create(depts)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
+			r.log.Infof("dept already exists")
+		} else {
+			return 0, result.Error
+		}
+
+	}
+	return int(result.RowsAffected), nil
+}
+func (r *accounterRepo) BatchSaveDeptUsers(ctx context.Context, usersdepts []*models.TbLasDepartmentUser) (int, error) {
+
+	r.log.WithContext(ctx).Infof("BatchSaveDeptUsers usersdepts: %s", usersdepts)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	if len(usersdepts) == 0 {
+		r.log.Infof("users is empty")
+		return 0, nil
+	}
+	for _, userdept := range usersdepts {
+		r.log.Info(userdept)
+	}
+	result := r.data.db.WithContext(ctx).Create(usersdepts)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
+			r.log.Infof("deptuser already exists")
+		} else {
+			return 0, result.Error
+		}
+
+	}
+	return int(result.RowsAffected), nil
+}
+
+func (r *accounterRepo) CreateTask(ctx context.Context, taskName string) error {
+
+	r.log.WithContext(ctx).Infof("CreateTask name: %s", taskName)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	task := &models.Task{
+		Title:         taskName,
+		Description:   taskName,
+		CreatedAt:     time.Now(),
+		Status:        models.TaskStatusPending,
+		Progress:      0,
+		StartDate:     time.Now(),
+		DueDate:       time.Now().Add(time.Minute * 30),
+		CompletedAt:   time.Now(),
+		CreatorID:     99,
+		EstimatedTime: 10,
+		ActualTime:    0,
+	}
+	result := r.data.db.WithContext(ctx).Where("title=?", taskName).FirstOrCreate(task)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
+			r.log.Infof("task already exists")
 		} else {
 			return result.Error
 		}
@@ -473,73 +612,57 @@ func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context
 	return nil
 }
 
-// func (r *accounterRepo) CallEcisaccountsyncIncrement(ctx context.Context, thirdCompanyID string) (biz.EcisaccountsyncIncrementResponse, error) {
+func (r *accounterRepo) UpdateTask(ctx context.Context, taskName, status string) error {
 
-// 	//待开发
-// 	path := r.serviceConf.Business.EcisaccountsyncUrlIncrement
+	// pending/in_progress/completed/cancelled
+	r.log.WithContext(ctx).Infof("UpdateTask name: %s, staus %s", taskName, status)
 
-// 	r.log.Infof("CallEcisaccountsyncIncrement path : %v", path)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
-// 	uri := path
-// 	var resp biz.EcisaccountsyncIncrementResponse
-// 	thirdCompanyID = r.serviceConf.Business.ThirdCompanyId
+	var task models.Task
+	if err := r.data.db.Model(&models.Task{}).WithContext(ctx).Where("title=?", taskName).Find(&task).Error; err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			r.log.Info("查询超时")
+		}
+		return err
+	}
+	fmt.Printf("task pre: %v\n", task)
+	now := time.Now()
+	fmt.Printf("now: %v\n", task.StartDate)
+	fmt.Printf("now: %v\n", now)
+	fmt.Printf("actualtime: %v\n", now.Sub(task.StartDate).Seconds())
+	task.ActualTime = int(now.Sub(task.StartDate).Seconds())
+	task.UpdatedAt = now
+	task.Status = status
+	if status == models.TaskStatusCompleted || status == models.TaskStatusCancelled {
+		task.CompletedAt = now
+	}
 
-// 	input := &biz.EcisaccountsyncIncrementRequest{
-// 		ThirdCompanyId: thirdCompanyID,
-// 	}
-// 	jsonData, err := json.Marshal(input)
-// 	if err != nil {
-// 		return resp, err
-// 	}
+	fmt.Printf("task after:%v\n", task)
+	// task := &models.Task{
+	// 	Title:         taskName,
+	// 	Description:   taskName,
+	// 	CreatedAt:     time.Now(),
+	// 	Status:        status,
+	// 	Progress:      0,
+	// 	StartDate:     time.Now(),
+	// 	DueDate:       time.Now().Add(time.Minute * 30),
+	// 	CompletedAt:   time.Now(),
+	// 	CreatorID:     99,
+	// 	EstimatedTime: 10,
+	// 	ActualTime:    0,
+	// }
+	result := r.data.db.WithContext(ctx).Updates(task)
 
-// 	r.log.Infof("CallEcisaccountsyncIncrement uri: %s, input: %s", uri, string(jsonData))
-// 	bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
-// 	r.log.Infof("CallEcisaccountsyncIncrement.Post output: bs:%s, err:%w", string(bs), err)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
+			r.log.Infof("task already exists")
+		} else {
+			return result.Error
+		}
 
-// 	if err != nil {
-// 		return resp, err
-// 	}
-// 	err = json.Unmarshal(bs, &resp)
-// 	if err != nil {
-// 		return resp, fmt.Errorf("Unmarshal err: %w", err)
-// 	}
-// 	if resp.Code != "200" {
-// 		return resp, fmt.Errorf("code not 200: %s", resp.Code)
-// 	}
+	}
 
-// 	// r.callEcisaccountsyncIncrementTest(ctx, thirdCompanyID)
-
-// 	return resp, nil
-
-// }
-
-// func (r *accounterRepo) callEcisaccountsyncIncrementTest(ctx context.Context, thirdCompanyID string) (biz.EcisaccountsyncIncrementResponse, error) {
-
-// 	path := r.serviceConf.Business.EcisaccountsyncUrlIncrement
-
-// 	thirdCompanyID = r.serviceConf.Business.ThirdCompanyId
-
-// 	r.log.Infof("callEcisaccountsyncIncrementTest path : %v", path)
-
-// 	uri := fmt.Sprintf("%s?&thirdCompanyId=%s", path, thirdCompanyID)
-
-// 	var resp biz.EcisaccountsyncIncrementResponse
-
-// 	r.log.Infof("callEcisaccountsyncIncrementTest uri: %s", uri)
-// 	bs, err := httputil.PostJSON(uri, nil, time.Second*10)
-// 	r.log.Infof("callEcisaccountsyncIncrementTest output: bs:%s, err:%w", string(bs), err)
-
-// 	if err != nil {
-// 		return resp, err
-// 	}
-// 	err = json.Unmarshal(bs, &resp)
-// 	if err != nil {
-// 		return resp, fmt.Errorf("Unmarshal err: %w", err)
-// 	}
-// 	if resp.Code != "200" {
-// 		return resp, fmt.Errorf("code not 200: %s", resp.Code)
-// 	}
-
-// 	return resp, nil
-
-// }
+	return nil
+}

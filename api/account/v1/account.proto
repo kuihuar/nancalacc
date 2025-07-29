@@ -62,12 +62,12 @@ service Account {
 }
 
 message UploadRequest {
-  bytes file_data = 1;
-  string file_name = 2;
+  bytes file = 1;
+  string filename = 2;
 }
 message UploadReply {
-  string file_url = 1;
-  int64 file_size = 2;
+  string url = 1;
+  string task = 2;
 }
 
 enum TriggerType {

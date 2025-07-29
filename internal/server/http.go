@@ -1,6 +1,7 @@
 package server
 
 import (
+	"io"
 	v1 "nancalacc/api/account/v1"
 	"nancalacc/internal/conf"
 	"nancalacc/internal/service"
@@ -18,6 +19,23 @@ func NewHTTPServer(c *conf.Server, accountService *service.AccountService, logge
 		http.Middleware(
 			recovery.Recovery(),
 		),
+
+		http.RequestDecoder(func(r *http.Request, v interface{}) error {
+			if r.URL.Path == "/v1/upload" {
+				data, err := io.ReadAll(r.Body)
+				if err != nil {
+					return err
+				}
+				if req, ok := v.(*v1.UploadRequest); ok {
+					req.File = data
+					if filename := r.Header.Get("X-Filename"); filename != "" {
+						req.Filename = filename
+					}
+					return nil
+				}
+			}
+			return http.DefaultRequestDecoder(r, v)
+		}),
 	}
 	if c.Http.Network != "" {
 		opts = append(opts, http.Network(c.Http.Network))

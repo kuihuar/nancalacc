@@ -36,9 +36,10 @@ func NewAccounterIncreUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk
 }
 
 func (uc *AccounterIncreUsecase) OrgDeptCreate(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
-	uc.log.Infof("OrgDeptCreate: %v", event.Data)
 
-	uc.log.WithContext(ctx).Info("")
+	log := uc.log.WithContext(ctx)
+	log.Infof("OrgDeptCreate data: %v", event.Data)
+
 	if event.Data == nil {
 		return nil
 	}
@@ -49,25 +50,25 @@ func (uc *AccounterIncreUsecase) OrgDeptCreate(ctx context.Context, event *clien
 	}
 
 	if len(depIds) == 0 {
-		uc.log.Info("OrgDeptCreate len(depIds) eq 0")
+		log.Info("OrgDeptCreate len(depIds) eq 0")
 		return nil
 	}
 
 	accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-	uc.log.WithContext(ctx).Infof("OrgDeptCreate.GetAccessToken accessToken: %v, err: %v", accessToken, err)
+	log.Infof("OrgDeptCreate.GetAccessToken accessToken: %v, err: %v", accessToken, err)
 	if err != nil {
 		return err
 	}
 	uc.log.WithContext(ctx).Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v", accessToken, depIds)
 	depts, err := uc.dingTalkRepo.FetchDeptDetails(ctx, accessToken, depIds)
-	uc.log.WithContext(ctx).Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v, err:%v", accessToken, depIds, err)
+	log.Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v, err:%v", accessToken, depIds, err)
 	if err != nil {
 		return err
 	}
 
 	err = uc.repo.SaveIncrementDepartments(ctx, depts, nil)
 	if err != nil {
-		uc.log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
+		log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
 		return err
 	}
 
@@ -83,14 +84,16 @@ func (uc *AccounterIncreUsecase) OrgDeptCreate(ctx context.Context, event *clien
 		return err
 	}
 	if res.Code != "200" {
-		uc.log.Errorf("code %v, not '200'", res.Code)
+		log.Errorf("code %v, not '200'", res.Code)
 		return fmt.Errorf("code %s not 200", res.Code)
 	}
 	return nil
 
 }
 func (uc *AccounterIncreUsecase) OrgDeptRemove(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
-	uc.log.Infof("OrgDeptCreate: %v", event.Data)
+	log := uc.log.WithContext(ctx)
+	log.Infof("OrgDeptRemove data: %v", event.Data)
+
 	if event.Data == nil {
 		return nil
 	}
@@ -124,7 +127,7 @@ func (uc *AccounterIncreUsecase) OrgDeptRemove(ctx context.Context, event *clien
 	})
 
 	if err != nil {
-		uc.log.Errorf("OrgDeptRemove.BatchGetDepartment err: %v", err)
+		log.Errorf("OrgDeptRemove.BatchGetDepartment err: %v", err)
 		return err
 	}
 	depInfoMap := make(map[string]*wps.WpsDepartmentItem)
@@ -156,16 +159,21 @@ func (uc *AccounterIncreUsecase) OrgDeptRemove(ctx context.Context, event *clien
 		return err
 	}
 	if res.Code != "200" {
-		uc.log.Errorf("code %v, not '200'", res.Code)
+		log.Errorf("code %v, not '200'", res.Code)
 		return fmt.Errorf("code %s not 200", res.Code)
 	}
 	return nil
 }
 func (uc *AccounterIncreUsecase) OrgDeptModify(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
+	log := uc.log.WithContext(ctx)
+	log.Infof("OrgDeptModify data: %v", event.Data)
 	return uc.repo.SaveIncrementDepartments(ctx, nil, nil)
 }
 func (uc *AccounterIncreUsecase) UserAddOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
-	uc.log.Infof("UserAddOrg: %v", event.Data)
+
+	log := uc.log.WithContext(ctx)
+	log.Infof("UserAddOrg data: %v", event.Data)
+
 	if event.Data == nil {
 		return nil
 	}
@@ -176,7 +184,7 @@ func (uc *AccounterIncreUsecase) UserAddOrg(ctx context.Context, event *clientV2
 	}
 
 	accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-	uc.log.WithContext(ctx).Infof("UserAddOrg.GetAccessToken accessToken: %v,userIds:%v err: %v", accessToken, userIds, err)
+	log.Infof("UserAddOrg.GetAccessToken accessToken: %v,userIds:%v err: %v", accessToken, userIds, err)
 	if err != nil {
 		return err
 	}
@@ -208,30 +216,22 @@ func (uc *AccounterIncreUsecase) UserAddOrg(ctx context.Context, event *clientV2
 		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
 	})
 
-	uc.log.WithContext(ctx).Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+	log.Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
 
 	if err != nil {
 		return err
 	}
 	if res.Code != "200" {
-		uc.log.Errorf("code %v, not '200'", res.Code)
+		log.Errorf("code %v, not '200'", res.Code)
 		return fmt.Errorf("code %s not 200", res.Code)
 	}
 	return nil
 }
 
-type user struct {
-	DingtalkUserId string
-	WpsUserId      string
-	Dept           struct {
-		DingtalkDeptId string
-		WpsDeptid      string
-	}
-}
-
 func (uc *AccounterIncreUsecase) UserLeaveOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
-	uc.log.Infof("UserLeaveOrg: %v", event.Data)
+	log := uc.log.WithContext(ctx)
+	log.Infof("UserLeaveOrg data: %v", event.Data)
 	if event.Data == nil {
 		return nil
 	}
@@ -248,7 +248,7 @@ func (uc *AccounterIncreUsecase) UserLeaveOrg(ctx context.Context, event *client
 	// 2.2 wps 用户ID 查 wps 部门ID
 	// 2.3 wps 部门ID 查 部门ID
 
-	uc.log.Info("UserLeaveOrg.GetAccessToken")
+	log.Info("UserLeaveOrg.GetAccessToken")
 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
 	if err != nil {
 		return err
@@ -261,7 +261,7 @@ func (uc *AccounterIncreUsecase) UserLeaveOrg(ctx context.Context, event *client
 		ExUserIDs: userIds,
 		Status:    []string{wps.UserStatusActive, wps.UserStatusNoActive},
 	})
-	uc.log.Infof("wpsUserInfo:%+v, err:%+v\n", wpsUserInfo, err)
+	log.Infof("wpsUserInfo:%+v, err:%+v\n", wpsUserInfo, err)
 	if err != nil {
 		return err
 	}
@@ -276,11 +276,11 @@ func (uc *AccounterIncreUsecase) UserLeaveOrg(ctx context.Context, event *client
 		WithDept: true,
 		Status:   []string{wps.UserStatusActive, wps.UserStatusNoActive},
 	}
-	uc.log.Infof("UserLeaveOrg.BatchPostUsers input:+%v", input)
+	log.Infof("UserLeaveOrg.BatchPostUsers input:+%v", input)
 	// 2.2 wps 用户ID 查 wps 部门ID
 	wpsUserInfoWithDept, err := uc.wps.BatchPostUsers(ctx, appAccessToken.AccessToken, input)
 
-	uc.log.Infof("UserLeaveOrg.BatchPostUser wpsUserInfoWithDept: %+v, err: %+v\n", wpsUserInfoWithDept, err)
+	log.Infof("UserLeaveOrg.BatchPostUser wpsUserInfoWithDept: %+v, err: %+v\n", wpsUserInfoWithDept, err)
 	if err != nil {
 		return err
 	}
@@ -300,7 +300,7 @@ func (uc *AccounterIncreUsecase) UserLeaveOrg(ctx context.Context, event *client
 
 	// 2.3 wps 部门ID 查 部门ID
 
-	uc.log.Info("UserLeaveOrg.BatchPostDepartments")
+	log.Info("UserLeaveOrg.BatchPostDepartments")
 	wpsDeptInfo, err := uc.wps.BatchPostDepartments(ctx, appAccessToken.AccessToken, wps.BatchPostDepartmentsRequest{
 		DeptIDs: deptIds,
 	})
@@ -346,30 +346,32 @@ func (uc *AccounterIncreUsecase) UserLeaveOrg(ctx context.Context, event *client
 		users = append(users, user)
 	}
 	// 1. 增量删除用户
-	uc.log.Info("UserLeaveOrg.SaveIncrementUsers")
+	log.Info("UserLeaveOrg.SaveIncrementUsers")
 	err = uc.repo.SaveIncrementUsers(ctx, nil, users)
 	if err != nil {
 		return err
 	}
 	relations := generateUserDeptRelations(users)
 
-	uc.log.Info("UserLeaveOrg.SaveIncrementDepartmentUserRelations")
+	log.Info("UserLeaveOrg.SaveIncrementDepartmentUserRelations")
 	err = uc.repo.SaveIncrementDepartmentUserRelations(ctx, nil, relations)
 
 	if err != nil {
 		return err
 	}
 
-	uc.log.Info("UserLeaveOrg.PostEcisaccountsyncIncrement")
+	log.Info("UserLeaveOrg.PostEcisaccountsyncIncrement")
 	res, err := uc.wpsSync.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
 		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
 	})
 
-	uc.log.WithContext(ctx).Infof("UserLeaveOrg.PostEcisaccountsyncIncrement res: %v, err: %v", res, err)
+	log.Infof("UserLeaveOrg.PostEcisaccountsyncIncrement res: %v, err: %v", res, err)
 
 	return err
 }
 func (uc *AccounterIncreUsecase) UserModifyOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
+	log := uc.log.WithContext(ctx)
+	log.Infof("UserModifyOrg data: %v", event.Data)
 	return uc.repo.SaveIncrementUsers(ctx, nil, nil)
 }
 func generateUserDeptRelations(deptUsers []*dingtalk.DingtalkDeptUser) []*dingtalk.DingtalkDeptUserRelation {
@@ -397,6 +399,7 @@ func generateUserDeptRelations(deptUsers []*dingtalk.DingtalkDeptUser) []*dingta
 
 func (uc *AccounterIncreUsecase) getDeptidsFromDingTalkEvent(event *clientV2.GenericOpenDingTalkEvent) ([]int64, error) {
 	uc.log.Infof("getDeptidsFromDingTalkEvent: %v", event.Data)
+
 	if event.Data == nil {
 		return nil, errors.New("getDeptidsFromDingTalkEvent event.Data is nil")
 	}

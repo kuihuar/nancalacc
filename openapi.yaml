@@ -262,17 +262,17 @@ components:
         UploadReply:
             type: object
             properties:
-                fileUrl:
+                url:
                     type: string
-                fileSize:
+                task:
                     type: string
         UploadRequest:
             type: object
             properties:
-                fileData:
+                file:
                     type: string
                     format: bytes
-                fileName:
+                filename:
                     type: string
 tags:
     - name: Account

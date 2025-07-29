@@ -173,8 +173,8 @@ func (GetSyncAccountReply_Status) EnumDescriptor() ([]byte, []int) {
 
 type UploadRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	FileData      []byte                 `protobuf:"bytes,1,opt,name=file_data,json=fileData,proto3" json:"file_data,omitempty"`
-	FileName      string                 `protobuf:"bytes,2,opt,name=file_name,json=fileName,proto3" json:"file_name,omitempty"`
+	File          []byte                 `protobuf:"bytes,1,opt,name=file,proto3" json:"file,omitempty"`
+	Filename      string                 `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -209,24 +209,24 @@ func (*UploadRequest) Descriptor() ([]byte, []int) {
 	return file_api_account_v1_account_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *UploadRequest) GetFileData() []byte {
+func (x *UploadRequest) GetFile() []byte {
 	if x != nil {
-		return x.FileData
+		return x.File
 	}
 	return nil
 }
 
-func (x *UploadRequest) GetFileName() string {
+func (x *UploadRequest) GetFilename() string {
 	if x != nil {
-		return x.FileName
+		return x.Filename
 	}
 	return ""
 }
 
 type UploadReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	FileUrl       string                 `protobuf:"bytes,1,opt,name=file_url,json=fileUrl,proto3" json:"file_url,omitempty"`
-	FileSize      int64                  `protobuf:"varint,2,opt,name=file_size,json=fileSize,proto3" json:"file_size,omitempty"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Task          string                 `protobuf:"bytes,2,opt,name=task,proto3" json:"task,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -261,18 +261,18 @@ func (*UploadReply) Descriptor() ([]byte, []int) {
 	return file_api_account_v1_account_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *UploadReply) GetFileUrl() string {
+func (x *UploadReply) GetUrl() string {
 	if x != nil {
-		return x.FileUrl
+		return x.Url
 	}
 	return ""
 }
 
-func (x *UploadReply) GetFileSize() int64 {
+func (x *UploadReply) GetTask() string {
 	if x != nil {
-		return x.FileSize
+		return x.Task
 	}
-	return 0
+	return ""
 }
 
 // 创建同步请求
@@ -880,13 +880,13 @@ var File_api_account_v1_account_proto protoreflect.FileDescriptor
 
 const file_api_account_v1_account_proto_rawDesc = "" +
 	"\n" +
-	"\x1capi/account/v1/account.proto\x12\x0eapi.account.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"I\n" +
-	"\rUploadRequest\x12\x1b\n" +
-	"\tfile_data\x18\x01 \x01(\fR\bfileData\x12\x1b\n" +
-	"\tfile_name\x18\x02 \x01(\tR\bfileName\"E\n" +
-	"\vUploadReply\x12\x19\n" +
-	"\bfile_url\x18\x01 \x01(\tR\afileUrl\x12\x1b\n" +
-	"\tfile_size\x18\x02 \x01(\x03R\bfileSize\"\x91\x01\n" +
+	"\x1capi/account/v1/account.proto\x12\x0eapi.account.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"?\n" +
+	"\rUploadRequest\x12\x12\n" +
+	"\x04file\x18\x01 \x01(\fR\x04file\x12\x1a\n" +
+	"\bfilename\x18\x02 \x01(\tR\bfilename\"3\n" +
+	"\vUploadReply\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12\x12\n" +
+	"\x04task\x18\x02 \x01(\tR\x04task\"\x91\x01\n" +
 	"\x18CreateSyncAccountRequest\x12>\n" +
 	"\ftrigger_type\x18\x01 \x01(\x0e2\x1b.api.account.v1.TriggerTypeR\vtriggerType\x125\n" +
 	"\tsync_type\x18\x02 \x01(\x0e2\x18.api.account.v1.SyncTypeR\bsyncType\"n\n" +
