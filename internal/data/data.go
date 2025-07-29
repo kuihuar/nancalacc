@@ -1,9 +1,7 @@
 package data
 
 import (
-	"context"
 	"errors"
-	"fmt"
 	"nancalacc/internal/conf"
 	"nancalacc/pkg/cipherutil"
 	"strings"
@@ -28,7 +26,7 @@ type Data struct {
 }
 
 func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
-	fmt.Printf("=====newData.c: %v\n", c)
+	log.NewHelper(logger).Info("=====newData.c: %v\n", c)
 
 	var db *gorm.DB
 	var err error
@@ -72,9 +70,11 @@ func NewData(c *conf.Data, logger log.Logger) (*Data, func(), error) {
 	})
 
 	// 测试连接
-	if err := rdb.Ping(context.Background()).Err(); err != nil {
-		return nil, nil, err
-	}
+	// if err := rdb.Ping(context.Background()).Err(); err != nil {
+	// 	log.NewHelper(logger).Error(err)
+
+	// 	return nil, nil, nil
+	// }
 
 	return &Data{
 		db:    db,

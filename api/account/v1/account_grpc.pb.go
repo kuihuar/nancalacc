@@ -27,6 +27,7 @@ const (
 	Account_GetAccessToken_FullMethodName    = "/api.account.v1.Account/GetAccessToken"
 	Account_Callback_FullMethodName          = "/api.account.v1.Account/Callback"
 	Account_UploadFile_FullMethodName        = "/api.account.v1.Account/UploadFile"
+	Account_GetTask_FullMethodName           = "/api.account.v1.Account/GetTask"
 )
 
 // AccountClient is the client API for Account service.
@@ -40,6 +41,7 @@ type AccountClient interface {
 	GetAccessToken(ctx context.Context, in *GetAccessTokenRequest, opts ...grpc.CallOption) (*GetAccessTokenResponse, error)
 	Callback(ctx context.Context, in *CallbackRequest, opts ...grpc.CallOption) (*CallbackResponse, error)
 	UploadFile(ctx context.Context, in *UploadRequest, opts ...grpc.CallOption) (*UploadReply, error)
+	GetTask(ctx context.Context, in *GetTaskRequest, opts ...grpc.CallOption) (*GetTaskReply, error)
 }
 
 type accountClient struct {
@@ -120,6 +122,16 @@ func (c *accountClient) UploadFile(ctx context.Context, in *UploadRequest, opts 
 	return out, nil
 }
 
+func (c *accountClient) GetTask(ctx context.Context, in *GetTaskRequest, opts ...grpc.CallOption) (*GetTaskReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTaskReply)
+	err := c.cc.Invoke(ctx, Account_GetTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccountServer is the server API for Account service.
 // All implementations must embed UnimplementedAccountServer
 // for forward compatibility.
@@ -131,6 +143,7 @@ type AccountServer interface {
 	GetAccessToken(context.Context, *GetAccessTokenRequest) (*GetAccessTokenResponse, error)
 	Callback(context.Context, *CallbackRequest) (*CallbackResponse, error)
 	UploadFile(context.Context, *UploadRequest) (*UploadReply, error)
+	GetTask(context.Context, *GetTaskRequest) (*GetTaskReply, error)
 	mustEmbedUnimplementedAccountServer()
 }
 
@@ -161,6 +174,9 @@ func (UnimplementedAccountServer) Callback(context.Context, *CallbackRequest) (*
 }
 func (UnimplementedAccountServer) UploadFile(context.Context, *UploadRequest) (*UploadReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UploadFile not implemented")
+}
+func (UnimplementedAccountServer) GetTask(context.Context, *GetTaskRequest) (*GetTaskReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTask not implemented")
 }
 func (UnimplementedAccountServer) mustEmbedUnimplementedAccountServer() {}
 func (UnimplementedAccountServer) testEmbeddedByValue()                 {}
@@ -309,6 +325,24 @@ func _Account_UploadFile_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Account_GetTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServer).GetTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Account_GetTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServer).GetTask(ctx, req.(*GetTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Account_ServiceDesc is the grpc.ServiceDesc for Account service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -343,6 +377,10 @@ var Account_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UploadFile",
 			Handler:    _Account_UploadFile_Handler,
+		},
+		{
+			MethodName: "GetTask",
+			Handler:    _Account_GetTask_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

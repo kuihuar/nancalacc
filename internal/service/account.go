@@ -34,6 +34,9 @@ func NewAccountService(accounterUsecase *biz.AccounterUsecase, oauth2Usecase *bi
 func (s *AccountService) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
 	log := s.log.WithContext(ctx)
 	log.Infof("CreateSyncAccount req: %v", req)
+	if req.GetTaskName() != "" && len(req.GetTaskName()) != 14 {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid taskname: %s", req.GetTaskName())
+	}
 	// 这里设置传进来的最大分钟数
 	ctx, cancel := context.WithTimeout(ctx, 50*time.Minute)
 	defer cancel()
@@ -97,7 +100,7 @@ func (s *AccountService) Callback(ctx context.Context, req *v1.CallbackRequest) 
 func (s *AccountService) UploadFile(ctx context.Context, req *v1.UploadRequest) (*v1.UploadReply, error) {
 
 	log := s.log.WithContext(ctx)
-	log.Infof("UploadFile req: %v", req)
+	log.Infof("UploadFile req: %v", req.Filename)
 	// maxUploadSize := 4
 	// if len(req.File) > maxUploadSize {
 	// 	return nil, status.Errorf(codes.InvalidArgument,
@@ -129,7 +132,7 @@ func (s *AccountService) UploadFile(ctx context.Context, req *v1.UploadRequest) 
 		return nil, status.Errorf(codes.Internal, "safe file failed: %v", err)
 	}
 	taskId := time.Now().Add(time.Duration(1) * time.Second).Format("20060102150405")
-	err := s.accounterUsecase.CreateTask(ctx, taskId)
+	_, err := s.accounterUsecase.CreateTask(ctx, taskId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "create task failed: %v", err)
 	}
@@ -139,4 +142,26 @@ func (s *AccountService) UploadFile(ctx context.Context, req *v1.UploadRequest) 
 		Task: taskId,
 	}, nil
 
+}
+
+func (s *AccountService) GetTask(ctx context.Context, in *v1.GetTaskRequest) (*v1.GetTaskReply, error) {
+
+	log := s.log.WithContext(ctx)
+	log.Infof("GetAccessToken req: %v", in)
+
+	taskName := in.GetTaskName()
+	if taskName == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "taskName empty")
+	}
+
+	if len(taskName) != 14 {
+		return nil, status.Errorf(codes.InvalidArgument, "taskName invalid")
+	}
+	task, err := s.accounterUsecase.GetTask(ctx, taskName)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "create task failed: %v", err)
+	}
+	return &v1.GetTaskReply{
+		Task: task,
+	}, nil
 }

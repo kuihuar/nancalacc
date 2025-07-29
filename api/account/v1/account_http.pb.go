@@ -25,6 +25,7 @@ const OperationAccountCancelSyncTask = "/api.account.v1.Account/CancelSyncTask"
 const OperationAccountCreateSyncAccount = "/api.account.v1.Account/CreateSyncAccount"
 const OperationAccountGetAccessToken = "/api.account.v1.Account/GetAccessToken"
 const OperationAccountGetSyncAccount = "/api.account.v1.Account/GetSyncAccount"
+const OperationAccountGetTask = "/api.account.v1.Account/GetTask"
 const OperationAccountGetUserInfo = "/api.account.v1.Account/GetUserInfo"
 const OperationAccountUploadFile = "/api.account.v1.Account/UploadFile"
 
@@ -34,6 +35,7 @@ type AccountHTTPServer interface {
 	CreateSyncAccount(context.Context, *CreateSyncAccountRequest) (*CreateSyncAccountReply, error)
 	GetAccessToken(context.Context, *GetAccessTokenRequest) (*GetAccessTokenResponse, error)
 	GetSyncAccount(context.Context, *GetSyncAccountRequest) (*GetSyncAccountReply, error)
+	GetTask(context.Context, *GetTaskRequest) (*GetTaskReply, error)
 	GetUserInfo(context.Context, *GetUserInfoRequest) (*GetUserInfoResponse, error)
 	UploadFile(context.Context, *UploadRequest) (*UploadReply, error)
 }
@@ -47,6 +49,7 @@ func RegisterAccountHTTPServer(s *http.Server, srv AccountHTTPServer) {
 	r.GET("/v1/oauth/userAccessToken", _Account_GetAccessToken0_HTTP_Handler(srv))
 	r.GET("/v1/oauth/callback", _Account_Callback0_HTTP_Handler(srv))
 	r.POST("/v1/upload", _Account_UploadFile0_HTTP_Handler(srv))
+	r.GET("/v1/task", _Account_GetTask0_HTTP_Handler(srv))
 }
 
 func _Account_CreateSyncAccount0_HTTP_Handler(srv AccountHTTPServer) func(ctx http.Context) error {
@@ -188,12 +191,32 @@ func _Account_UploadFile0_HTTP_Handler(srv AccountHTTPServer) func(ctx http.Cont
 	}
 }
 
+func _Account_GetTask0_HTTP_Handler(srv AccountHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in GetTaskRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationAccountGetTask)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetTask(ctx, req.(*GetTaskRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*GetTaskReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 type AccountHTTPClient interface {
 	Callback(ctx context.Context, req *CallbackRequest, opts ...http.CallOption) (rsp *CallbackResponse, err error)
 	CancelSyncTask(ctx context.Context, req *CancelSyncAccountRequest, opts ...http.CallOption) (rsp *emptypb.Empty, err error)
 	CreateSyncAccount(ctx context.Context, req *CreateSyncAccountRequest, opts ...http.CallOption) (rsp *CreateSyncAccountReply, err error)
 	GetAccessToken(ctx context.Context, req *GetAccessTokenRequest, opts ...http.CallOption) (rsp *GetAccessTokenResponse, err error)
 	GetSyncAccount(ctx context.Context, req *GetSyncAccountRequest, opts ...http.CallOption) (rsp *GetSyncAccountReply, err error)
+	GetTask(ctx context.Context, req *GetTaskRequest, opts ...http.CallOption) (rsp *GetTaskReply, err error)
 	GetUserInfo(ctx context.Context, req *GetUserInfoRequest, opts ...http.CallOption) (rsp *GetUserInfoResponse, err error)
 	UploadFile(ctx context.Context, req *UploadRequest, opts ...http.CallOption) (rsp *UploadReply, err error)
 }
@@ -263,6 +286,19 @@ func (c *AccountHTTPClientImpl) GetSyncAccount(ctx context.Context, in *GetSyncA
 	pattern := "/v1/account"
 	path := binding.EncodeURL(pattern, in, true)
 	opts = append(opts, http.Operation(OperationAccountGetSyncAccount))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *AccountHTTPClientImpl) GetTask(ctx context.Context, in *GetTaskRequest, opts ...http.CallOption) (*GetTaskReply, error) {
+	var out GetTaskReply
+	pattern := "/v1/task"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationAccountGetTask))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {

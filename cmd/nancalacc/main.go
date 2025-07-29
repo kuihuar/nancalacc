@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 
 	"nancalacc/internal/conf"
 	"nancalacc/internal/service"
 	"nancalacc/internal/task"
+	"nancalacc/internal/tracer"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
@@ -26,6 +28,8 @@ var (
 	Name string
 	// Version is the version of the compiled software.
 	Version string
+
+	Env string
 	// flagconf is the config flag.
 	flagconf string
 
@@ -37,6 +41,7 @@ func init() {
 }
 
 func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, cronService *task.CronService, eventService *service.DingTalkEventService) *kratos.App {
+
 	return kratos.New(
 		kratos.ID(id),
 		kratos.Name(Name),
@@ -63,6 +68,14 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, cronService *ta
 			eventService.Stop()
 			return nil
 		}),
+		// kratos.BeforeStart(func(ctx context.Context) error {
+		// 	tracer.Init()
+		// 	return nil
+		// }),
+		// kratos.AfterStop(func(ctx context.Context) error {
+		// 	tracer.Shutdown()
+		// 	return nil
+		// }),
 	)
 }
 
@@ -84,7 +97,20 @@ func main() {
 	if err := c.Scan(&bc); err != nil {
 		panic(err)
 	}
-	logger := log.With(log.NewStdLogger(os.Stdout),
+	stdLogger := log.NewStdLogger(os.Stdout)
+
+	// 创建级别过滤器
+	lv := log.ParseLevel(bc.App.GetLogLevel())
+	levelFilter := log.NewFilter(stdLogger, log.FilterLevel(lv))
+
+	id := bc.App.GetId()
+	Name := bc.App.GetName()
+	Version := bc.App.GetVersion()
+	Env := bc.App.GetEnv()
+
+	fmt.Print(Env)
+
+	logger := log.With(levelFilter,
 		"ts", log.DefaultTimestamp,
 		"caller", log.DefaultCaller,
 		"service.id", id,
@@ -99,6 +125,12 @@ func main() {
 		panic(err)
 	}
 	defer cleanup()
+
+	//app.Use(middleware.LogMiddleware(log.LevelError))
+
+	ttc := tracer.NewTracerManager()
+	ttc.Init(Env, Name)
+	defer ttc.Shutdown()
 
 	// start and wait for stop signal
 	if err := app.Run(); err != nil {

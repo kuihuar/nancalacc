@@ -23,7 +23,8 @@ app:
   name: "nancalacc"
   version: "v1.0.0"
   env: "prov" #dev #prov
-  log_level: "debug"
+  log_level: "INFO" # DEBUG INFO WARN ERROR FATAL
+  logout : "stdout"
 service:
   business:
     third_company_id: "1" # 三方租户ID

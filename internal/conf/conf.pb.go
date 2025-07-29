@@ -209,6 +209,7 @@ type App struct {
 	Version       string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
 	Env           string                 `protobuf:"bytes,4,opt,name=env,proto3" json:"env,omitempty"`
 	LogLevel      string                 `protobuf:"bytes,5,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`
+	LogOut        string                 `protobuf:"bytes,6,opt,name=log_out,json=logOut,proto3" json:"log_out,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -274,6 +275,13 @@ func (x *App) GetEnv() string {
 func (x *App) GetLogLevel() string {
 	if x != nil {
 		return x.LogLevel
+	}
+	return ""
+}
+
+func (x *App) GetLogOut() string {
+	if x != nil {
+		return x.LogOut
 	}
 	return ""
 }
@@ -1226,13 +1234,14 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\x04Auth\x12\x15\n" +
 	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12\x1d\n" +
 	"\n" +
-	"app_secret\x18\x02 \x01(\tR\tappSecret\"r\n" +
+	"app_secret\x18\x02 \x01(\tR\tappSecret\"\x8b\x01\n" +
 	"\x03App\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
 	"\aversion\x18\x03 \x01(\tR\aversion\x12\x10\n" +
 	"\x03env\x18\x04 \x01(\tR\x03env\x12\x1b\n" +
-	"\tlog_level\x18\x05 \x01(\tR\blogLevel\"\xc3\v\n" +
+	"\tlog_level\x18\x05 \x01(\tR\blogLevel\x12\x17\n" +
+	"\alog_out\x18\x06 \x01(\tR\x06logOut\"\xc3\v\n" +
 	"\aService\x128\n" +
 	"\bbusiness\x18\x01 \x01(\v2\x1c.kratos.api.Service.BusinessR\bbusiness\x12,\n" +
 	"\x04auth\x18\x02 \x01(\v2\x18.kratos.api.Service.AuthR\x04auth\x1a\xeb\x01\n" +

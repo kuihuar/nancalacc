@@ -31,7 +31,7 @@ var (
 )
 
 type WPSRequest struct {
-	// log         log.Logger
+	logger      *log.Helper
 	baseURL     string
 	method      string
 	path        string
@@ -51,7 +51,6 @@ type Option func(*WPSRequest)
 
 func NewWPSRequest(baseURL, accessKey, secretKey string, opts ...Option) *WPSRequest {
 	r := &WPSRequest{
-		// log:         log,
 		baseURL:     strings.TrimRight(baseURL, "/"),
 		accessKey:   accessKey,
 		secretKey:   secretKey,
@@ -67,6 +66,12 @@ func NewWPSRequest(baseURL, accessKey, secretKey string, opts ...Option) *WPSReq
 	}
 
 	return r
+}
+
+func WithLogger(logger *log.Helper) Option {
+	return func(r *WPSRequest) {
+		r.logger = logger
+	}
 }
 
 // Option setters
@@ -198,11 +203,12 @@ func (r *WPSRequest) Do(ctx context.Context) ([]byte, error) {
 
 	command, _ := http2curl.GetCurlCommand(req)
 	// fmt.Println()
-	log.Infof("request command: %s\n", command)
+
+	r.logger.Infof("request command: %s\n", command)
 	// Execute request
 	resp, err := r.client.Do(req.WithContext(ctx))
 
-	log.Infof("request resp: %+v, err: %+v\n", resp, err)
+	r.logger.Infof("request resp: %+v, err: %+v\n", resp, err)
 	// fmt.Println()
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrHTTPRequest, err)
@@ -210,7 +216,7 @@ func (r *WPSRequest) Do(ctx context.Context) ([]byte, error) {
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
-	log.Infof("reques resp.StatusCode: %d, detail: %s\n", resp.StatusCode, string(body))
+	r.logger.Infof("reques resp.StatusCode: %d, detail: %s\n", resp.StatusCode, string(body))
 	if resp.StatusCode >= http.StatusBadRequest {
 
 		return nil, fmt.Errorf("%w: status %d", ErrHTTPRequest, resp.StatusCode)

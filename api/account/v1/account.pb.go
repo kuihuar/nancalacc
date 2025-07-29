@@ -168,7 +168,95 @@ func (x GetSyncAccountReply_Status) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use GetSyncAccountReply_Status.Descriptor instead.
 func (GetSyncAccountReply_Status) EnumDescriptor() ([]byte, []int) {
-	return file_api_account_v1_account_proto_rawDescGZIP(), []int{5, 0}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{7, 0}
+}
+
+type GetTaskRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TaskName      string                 `protobuf:"bytes,1,opt,name=task_name,json=taskName,proto3" json:"task_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTaskRequest) Reset() {
+	*x = GetTaskRequest{}
+	mi := &file_api_account_v1_account_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTaskRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTaskRequest) ProtoMessage() {}
+
+func (x *GetTaskRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_account_v1_account_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTaskRequest.ProtoReflect.Descriptor instead.
+func (*GetTaskRequest) Descriptor() ([]byte, []int) {
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *GetTaskRequest) GetTaskName() string {
+	if x != nil {
+		return x.TaskName
+	}
+	return ""
+}
+
+type GetTaskReply struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Task          *GetTaskReply_Task     `protobuf:"bytes,1,opt,name=task,proto3" json:"task,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTaskReply) Reset() {
+	*x = GetTaskReply{}
+	mi := &file_api_account_v1_account_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTaskReply) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTaskReply) ProtoMessage() {}
+
+func (x *GetTaskReply) ProtoReflect() protoreflect.Message {
+	mi := &file_api_account_v1_account_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTaskReply.ProtoReflect.Descriptor instead.
+func (*GetTaskReply) Descriptor() ([]byte, []int) {
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetTaskReply) GetTask() *GetTaskReply_Task {
+	if x != nil {
+		return x.Task
+	}
+	return nil
 }
 
 type UploadRequest struct {
@@ -181,7 +269,7 @@ type UploadRequest struct {
 
 func (x *UploadRequest) Reset() {
 	*x = UploadRequest{}
-	mi := &file_api_account_v1_account_proto_msgTypes[0]
+	mi := &file_api_account_v1_account_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -193,7 +281,7 @@ func (x *UploadRequest) String() string {
 func (*UploadRequest) ProtoMessage() {}
 
 func (x *UploadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_account_v1_account_proto_msgTypes[0]
+	mi := &file_api_account_v1_account_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -206,7 +294,7 @@ func (x *UploadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadRequest.ProtoReflect.Descriptor instead.
 func (*UploadRequest) Descriptor() ([]byte, []int) {
-	return file_api_account_v1_account_proto_rawDescGZIP(), []int{0}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *UploadRequest) GetFile() []byte {
@@ -233,7 +321,7 @@ type UploadReply struct {
 
 func (x *UploadReply) Reset() {
 	*x = UploadReply{}
-	mi := &file_api_account_v1_account_proto_msgTypes[1]
+	mi := &file_api_account_v1_account_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -245,7 +333,7 @@ func (x *UploadReply) String() string {
 func (*UploadReply) ProtoMessage() {}
 
 func (x *UploadReply) ProtoReflect() protoreflect.Message {
-	mi := &file_api_account_v1_account_proto_msgTypes[1]
+	mi := &file_api_account_v1_account_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -258,7 +346,7 @@ func (x *UploadReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadReply.ProtoReflect.Descriptor instead.
 func (*UploadReply) Descriptor() ([]byte, []int) {
-	return file_api_account_v1_account_proto_rawDescGZIP(), []int{1}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *UploadReply) GetUrl() string {
@@ -280,13 +368,14 @@ type CreateSyncAccountRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TriggerType   TriggerType            `protobuf:"varint,1,opt,name=trigger_type,json=triggerType,proto3,enum=api.account.v1.TriggerType" json:"trigger_type,omitempty"` // 触发类型
 	SyncType      SyncType               `protobuf:"varint,2,opt,name=sync_type,json=syncType,proto3,enum=api.account.v1.SyncType" json:"sync_type,omitempty"`             // 同步类型
+	TaskName      *string                `protobuf:"bytes,3,opt,name=task_name,json=taskName,proto3,oneof" json:"task_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateSyncAccountRequest) Reset() {
 	*x = CreateSyncAccountRequest{}
-	mi := &file_api_account_v1_account_proto_msgTypes[2]
+	mi := &file_api_account_v1_account_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -298,7 +387,7 @@ func (x *CreateSyncAccountRequest) String() string {
 func (*CreateSyncAccountRequest) ProtoMessage() {}
 
 func (x *CreateSyncAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_account_v1_account_proto_msgTypes[2]
+	mi := &file_api_account_v1_account_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -311,7 +400,7 @@ func (x *CreateSyncAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateSyncAccountRequest.ProtoReflect.Descriptor instead.
 func (*CreateSyncAccountRequest) Descriptor() ([]byte, []int) {
-	return file_api_account_v1_account_proto_rawDescGZIP(), []int{2}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CreateSyncAccountRequest) GetTriggerType() TriggerType {
@@ -328,6 +417,13 @@ func (x *CreateSyncAccountRequest) GetSyncType() SyncType {
 	return SyncType_FULL
 }
 
+func (x *CreateSyncAccountRequest) GetTaskName() string {
+	if x != nil && x.TaskName != nil {
+		return *x.TaskName
+	}
+	return ""
+}
+
 // 创建同步响应
 type CreateSyncAccountReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -339,7 +435,7 @@ type CreateSyncAccountReply struct {
 
 func (x *CreateSyncAccountReply) Reset() {
 	*x = CreateSyncAccountReply{}
-	mi := &file_api_account_v1_account_proto_msgTypes[3]
+	mi := &file_api_account_v1_account_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -351,7 +447,7 @@ func (x *CreateSyncAccountReply) String() string {
 func (*CreateSyncAccountReply) ProtoMessage() {}
 
 func (x *CreateSyncAccountReply) ProtoReflect() protoreflect.Message {
-	mi := &file_api_account_v1_account_proto_msgTypes[3]
+	mi := &file_api_account_v1_account_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -364,7 +460,7 @@ func (x *CreateSyncAccountReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateSyncAccountReply.ProtoReflect.Descriptor instead.
 func (*CreateSyncAccountReply) Descriptor() ([]byte, []int) {
-	return file_api_account_v1_account_proto_rawDescGZIP(), []int{3}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CreateSyncAccountReply) GetTaskId() string {
@@ -391,7 +487,7 @@ type GetSyncAccountRequest struct {
 
 func (x *GetSyncAccountRequest) Reset() {
 	*x = GetSyncAccountRequest{}
-	mi := &file_api_account_v1_account_proto_msgTypes[4]
+	mi := &file_api_account_v1_account_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -403,7 +499,7 @@ func (x *GetSyncAccountRequest) String() string {
 func (*GetSyncAccountRequest) ProtoMessage() {}
 
 func (x *GetSyncAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_account_v1_account_proto_msgTypes[4]
+	mi := &file_api_account_v1_account_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -416,7 +512,7 @@ func (x *GetSyncAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSyncAccountRequest.ProtoReflect.Descriptor instead.
 func (*GetSyncAccountRequest) Descriptor() ([]byte, []int) {
-	return file_api_account_v1_account_proto_rawDescGZIP(), []int{4}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetSyncAccountRequest) GetTaskId() string {
@@ -440,7 +536,7 @@ type GetSyncAccountReply struct {
 
 func (x *GetSyncAccountReply) Reset() {
 	*x = GetSyncAccountReply{}
-	mi := &file_api_account_v1_account_proto_msgTypes[5]
+	mi := &file_api_account_v1_account_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -452,7 +548,7 @@ func (x *GetSyncAccountReply) String() string {
 func (*GetSyncAccountReply) ProtoMessage() {}
 
 func (x *GetSyncAccountReply) ProtoReflect() protoreflect.Message {
-	mi := &file_api_account_v1_account_proto_msgTypes[5]
+	mi := &file_api_account_v1_account_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -465,7 +561,7 @@ func (x *GetSyncAccountReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSyncAccountReply.ProtoReflect.Descriptor instead.
 func (*GetSyncAccountReply) Descriptor() ([]byte, []int) {
-	return file_api_account_v1_account_proto_rawDescGZIP(), []int{5}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetSyncAccountReply) GetStatus() GetSyncAccountReply_Status {
@@ -512,7 +608,7 @@ type CancelSyncAccountRequest struct {
 
 func (x *CancelSyncAccountRequest) Reset() {
 	*x = CancelSyncAccountRequest{}
-	mi := &file_api_account_v1_account_proto_msgTypes[6]
+	mi := &file_api_account_v1_account_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -524,7 +620,7 @@ func (x *CancelSyncAccountRequest) String() string {
 func (*CancelSyncAccountRequest) ProtoMessage() {}
 
 func (x *CancelSyncAccountRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_account_v1_account_proto_msgTypes[6]
+	mi := &file_api_account_v1_account_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -537,7 +633,7 @@ func (x *CancelSyncAccountRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelSyncAccountRequest.ProtoReflect.Descriptor instead.
 func (*CancelSyncAccountRequest) Descriptor() ([]byte, []int) {
-	return file_api_account_v1_account_proto_rawDescGZIP(), []int{6}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *CancelSyncAccountRequest) GetTaskId() string {
@@ -556,7 +652,7 @@ type GetAccessTokenRequest struct {
 
 func (x *GetAccessTokenRequest) Reset() {
 	*x = GetAccessTokenRequest{}
-	mi := &file_api_account_v1_account_proto_msgTypes[7]
+	mi := &file_api_account_v1_account_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -568,7 +664,7 @@ func (x *GetAccessTokenRequest) String() string {
 func (*GetAccessTokenRequest) ProtoMessage() {}
 
 func (x *GetAccessTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_account_v1_account_proto_msgTypes[7]
+	mi := &file_api_account_v1_account_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -581,7 +677,7 @@ func (x *GetAccessTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAccessTokenRequest.ProtoReflect.Descriptor instead.
 func (*GetAccessTokenRequest) Descriptor() ([]byte, []int) {
-	return file_api_account_v1_account_proto_rawDescGZIP(), []int{7}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetAccessTokenRequest) GetCode() string {
@@ -602,7 +698,7 @@ type GetAccessTokenResponse struct {
 
 func (x *GetAccessTokenResponse) Reset() {
 	*x = GetAccessTokenResponse{}
-	mi := &file_api_account_v1_account_proto_msgTypes[8]
+	mi := &file_api_account_v1_account_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -614,7 +710,7 @@ func (x *GetAccessTokenResponse) String() string {
 func (*GetAccessTokenResponse) ProtoMessage() {}
 
 func (x *GetAccessTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_account_v1_account_proto_msgTypes[8]
+	mi := &file_api_account_v1_account_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -627,7 +723,7 @@ func (x *GetAccessTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAccessTokenResponse.ProtoReflect.Descriptor instead.
 func (*GetAccessTokenResponse) Descriptor() ([]byte, []int) {
-	return file_api_account_v1_account_proto_rawDescGZIP(), []int{8}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetAccessTokenResponse) GetAccessToken() string {
@@ -660,7 +756,7 @@ type GetUserInfoRequest struct {
 
 func (x *GetUserInfoRequest) Reset() {
 	*x = GetUserInfoRequest{}
-	mi := &file_api_account_v1_account_proto_msgTypes[9]
+	mi := &file_api_account_v1_account_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -672,7 +768,7 @@ func (x *GetUserInfoRequest) String() string {
 func (*GetUserInfoRequest) ProtoMessage() {}
 
 func (x *GetUserInfoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_account_v1_account_proto_msgTypes[9]
+	mi := &file_api_account_v1_account_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -685,7 +781,7 @@ func (x *GetUserInfoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserInfoRequest.ProtoReflect.Descriptor instead.
 func (*GetUserInfoRequest) Descriptor() ([]byte, []int) {
-	return file_api_account_v1_account_proto_rawDescGZIP(), []int{9}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetUserInfoRequest) GetAccessToken() string {
@@ -708,7 +804,7 @@ type GetUserInfoResponse struct {
 
 func (x *GetUserInfoResponse) Reset() {
 	*x = GetUserInfoResponse{}
-	mi := &file_api_account_v1_account_proto_msgTypes[10]
+	mi := &file_api_account_v1_account_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -720,7 +816,7 @@ func (x *GetUserInfoResponse) String() string {
 func (*GetUserInfoResponse) ProtoMessage() {}
 
 func (x *GetUserInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_account_v1_account_proto_msgTypes[10]
+	mi := &file_api_account_v1_account_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -733,7 +829,7 @@ func (x *GetUserInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserInfoResponse.ProtoReflect.Descriptor instead.
 func (*GetUserInfoResponse) Descriptor() ([]byte, []int) {
-	return file_api_account_v1_account_proto_rawDescGZIP(), []int{10}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetUserInfoResponse) GetUnionId() string {
@@ -781,7 +877,7 @@ type CallbackRequest struct {
 
 func (x *CallbackRequest) Reset() {
 	*x = CallbackRequest{}
-	mi := &file_api_account_v1_account_proto_msgTypes[11]
+	mi := &file_api_account_v1_account_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -793,7 +889,7 @@ func (x *CallbackRequest) String() string {
 func (*CallbackRequest) ProtoMessage() {}
 
 func (x *CallbackRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_account_v1_account_proto_msgTypes[11]
+	mi := &file_api_account_v1_account_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -806,7 +902,7 @@ func (x *CallbackRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CallbackRequest.ProtoReflect.Descriptor instead.
 func (*CallbackRequest) Descriptor() ([]byte, []int) {
-	return file_api_account_v1_account_proto_rawDescGZIP(), []int{11}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *CallbackRequest) GetCode() string {
@@ -834,7 +930,7 @@ type CallbackResponse struct {
 
 func (x *CallbackResponse) Reset() {
 	*x = CallbackResponse{}
-	mi := &file_api_account_v1_account_proto_msgTypes[12]
+	mi := &file_api_account_v1_account_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -846,7 +942,7 @@ func (x *CallbackResponse) String() string {
 func (*CallbackResponse) ProtoMessage() {}
 
 func (x *CallbackResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_account_v1_account_proto_msgTypes[12]
+	mi := &file_api_account_v1_account_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -859,7 +955,7 @@ func (x *CallbackResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CallbackResponse.ProtoReflect.Descriptor instead.
 func (*CallbackResponse) Descriptor() ([]byte, []int) {
-	return file_api_account_v1_account_proto_rawDescGZIP(), []int{12}
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *CallbackResponse) GetStatus() string {
@@ -876,20 +972,121 @@ func (x *CallbackResponse) GetMessage() string {
 	return ""
 }
 
+type GetTaskReply_Task struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	CreateTime    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	StartTime     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	CompletedTime *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=completed_time,json=completedTime,proto3" json:"completed_time,omitempty"`
+	ActurlTime    int32                  `protobuf:"varint,6,opt,name=acturl_time,json=acturlTime,proto3" json:"acturl_time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTaskReply_Task) Reset() {
+	*x = GetTaskReply_Task{}
+	mi := &file_api_account_v1_account_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTaskReply_Task) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTaskReply_Task) ProtoMessage() {}
+
+func (x *GetTaskReply_Task) ProtoReflect() protoreflect.Message {
+	mi := &file_api_account_v1_account_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTaskReply_Task.ProtoReflect.Descriptor instead.
+func (*GetTaskReply_Task) Descriptor() ([]byte, []int) {
+	return file_api_account_v1_account_proto_rawDescGZIP(), []int{1, 0}
+}
+
+func (x *GetTaskReply_Task) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *GetTaskReply_Task) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *GetTaskReply_Task) GetCreateTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreateTime
+	}
+	return nil
+}
+
+func (x *GetTaskReply_Task) GetStartTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartTime
+	}
+	return nil
+}
+
+func (x *GetTaskReply_Task) GetCompletedTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CompletedTime
+	}
+	return nil
+}
+
+func (x *GetTaskReply_Task) GetActurlTime() int32 {
+	if x != nil {
+		return x.ActurlTime
+	}
+	return 0
+}
+
 var File_api_account_v1_account_proto protoreflect.FileDescriptor
 
 const file_api_account_v1_account_proto_rawDesc = "" +
 	"\n" +
-	"\x1capi/account/v1/account.proto\x12\x0eapi.account.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"?\n" +
+	"\x1capi/account/v1/account.proto\x12\x0eapi.account.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"-\n" +
+	"\x0eGetTaskRequest\x12\x1b\n" +
+	"\ttask_name\x18\x01 \x01(\tR\btaskName\"\xd6\x02\n" +
+	"\fGetTaskReply\x125\n" +
+	"\x04task\x18\x01 \x01(\v2!.api.account.v1.GetTaskReply.TaskR\x04task\x1a\x8e\x02\n" +
+	"\x04Task\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12;\n" +
+	"\vcreate_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"createTime\x129\n" +
+	"\n" +
+	"start_time\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tstartTime\x12A\n" +
+	"\x0ecompleted_time\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\rcompletedTime\x12\x1f\n" +
+	"\vacturl_time\x18\x06 \x01(\x05R\n" +
+	"acturlTime\"?\n" +
 	"\rUploadRequest\x12\x12\n" +
 	"\x04file\x18\x01 \x01(\fR\x04file\x12\x1a\n" +
 	"\bfilename\x18\x02 \x01(\tR\bfilename\"3\n" +
 	"\vUploadReply\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x12\n" +
-	"\x04task\x18\x02 \x01(\tR\x04task\"\x91\x01\n" +
+	"\x04task\x18\x02 \x01(\tR\x04task\"\xc1\x01\n" +
 	"\x18CreateSyncAccountRequest\x12>\n" +
 	"\ftrigger_type\x18\x01 \x01(\x0e2\x1b.api.account.v1.TriggerTypeR\vtriggerType\x125\n" +
-	"\tsync_type\x18\x02 \x01(\x0e2\x18.api.account.v1.SyncTypeR\bsyncType\"n\n" +
+	"\tsync_type\x18\x02 \x01(\x0e2\x18.api.account.v1.SyncTypeR\bsyncType\x12 \n" +
+	"\ttask_name\x18\x03 \x01(\tH\x00R\btaskName\x88\x01\x01B\f\n" +
+	"\n" +
+	"_task_name\"n\n" +
 	"\x16CreateSyncAccountReply\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12;\n" +
 	"\vcreate_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
@@ -938,7 +1135,7 @@ const file_api_account_v1_account_proto_rawDesc = "" +
 	"\x11TRIGGER_SCHEDULED\x10\x02*%\n" +
 	"\bSyncType\x12\b\n" +
 	"\x04FULL\x10\x00\x12\x0f\n" +
-	"\vINCREMENTAL\x10\x012\xac\x06\n" +
+	"\vINCREMENTAL\x10\x012\x87\a\n" +
 	"\aAccount\x12}\n" +
 	"\x11CreateSyncAccount\x12(.api.account.v1.CreateSyncAccountRequest\x1a&.api.account.v1.CreateSyncAccountReply\"\x16\x82\xd3\xe4\x93\x02\x10:\x01*\"\v/v1/account\x12q\n" +
 	"\x0eGetSyncAccount\x12%.api.account.v1.GetSyncAccountRequest\x1a#.api.account.v1.GetSyncAccountReply\"\x13\x82\xd3\xe4\x93\x02\r\x12\v/v1/account\x12g\n" +
@@ -948,7 +1145,9 @@ const file_api_account_v1_account_proto_rawDesc = "" +
 	"\bCallback\x12\x1f.api.account.v1.CallbackRequest\x1a .api.account.v1.CallbackResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/v1/oauth/callback\x12_\n" +
 	"\n" +
 	"UploadFile\x12\x1d.api.account.v1.UploadRequest\x1a\x1b.api.account.v1.UploadReply\"\x15\x82\xd3\xe4\x93\x02\x0f:\x01*\"\n" +
-	"/v1/uploadB?\n" +
+	"/v1/upload\x12Y\n" +
+	"\aGetTask\x12\x1e.api.account.v1.GetTaskRequest\x1a\x1c.api.account.v1.GetTaskReply\"\x10\x82\xd3\xe4\x93\x02\n" +
+	"\x12\b/v1/taskB?\n" +
 	"\x0eapi.account.v1B\x0eAccountProtoV1P\x01Z\x1bnancalacc/api/account/v1;v1b\x06proto3"
 
 var (
@@ -964,52 +1163,61 @@ func file_api_account_v1_account_proto_rawDescGZIP() []byte {
 }
 
 var file_api_account_v1_account_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_api_account_v1_account_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_api_account_v1_account_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_api_account_v1_account_proto_goTypes = []any{
 	(TriggerType)(0),                 // 0: api.account.v1.TriggerType
 	(SyncType)(0),                    // 1: api.account.v1.SyncType
 	(GetSyncAccountReply_Status)(0),  // 2: api.account.v1.GetSyncAccountReply.Status
-	(*UploadRequest)(nil),            // 3: api.account.v1.UploadRequest
-	(*UploadReply)(nil),              // 4: api.account.v1.UploadReply
-	(*CreateSyncAccountRequest)(nil), // 5: api.account.v1.CreateSyncAccountRequest
-	(*CreateSyncAccountReply)(nil),   // 6: api.account.v1.CreateSyncAccountReply
-	(*GetSyncAccountRequest)(nil),    // 7: api.account.v1.GetSyncAccountRequest
-	(*GetSyncAccountReply)(nil),      // 8: api.account.v1.GetSyncAccountReply
-	(*CancelSyncAccountRequest)(nil), // 9: api.account.v1.CancelSyncAccountRequest
-	(*GetAccessTokenRequest)(nil),    // 10: api.account.v1.GetAccessTokenRequest
-	(*GetAccessTokenResponse)(nil),   // 11: api.account.v1.GetAccessTokenResponse
-	(*GetUserInfoRequest)(nil),       // 12: api.account.v1.GetUserInfoRequest
-	(*GetUserInfoResponse)(nil),      // 13: api.account.v1.GetUserInfoResponse
-	(*CallbackRequest)(nil),          // 14: api.account.v1.CallbackRequest
-	(*CallbackResponse)(nil),         // 15: api.account.v1.CallbackResponse
-	(*timestamppb.Timestamp)(nil),    // 16: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),            // 17: google.protobuf.Empty
+	(*GetTaskRequest)(nil),           // 3: api.account.v1.GetTaskRequest
+	(*GetTaskReply)(nil),             // 4: api.account.v1.GetTaskReply
+	(*UploadRequest)(nil),            // 5: api.account.v1.UploadRequest
+	(*UploadReply)(nil),              // 6: api.account.v1.UploadReply
+	(*CreateSyncAccountRequest)(nil), // 7: api.account.v1.CreateSyncAccountRequest
+	(*CreateSyncAccountReply)(nil),   // 8: api.account.v1.CreateSyncAccountReply
+	(*GetSyncAccountRequest)(nil),    // 9: api.account.v1.GetSyncAccountRequest
+	(*GetSyncAccountReply)(nil),      // 10: api.account.v1.GetSyncAccountReply
+	(*CancelSyncAccountRequest)(nil), // 11: api.account.v1.CancelSyncAccountRequest
+	(*GetAccessTokenRequest)(nil),    // 12: api.account.v1.GetAccessTokenRequest
+	(*GetAccessTokenResponse)(nil),   // 13: api.account.v1.GetAccessTokenResponse
+	(*GetUserInfoRequest)(nil),       // 14: api.account.v1.GetUserInfoRequest
+	(*GetUserInfoResponse)(nil),      // 15: api.account.v1.GetUserInfoResponse
+	(*CallbackRequest)(nil),          // 16: api.account.v1.CallbackRequest
+	(*CallbackResponse)(nil),         // 17: api.account.v1.CallbackResponse
+	(*GetTaskReply_Task)(nil),        // 18: api.account.v1.GetTaskReply.Task
+	(*timestamppb.Timestamp)(nil),    // 19: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),            // 20: google.protobuf.Empty
 }
 var file_api_account_v1_account_proto_depIdxs = []int32{
-	0,  // 0: api.account.v1.CreateSyncAccountRequest.trigger_type:type_name -> api.account.v1.TriggerType
-	1,  // 1: api.account.v1.CreateSyncAccountRequest.sync_type:type_name -> api.account.v1.SyncType
-	16, // 2: api.account.v1.CreateSyncAccountReply.create_time:type_name -> google.protobuf.Timestamp
-	2,  // 3: api.account.v1.GetSyncAccountReply.status:type_name -> api.account.v1.GetSyncAccountReply.Status
-	16, // 4: api.account.v1.GetSyncAccountReply.latest_sync_time:type_name -> google.protobuf.Timestamp
-	5,  // 5: api.account.v1.Account.CreateSyncAccount:input_type -> api.account.v1.CreateSyncAccountRequest
-	7,  // 6: api.account.v1.Account.GetSyncAccount:input_type -> api.account.v1.GetSyncAccountRequest
-	9,  // 7: api.account.v1.Account.CancelSyncTask:input_type -> api.account.v1.CancelSyncAccountRequest
-	12, // 8: api.account.v1.Account.GetUserInfo:input_type -> api.account.v1.GetUserInfoRequest
-	10, // 9: api.account.v1.Account.GetAccessToken:input_type -> api.account.v1.GetAccessTokenRequest
-	14, // 10: api.account.v1.Account.Callback:input_type -> api.account.v1.CallbackRequest
-	3,  // 11: api.account.v1.Account.UploadFile:input_type -> api.account.v1.UploadRequest
-	6,  // 12: api.account.v1.Account.CreateSyncAccount:output_type -> api.account.v1.CreateSyncAccountReply
-	8,  // 13: api.account.v1.Account.GetSyncAccount:output_type -> api.account.v1.GetSyncAccountReply
-	17, // 14: api.account.v1.Account.CancelSyncTask:output_type -> google.protobuf.Empty
-	13, // 15: api.account.v1.Account.GetUserInfo:output_type -> api.account.v1.GetUserInfoResponse
-	11, // 16: api.account.v1.Account.GetAccessToken:output_type -> api.account.v1.GetAccessTokenResponse
-	15, // 17: api.account.v1.Account.Callback:output_type -> api.account.v1.CallbackResponse
-	4,  // 18: api.account.v1.Account.UploadFile:output_type -> api.account.v1.UploadReply
-	12, // [12:19] is the sub-list for method output_type
-	5,  // [5:12] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	18, // 0: api.account.v1.GetTaskReply.task:type_name -> api.account.v1.GetTaskReply.Task
+	0,  // 1: api.account.v1.CreateSyncAccountRequest.trigger_type:type_name -> api.account.v1.TriggerType
+	1,  // 2: api.account.v1.CreateSyncAccountRequest.sync_type:type_name -> api.account.v1.SyncType
+	19, // 3: api.account.v1.CreateSyncAccountReply.create_time:type_name -> google.protobuf.Timestamp
+	2,  // 4: api.account.v1.GetSyncAccountReply.status:type_name -> api.account.v1.GetSyncAccountReply.Status
+	19, // 5: api.account.v1.GetSyncAccountReply.latest_sync_time:type_name -> google.protobuf.Timestamp
+	19, // 6: api.account.v1.GetTaskReply.Task.create_time:type_name -> google.protobuf.Timestamp
+	19, // 7: api.account.v1.GetTaskReply.Task.start_time:type_name -> google.protobuf.Timestamp
+	19, // 8: api.account.v1.GetTaskReply.Task.completed_time:type_name -> google.protobuf.Timestamp
+	7,  // 9: api.account.v1.Account.CreateSyncAccount:input_type -> api.account.v1.CreateSyncAccountRequest
+	9,  // 10: api.account.v1.Account.GetSyncAccount:input_type -> api.account.v1.GetSyncAccountRequest
+	11, // 11: api.account.v1.Account.CancelSyncTask:input_type -> api.account.v1.CancelSyncAccountRequest
+	14, // 12: api.account.v1.Account.GetUserInfo:input_type -> api.account.v1.GetUserInfoRequest
+	12, // 13: api.account.v1.Account.GetAccessToken:input_type -> api.account.v1.GetAccessTokenRequest
+	16, // 14: api.account.v1.Account.Callback:input_type -> api.account.v1.CallbackRequest
+	5,  // 15: api.account.v1.Account.UploadFile:input_type -> api.account.v1.UploadRequest
+	3,  // 16: api.account.v1.Account.GetTask:input_type -> api.account.v1.GetTaskRequest
+	8,  // 17: api.account.v1.Account.CreateSyncAccount:output_type -> api.account.v1.CreateSyncAccountReply
+	10, // 18: api.account.v1.Account.GetSyncAccount:output_type -> api.account.v1.GetSyncAccountReply
+	20, // 19: api.account.v1.Account.CancelSyncTask:output_type -> google.protobuf.Empty
+	15, // 20: api.account.v1.Account.GetUserInfo:output_type -> api.account.v1.GetUserInfoResponse
+	13, // 21: api.account.v1.Account.GetAccessToken:output_type -> api.account.v1.GetAccessTokenResponse
+	17, // 22: api.account.v1.Account.Callback:output_type -> api.account.v1.CallbackResponse
+	6,  // 23: api.account.v1.Account.UploadFile:output_type -> api.account.v1.UploadReply
+	4,  // 24: api.account.v1.Account.GetTask:output_type -> api.account.v1.GetTaskReply
+	17, // [17:25] is the sub-list for method output_type
+	9,  // [9:17] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_api_account_v1_account_proto_init() }
@@ -1017,13 +1225,14 @@ func file_api_account_v1_account_proto_init() {
 	if File_api_account_v1_account_proto != nil {
 		return
 	}
+	file_api_account_v1_account_proto_msgTypes[4].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_account_v1_account_proto_rawDesc), len(file_api_account_v1_account_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   13,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

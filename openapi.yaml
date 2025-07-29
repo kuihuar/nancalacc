@@ -144,6 +144,29 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+    /v1/task:
+        get:
+            tags:
+                - Account
+            operationId: Account_GetTask
+            parameters:
+                - name: taskName
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetTaskReply'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /v1/upload:
         post:
             tags:
@@ -196,6 +219,8 @@ components:
                 syncType:
                     type: integer
                     format: enum
+                taskName:
+                    type: string
             description: 创建同步请求
         GetAccessTokenResponse:
             type: object
@@ -222,6 +247,30 @@ components:
                     type: string
                     format: date-time
             description: 查询同步响应
+        GetTaskReply:
+            type: object
+            properties:
+                task:
+                    $ref: '#/components/schemas/GetTaskReply_Task'
+        GetTaskReply_Task:
+            type: object
+            properties:
+                name:
+                    type: string
+                status:
+                    type: string
+                createTime:
+                    type: string
+                    format: date-time
+                startTime:
+                    type: string
+                    format: date-time
+                completedTime:
+                    type: string
+                    format: date-time
+                acturlTime:
+                    type: integer
+                    format: int32
         GetUserInfoResponse:
             type: object
             properties:

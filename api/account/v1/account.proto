@@ -58,9 +58,31 @@ service Account {
 		body: "*" 
 		};
 	}
+	rpc GetTask (GetTaskRequest) returns (GetTaskReply) {
+		option (google.api.http) = {
+			get: "/v1/task"
+		};
+	}
 
 }
 
+
+message GetTaskRequest {
+  string task_name = 1;
+}
+
+message GetTaskReply {
+  message Task {
+    string name = 1;
+	string status =2;
+	google.protobuf.Timestamp create_time = 3; 
+	google.protobuf.Timestamp start_time = 4; 
+	google.protobuf.Timestamp completed_time = 5; 
+	int32 acturl_time = 6; 
+
+  }
+  Task task = 1;
+}
 message UploadRequest {
   bytes file = 1;
   string filename = 2;
@@ -86,6 +108,7 @@ enum SyncType {
 message CreateSyncAccountRequest {
 	TriggerType trigger_type = 1; // 触发类型
 	SyncType sync_type = 2;  // 同步类型
+	optional string task_name = 3;
 }
 // 创建同步响应
 message CreateSyncAccountReply {

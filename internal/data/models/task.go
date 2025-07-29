@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-var (
+const (
 	TaskStatusPending    = "pending"
 	TaskStatusInProgress = "in_progress"
 	TaskStatusCompleted  = "completed"

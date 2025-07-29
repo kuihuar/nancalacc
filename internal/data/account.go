@@ -3,7 +3,6 @@ package data
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -46,7 +45,7 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.Dingtal
 
 	r.log.Infof("SaveUsers: %v", users)
 	if len(users) == 0 {
-		r.log.Infof("users is empty")
+		r.log.Warn("users is empty")
 		return 0, nil
 	}
 	entities := make([]*models.TbLasUser, 0, len(users))
@@ -101,7 +100,7 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.Dingtal
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Infof("user already exists")
+			r.log.Error("user already exists")
 		} else {
 			return 0, result.Error
 		}
@@ -160,7 +159,7 @@ func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*dingtalk.D
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Infof("department already exists")
+			r.log.Error("department already exists")
 		} else {
 			return 0, result.Error
 		}
@@ -227,7 +226,7 @@ func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, cfg *dingtalk.Dingta
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			r.log.Infof("company config already exists")
+			r.log.Error("company config already exists")
 		} else {
 			return err
 		}
@@ -376,7 +375,7 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Infof("user already exists")
+			r.log.Error("user already exists")
 		} else {
 			return result.Error
 		}
@@ -392,7 +391,6 @@ func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	r.log.Infof("SaveIncrementDepartments deptsAdd: %v, deptsDel: %v", deptsAdd, deptsDel)
 	entities := make([]*models.TbLasDepartmentIncrement, 0, len(deptsAdd)+len(deptsDel))
 
 	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
@@ -438,7 +436,7 @@ func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, 
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Infof("user already exists")
+			r.log.Error("user already exists")
 		} else {
 			return result.Error
 		}
@@ -513,15 +511,15 @@ func (r *accounterRepo) BatchSaveUsers(ctx context.Context, users []*models.TbLa
 		return 0, nil
 	}
 
-	for _, user := range users {
-		r.log.Info(user)
-	}
+	// for _, user := range users {
+	// 	r.log.Warn(user)
+	// }
 
 	result := r.data.db.WithContext(ctx).Create(users)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Infof("user already exists")
+			r.log.Error("user already exists")
 		} else {
 			return 0, result.Error
 		}
@@ -536,18 +534,18 @@ func (r *accounterRepo) BatchSaveDepts(ctx context.Context, depts []*models.TbLa
 	defer cancel()
 
 	if len(depts) == 0 {
-		r.log.Infof("users is empty")
+		r.log.Warn("users is empty")
 		return 0, nil
 	}
-	for _, dept := range depts {
-		r.log.Info(dept)
-	}
+	// for _, dept := range depts {
+	// 	r.log.Info(dept)
+	// }
 
 	result := r.data.db.WithContext(ctx).Create(depts)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Infof("dept already exists")
+			r.log.Error("dept already exists")
 		} else {
 			return 0, result.Error
 		}
@@ -557,21 +555,21 @@ func (r *accounterRepo) BatchSaveDepts(ctx context.Context, depts []*models.TbLa
 }
 func (r *accounterRepo) BatchSaveDeptUsers(ctx context.Context, usersdepts []*models.TbLasDepartmentUser) (int, error) {
 
-	r.log.WithContext(ctx).Infof("BatchSaveDeptUsers usersdepts: %s", usersdepts)
+	r.log.WithContext(ctx).Infof("BatchSaveDeptUsers usersdepts: %v", usersdepts)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	if len(usersdepts) == 0 {
-		r.log.Infof("users is empty")
+		r.log.Warn("users is empty")
 		return 0, nil
 	}
-	for _, userdept := range usersdepts {
-		r.log.Info(userdept)
-	}
+	// for _, userdept := range usersdepts {
+	// 	r.log.Info(userdept)
+	// }
 	result := r.data.db.WithContext(ctx).Create(usersdepts)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Infof("deptuser already exists")
+			r.log.Error("deptuser already exists")
 		} else {
 			return 0, result.Error
 		}
@@ -580,9 +578,10 @@ func (r *accounterRepo) BatchSaveDeptUsers(ctx context.Context, usersdepts []*mo
 	return int(result.RowsAffected), nil
 }
 
-func (r *accounterRepo) CreateTask(ctx context.Context, taskName string) error {
+func (r *accounterRepo) CreateTask(ctx context.Context, taskName string) (int, error) {
+	log := r.log.WithContext(ctx)
+	log.Infof("CreateTask name: %s", taskName)
 
-	r.log.WithContext(ctx).Infof("CreateTask name: %s", taskName)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	task := &models.Task{
@@ -598,11 +597,50 @@ func (r *accounterRepo) CreateTask(ctx context.Context, taskName string) error {
 		EstimatedTime: 10,
 		ActualTime:    0,
 	}
+
 	result := r.data.db.WithContext(ctx).Where("title=?", taskName).FirstOrCreate(task)
 
 	if result.Error != nil {
+		// 处理其他错误
+		return 0, result.Error
+	}
+
+	if result.RowsAffected > 0 {
+		return 1, nil
+	} else {
+		return 0, nil
+	}
+}
+
+func (r *accounterRepo) UpdateTask(ctx context.Context, taskName, status string) error {
+
+	log := r.log.WithContext(ctx)
+	log.Infof("UpdateTask taskName: %s, status: %s", taskName, status)
+	// pending/in_progress/completed/cancelled
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	var task models.Task
+	if err := r.data.db.Model(&models.Task{}).WithContext(ctx).Where("title=?", taskName).Find(&task).Error; err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			log.Error("查询超时")
+		}
+		return err
+	}
+	now := time.Now()
+	task.ActualTime = int(now.Sub(task.StartDate).Seconds())
+	task.UpdatedAt = now
+	task.Status = status
+	if status == models.TaskStatusCompleted || status == models.TaskStatusCancelled {
+		task.CompletedAt = now
+	}
+
+	result := r.data.db.WithContext(ctx).Updates(task)
+
+	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Infof("task already exists")
+			log.Infof("task already exists")
 		} else {
 			return result.Error
 		}
@@ -612,57 +650,20 @@ func (r *accounterRepo) CreateTask(ctx context.Context, taskName string) error {
 	return nil
 }
 
-func (r *accounterRepo) UpdateTask(ctx context.Context, taskName, status string) error {
+func (r *accounterRepo) GetTask(ctx context.Context, taskName string) (*models.Task, error) {
 
-	// pending/in_progress/completed/cancelled
-	r.log.WithContext(ctx).Infof("UpdateTask name: %s, staus %s", taskName, status)
-
+	r.log.WithContext(ctx).Infof("CreateTask name: %s", taskName)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-
-	var task models.Task
-	if err := r.data.db.Model(&models.Task{}).WithContext(ctx).Where("title=?", taskName).Find(&task).Error; err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			r.log.Info("查询超时")
-		}
-		return err
-	}
-	fmt.Printf("task pre: %v\n", task)
-	now := time.Now()
-	fmt.Printf("now: %v\n", task.StartDate)
-	fmt.Printf("now: %v\n", now)
-	fmt.Printf("actualtime: %v\n", now.Sub(task.StartDate).Seconds())
-	task.ActualTime = int(now.Sub(task.StartDate).Seconds())
-	task.UpdatedAt = now
-	task.Status = status
-	if status == models.TaskStatusCompleted || status == models.TaskStatusCancelled {
-		task.CompletedAt = now
-	}
-
-	fmt.Printf("task after:%v\n", task)
-	// task := &models.Task{
-	// 	Title:         taskName,
-	// 	Description:   taskName,
-	// 	CreatedAt:     time.Now(),
-	// 	Status:        status,
-	// 	Progress:      0,
-	// 	StartDate:     time.Now(),
-	// 	DueDate:       time.Now().Add(time.Minute * 30),
-	// 	CompletedAt:   time.Now(),
-	// 	CreatorID:     99,
-	// 	EstimatedTime: 10,
-	// 	ActualTime:    0,
-	// }
-	result := r.data.db.WithContext(ctx).Updates(task)
+	task := &models.Task{}
+	result := r.data.db.WithContext(ctx).Where("title=?", taskName).Find(task)
 
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Infof("task already exists")
-		} else {
-			return result.Error
-		}
-
+		return nil, result.Error
 	}
 
-	return nil
+	if result.RowsAffected == 0 {
+		return nil, errors.New("notfound")
+	}
+	return task, nil
 }
