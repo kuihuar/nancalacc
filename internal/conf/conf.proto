@@ -42,6 +42,8 @@ message Data {
     int32 max_open_conns = 3;
     int32 max_idle_conns = 4;
     string tag = 5;
+    string source_key = 6;
+    string env = 7;
   }
   message Redis {
     string network = 1;

@@ -361,6 +361,9 @@ func mergeData(dst, src *Data) {
 		if src.DatabaseSync.MaxIdleConns != 0 {
 			dst.DatabaseSync.MaxIdleConns = src.DatabaseSync.MaxIdleConns
 		}
+		if src.DatabaseSync.SourceKey != "" {
+			dst.DatabaseSync.SourceKey = src.DatabaseSync.SourceKey
+		}
 	}
 	if src.Redis != nil {
 		if dst.Redis == nil {

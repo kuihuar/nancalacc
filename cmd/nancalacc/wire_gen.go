@@ -28,7 +28,7 @@ import (
 
 // wireApp init kratos application.
 func wireApp(confServer *conf.Server, confService *conf.Service, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
-	syncDB, err := data.NewMysqlDBSync(confData, logger)
+	syncDB, err := data.NewMysqlSyncDB(confData, logger)
 	if err != nil {
 		return nil, nil, err
 	}

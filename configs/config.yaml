@@ -15,9 +15,11 @@ data:
     tag: migrate
   database_sync:
     driver: mysql
-    source: root:liujianfeng@tcp(192.168.1.142:3306)/syncdb?timeout=15s&charset=utf8mb4&parseTime=True
+    source: root:liujianfeng@tcp(192.168.1.141:3306)/nancalacc?timeout=15s&charset=utf8mb4&parseTime=True
+    source_key: ECIS_ECISACCOUNTSYNC_DB
     max_open_conns: 100
     max_idle_conns: 20
+    env: "dev"
   redis:
     addr: 192.168.1.142:6379
     password: liujianfeng

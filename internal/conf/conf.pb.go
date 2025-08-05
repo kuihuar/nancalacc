@@ -557,6 +557,8 @@ type Data_DatabaseSync struct {
 	MaxOpenConns  int32                  `protobuf:"varint,3,opt,name=max_open_conns,json=maxOpenConns,proto3" json:"max_open_conns,omitempty"`
 	MaxIdleConns  int32                  `protobuf:"varint,4,opt,name=max_idle_conns,json=maxIdleConns,proto3" json:"max_idle_conns,omitempty"`
 	Tag           string                 `protobuf:"bytes,5,opt,name=tag,proto3" json:"tag,omitempty"`
+	SourceKey     string                 `protobuf:"bytes,6,opt,name=source_key,json=sourceKey,proto3" json:"source_key,omitempty"`
+	Env           string                 `protobuf:"bytes,7,opt,name=env,proto3" json:"env,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -622,6 +624,20 @@ func (x *Data_DatabaseSync) GetMaxIdleConns() int32 {
 func (x *Data_DatabaseSync) GetTag() string {
 	if x != nil {
 		return x.Tag
+	}
+	return ""
+}
+
+func (x *Data_DatabaseSync) GetSourceKey() string {
+	if x != nil {
+		return x.SourceKey
+	}
+	return ""
+}
+
+func (x *Data_DatabaseSync) GetEnv() string {
+	if x != nil {
+		return x.Env
 	}
 	return ""
 }
@@ -1391,7 +1407,7 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\x04GRPC\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x123\n" +
-	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\xfe\a\n" +
+	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\xaf\b\n" +
 	"\x04Data\x125\n" +
 	"\bdatabase\x18\x01 \x01(\v2\x19.kratos.api.Data.DatabaseR\bdatabase\x12B\n" +
 	"\rdatabase_sync\x18\x02 \x01(\v2\x1d.kratos.api.Data.DatabaseSyncR\fdatabaseSync\x12,\n" +
@@ -1403,13 +1419,16 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12$\n" +
 	"\x0emax_open_conns\x18\x03 \x01(\x05R\fmaxOpenConns\x12$\n" +
 	"\x0emax_idle_conns\x18\x04 \x01(\x05R\fmaxIdleConns\x12\x10\n" +
-	"\x03tag\x18\x05 \x01(\tR\x03tag\x1a\x9c\x01\n" +
+	"\x03tag\x18\x05 \x01(\tR\x03tag\x1a\xcd\x01\n" +
 	"\fDatabaseSync\x12\x16\n" +
 	"\x06driver\x18\x01 \x01(\tR\x06driver\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12$\n" +
 	"\x0emax_open_conns\x18\x03 \x01(\x05R\fmaxOpenConns\x12$\n" +
 	"\x0emax_idle_conns\x18\x04 \x01(\x05R\fmaxIdleConns\x12\x10\n" +
-	"\x03tag\x18\x05 \x01(\tR\x03tag\x1a\xdf\x01\n" +
+	"\x03tag\x18\x05 \x01(\tR\x03tag\x12\x1d\n" +
+	"\n" +
+	"source_key\x18\x06 \x01(\tR\tsourceKey\x12\x10\n" +
+	"\x03env\x18\a \x01(\tR\x03env\x1a\xdf\x01\n" +
 	"\x05Redis\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x12\x1a\n" +

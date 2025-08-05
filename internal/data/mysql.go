@@ -34,6 +34,9 @@ func NewMysqlDB(c *conf.Data, logger log.Logger) (*MainDB, error) {
 }
 
 func NewMysqlSyncDB(c *conf.Data, logger log.Logger) (*SyncDB, error) {
+	if c.GetDatabaseSync().Env == "dev" {
+		return newMysqlDBSyncTest(c, logger)
+	}
 	envkey := c.DatabaseSync.Source
 	encryptedDsn, err := conf.GetEnv(envkey)
 
@@ -76,7 +79,7 @@ func NewMysqlSyncDB(c *conf.Data, logger log.Logger) (*SyncDB, error) {
 	return &SyncDB{DB: db}, nil
 }
 
-func NewMysqlDBSync(c *conf.Data, logger log.Logger) (*SyncDB, error) {
+func newMysqlDBSyncTest(c *conf.Data, logger log.Logger) (*SyncDB, error) {
 	db, err := gorm.Open(mysql.Open(c.DatabaseSync.Source), &gorm.Config{
 		Logger: gormlogger.Default.LogMode(gormlogger.Info),
 	})

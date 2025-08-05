@@ -12,7 +12,7 @@ import (
 // var ProviderSet = wire.NewSet(NewData, NewMysqlDB, NewMysqlSyncDB, NewRedisClient, NewAccounterRepo)
 var ProviderSet = wire.NewSet(
 	NewMysqlDB,     // 会绑定到 MainDB
-	NewMysqlDBSync, // 会绑定到 SyncDB
+	NewMysqlSyncDB, // 会绑定到 SyncDB
 	NewRedisClient,
 	NewAccounterRepo,
 	NewRedisRepo,
