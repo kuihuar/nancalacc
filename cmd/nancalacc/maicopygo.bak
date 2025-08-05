@@ -12,6 +12,8 @@ import (
 	"nancalacc/internal/tracer"
 
 	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/config"
+	"github.com/go-kratos/kratos/v2/config/file"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
@@ -79,26 +81,22 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, cronService *ta
 
 func main() {
 	flag.Parse()
-	var bc *conf.Bootstrap
-	// cfg := conf.NewLoader(
-	// conf.WithConfigPath(flagconf),
-	// conf.WithEnvPrefix("NANCALACC_"), // 环境变量前缀
-	// conf.WithEtcdEnable(true),        // 启用etcd
-	// conf.WithEtcdConfig( // 自定义etcd配置
-	// 	[]string{"192.168.1.142:2379"}, // etcd端点
-	// 	"/configs/nancalacc/",          // etcd路径前缀
-	// 	5*time.Second,                  // 超时时间
-	// ),
-	// conf.WithLogger(log.NewHelper(log.DefaultLogger)), // 自定义日志
-	// )
-	// fmt.Printf("cfg: %+v\n", cfg)
-	bc, err := conf.Load(flagconf)
 
-	if err != nil {
-		panic("failed to load config: " + err.Error())
+	c := config.New(
+		config.WithSource(
+			file.NewSource(flagconf),
+		),
+	)
+	defer c.Close()
+
+	if err := c.Load(); err != nil {
+		panic(err)
 	}
-	//cfg.Watch(configSource, bc)
 
+	var bc conf.Bootstrap
+	if err := c.Scan(&bc); err != nil {
+		panic(err)
+	}
 	stdLogger := log.NewStdLogger(os.Stdout)
 
 	// 创建级别过滤器

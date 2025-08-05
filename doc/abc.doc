@@ -1,0 +1,37 @@
+各类平台登录账户信息如下：[kubewps内执行wpscli tool platform logininfo可再次查看]│  
+ │所属平台访问地址管理员账号     管理员初始密码│  
+ │----------------- ----------------------------------------   -----------------│  
+ │运维平台/部署平台 http://yun.test.cn/ksops/wpsadmin     0t@0xy5wqJFSsZvq│  
+ │运维平台/部署平台 https://172.16.170.22:8081/ksops/wpsadmin     0t@0xy5wqJFSsZvq│  
+ │运维平台/部署平台 http://yun.test.cn/ksops/guest 1k6BwDPXp5DRIO!z│  
+ │运维平台/部署平台 https://172.16.170.22:8081/ksops/guest 1k6BwDPXp5DRIO!z│  
+ │v7文档中心管理后台 http://yun.test.cn admin 4VzNDw!&mCBhscmd│  
+ │v7文档中心系统后台 http://yun.test.cn/micsweb/sys/login     adminroot    #BpM&axY9mqBTw2#│  
+ │v7二开应用管理平台 http://yun.test.cn/c/manage/#/loginwpsadmin     V70W#5TwdqkRnqeg│  
+ │v7二开应用管理平台 http://yun.test.cn/c/manage/#/loginsecadmin     GV28I&zwRNYV&U#0│  
+ │v7二开应用管理平台 http://yun.test.cn/c/manage/#/loginauditadmin   32QlRj$I2UgHG&0t
+
+
+
+
+
+
+ sql: insert into appManage_apphistory(version, status, create_time, opt_type, detail, major_version)   
+ 
+
+ 【部署工作已完成！】│  
+ ││  
+ │各类平台登录账户信息如下：[kubewps内执行wpscli tool platform logininfo可再次查看]│  
+ │所属平台访问地址管理员账号     管理员初始密码│  
+ │----------------- ----------------------------------------   -----------------│  
+ │运维平台/部署平台 http://172.16.170.22/ksops/wpsadmin     3WCa&iG64#mxX!ow│  
+ │运维平台/部署平台 https://172.16.170.22:8081/ksops/wpsadmin     3WCa&iG64#mxX!ow│  
+ │运维平台/部署平台 http://172.16.170.22/ksops/guestemfPk@lm6tI@K5vT│  
+ │运维平台/部署平台 https://172.16.170.22:8081/ksops/guestemfPk@lm6tI@K5vT│  
+ │v7文档中心管理后台 http://172.16.170.22adminO89GMdiHccb$jzsX│  
+ │v7文档中心系统后台 http://172.16.170.22/micsweb/sys/login   adminroot    R4rSQBU@zB7Ynuhm│  
+ │v7二开应用管理平台 http://172.16.170.22/c/manage/#/login    wpsadmin     NN6cLqa1OSY00&dD│  
+ │v7二开应用管理平台 http://172.16.170.22/c/manage/#/login    secadmin     s5&22hw0JG$fJi7A│  
+ │v7二开应用管理平台 http://172.16.170.22/c/manage/#/login    auditadmin   J76ytCmihwCsx#vE│  
+ ├───────────────────────────────────────────────────────────────────────────────────────────────
+

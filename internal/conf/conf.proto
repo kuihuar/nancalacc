@@ -32,7 +32,16 @@ message Data {
   message Database {
     string driver = 1;
     string source = 2;
-    string tag = 3;
+    int32 max_open_conns = 3;
+    int32 max_idle_conns = 4;
+    string tag = 5;
+  }
+  message DatabaseSync {
+    string driver = 1;
+    string source = 2;
+    int32 max_open_conns = 3;
+    int32 max_idle_conns = 4;
+    string tag = 5;
   }
   message Redis {
     string network = 1;
@@ -42,13 +51,21 @@ message Data {
     google.protobuf.Duration read_timeout = 5;
     google.protobuf.Duration write_timeout = 6;
   }
+  message Etcd {
+    repeated string endpoints = 1;
+    string dial_timeout = 2;
+    string config_prefix = 3;
+    bool enable_config_watch = 4;
+  }
   message Auth {
     string app_id = 1;
     string app_secret = 2;
   } 
   Database database = 1;
-  Redis redis = 2;
-  Auth auth = 3;
+  DatabaseSync database_sync = 2;
+  Redis redis = 3;
+  Etcd etcd = 4;
+  Auth auth = 5;
 }
 message App {
   string id = 1;

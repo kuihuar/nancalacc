@@ -11,6 +11,7 @@ import (
 
 	v1 "nancalacc/api/account/v1"
 	"nancalacc/internal/biz"
+	"nancalacc/internal/conf"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"google.golang.org/grpc/codes"
@@ -43,7 +44,16 @@ func (s *AccountService) CreateSyncAccount(ctx context.Context, req *v1.CreateSy
 	return s.accounterUsecase.CreateSyncAccount(ctx, req)
 }
 func (s *AccountService) GetSyncAccount(ctx context.Context, req *v1.GetSyncAccountRequest) (*v1.GetSyncAccountReply, error) {
-	return &v1.GetSyncAccountReply{}, nil
+
+	log.Infof("GetSyncAccount req: %v", req)
+	globalConf := conf.Get()
+	log.Infof("globalConf: %v", globalConf)
+	return &v1.GetSyncAccountReply{
+		Status:                      v1.GetSyncAccountReply_SUCCESS,
+		UserCount:                   1,
+		DepartmentCount:             1,
+		UserDepartmentRelationCount: 1,
+	}, nil
 }
 func (s *AccountService) CancelSyncTask(ctx context.Context, req *v1.CancelSyncAccountRequest) (*emptypb.Empty, error) {
 	return &emptypb.Empty{}, nil
@@ -87,6 +97,8 @@ func (s *AccountService) Callback(ctx context.Context, req *v1.CallbackRequest) 
 	log := s.log.WithContext(ctx)
 	log.Infof("Callback req: %v", req)
 
+	globalConf := conf.Get()
+	log.Infof("globalConf: %v", globalConf)
 	return &v1.CallbackResponse{
 		Status:  "success",
 		Message: "success",

@@ -1,0 +1,15 @@
+聚合平台地址
+https://p.wpseco.cn/yun-monitor/?#/packageManageV1/kubePackage
+
+precheck_kubewps_dc_v7.0.2505b.20250610.254.tar.gz
+
+
+7.7G  7 31 10:17 kubewps_dc_v7.0.2505b.20250610.254.tar.gz
+27M  7 31 10:10 precheck_kubewps_dc_v7.0.2505b.20250610.254.tar.gz
+16G  7 29 12:57 release_dc_v7.0.2505b.20250610.254.tar.gz
+
+
+
+curl -X POST http://192.168.1.141/c/asyncacc/v1/account -H "Content-Type: application/json" -d '{"trigger_type":"1","sync_type":"1"}'
+
+curl -X POST  -H 'X-Filename: test.xlsx' --data-binary "@/Users/jianfenliu/Downloads/sync_user.xlsx"  'http://192.168.1.141/c/asyncacc/v1/upload'

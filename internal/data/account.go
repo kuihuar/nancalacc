@@ -515,7 +515,7 @@ func (r *accounterRepo) BatchSaveUsers(ctx context.Context, users []*models.TbLa
 	// 	r.log.Warn(user)
 	// }
 
-	result := r.data.db.WithContext(ctx).Create(users)
+	result := r.data.nancalDB.WithContext(ctx).Create(users)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
@@ -541,7 +541,7 @@ func (r *accounterRepo) BatchSaveDepts(ctx context.Context, depts []*models.TbLa
 	// 	r.log.Info(dept)
 	// }
 
-	result := r.data.db.WithContext(ctx).Create(depts)
+	result := r.data.nancalDB.WithContext(ctx).Create(depts)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
@@ -566,7 +566,7 @@ func (r *accounterRepo) BatchSaveDeptUsers(ctx context.Context, usersdepts []*mo
 	// for _, userdept := range usersdepts {
 	// 	r.log.Info(userdept)
 	// }
-	result := r.data.db.WithContext(ctx).Create(usersdepts)
+	result := r.data.nancalDB.WithContext(ctx).Create(usersdepts)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
 			r.log.Error("deptuser already exists")
@@ -598,7 +598,7 @@ func (r *accounterRepo) CreateTask(ctx context.Context, taskName string) (int, e
 		ActualTime:    0,
 	}
 
-	result := r.data.db.WithContext(ctx).Where("title=?", taskName).FirstOrCreate(task)
+	result := r.data.nancalDB.WithContext(ctx).Where("title=?", taskName).FirstOrCreate(task)
 
 	if result.Error != nil {
 		// 处理其他错误
@@ -622,7 +622,7 @@ func (r *accounterRepo) UpdateTask(ctx context.Context, taskName, status string)
 	defer cancel()
 
 	var task models.Task
-	if err := r.data.db.Model(&models.Task{}).WithContext(ctx).Where("title=?", taskName).Find(&task).Error; err != nil {
+	if err := r.data.nancalDB.Model(&models.Task{}).WithContext(ctx).Where("title=?", taskName).Find(&task).Error; err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			log.Error("查询超时")
 		}
@@ -656,7 +656,7 @@ func (r *accounterRepo) GetTask(ctx context.Context, taskName string) (*models.T
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	task := &models.Task{}
-	result := r.data.db.WithContext(ctx).Where("title=?", taskName).Find(task)
+	result := r.data.nancalDB.WithContext(ctx).Where("title=?", taskName).Find(task)
 
 	if result.Error != nil {
 		return nil, result.Error

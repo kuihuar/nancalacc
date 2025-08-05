@@ -48,6 +48,7 @@ func (a *AppAuthenticator) GetAccessToken(ctx context.Context) (*AccessTokenResp
 
 	url := a.url
 
+	// fmt.Printf("GetAccessToken clientId: %s, clientSecret: %surl:%s", clientId, clientSecret, url)
 	// if token, found := tokenCache.Get(clientId); found {
 	// 	return token.(*AccessTokenResp), nil
 	// }
@@ -66,10 +67,10 @@ func (a *AppAuthenticator) GetAccessToken(ctx context.Context) (*AccessTokenResp
 	uri := fmt.Sprintf("%s%s", url, AppAuthPath)
 
 	dataStr := fmt.Sprintf(`grant_type=%s&client_id=%s&client_secret=%s`, grantType, clientId, clientSecret)
-	//fmt.Printf("Postpre uri: %s, dataStr: %s\n", uri, dataStr)
+	fmt.Printf("Postpre uri: %s, dataStr: %s\n", uri, dataStr)
 	data := []byte(dataStr)
 	bs, err := httputil.Post(uri, data, 5*time.Second)
-	//fmt.Printf("PostAfter err: %v,bs: %s\n", err, string(bs))
+	fmt.Printf("PostAfter err: %v,bs: %s\n", err, string(bs))
 	if err != nil {
 		return nil, err
 	}
