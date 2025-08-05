@@ -48,12 +48,9 @@ func (s *AccountService) GetSyncAccount(ctx context.Context, req *v1.GetSyncAcco
 	log.Infof("GetSyncAccount req: %v", req)
 	globalConf := conf.Get()
 	log.Infof("globalConf: %v", globalConf)
-	return &v1.GetSyncAccountReply{
-		Status:                      v1.GetSyncAccountReply_SUCCESS,
-		UserCount:                   1,
-		DepartmentCount:             1,
-		UserDepartmentRelationCount: 1,
-	}, nil
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Minute)
+	defer cancel()
+	return s.accounterUsecase.GetSyncAccount(ctx, req)
 }
 func (s *AccountService) CancelSyncTask(ctx context.Context, req *v1.CancelSyncAccountRequest) (*emptypb.Empty, error) {
 	return &emptypb.Empty{}, nil

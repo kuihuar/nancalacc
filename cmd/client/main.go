@@ -48,7 +48,7 @@ func main() {
 
 	fmt.Println("start...")
 
-	CheckReadExcell()
+	// CheckReadExcell()
 	// ctx := context.Background()
 	// fmt.Printf("bc: %+v\n", bc.Service)
 	// 初始化 WpsSync
@@ -60,7 +60,8 @@ func main() {
 
 	// fmt.Printf("token: %+v\n", token)
 
-	//token := GetToken()
+	token := GetToken()
+	fmt.Println(token)
 	// token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTM2MTU2MTgsImNvbXBfaWQiOiIxIiwiY2xpZW50X2lkIjoiY29tLmFjYy5hc3luYyIsInRrX3R5cGUiOiJhcHAiLCJzY29wZSI6Imtzby5hY2NvdW50c3luYy5zeW5jLGtzby5jb250YWN0LnJlYWQsa3NvLmNvbnRhY3QucmVhZHdyaXRlIiwiY29tcGFueV9pZCI6MSwiY2xpZW50X3ByaW5jaXBhbF9pZCI6IjczIiwiaXNfd3BzMzY1Ijp0cnVlfQ.ZOkiwnZ6f1uW45_sq5uT_ZW3dmA6yCXuKetMaUI7mCw"
 
 	//CheckPostBatchUsersByExDepIds(token)
@@ -121,9 +122,15 @@ func CheckGetUserByUserId(token string) {
 	fmt.Printf("CheckGetUserByUserId res: %+v, err:%+v\n", res, err)
 }
 func CheckUserLeaveOrg() {
+
 	ctx := context.Background()
-	// logger := log.NewHelper(log.GetLogger())
-	dataData, _, err := data.NewData(bc.Data, log.GetLogger())
+	nancalDB, _ := data.NewMysqlDB(bc.Data, log.GetLogger())
+
+	syncDB, _ := data.NewMysqlSyncDB(bc.Data, log.GetLogger())
+
+	client, _ := data.NewRedisClient(bc.Data, log.GetLogger())
+
+	dataData, _, err := data.NewData(syncDB, nancalDB, client, log.GetLogger())
 	if err != nil {
 		panic(err)
 	}
@@ -164,6 +171,7 @@ func CheckUserAddOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEve
 
 }
 func GetToken() string {
+	// fmt.Printf("bc.Service: %v", bc.Service)
 	token, err := auth.NewAppAuthenticator(bc.Service).GetAccessToken(context.Background())
 
 	if err != nil {

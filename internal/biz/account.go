@@ -61,12 +61,13 @@ type AccounterUsecase struct {
 	wpsSync      wps.WpsSync
 	wps          wps.Wps
 	bizConf      *conf.Service_Business
+	redisRepo    RedisCacheRepo
 	log          *log.Helper
 }
 
 // NewGreeterUsecase new a Greeter usecase.
-func NewAccounterUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, appAuth auth.Authenticator, wpsSync wps.WpsSync, wps wps.Wps, bizConf *conf.Service_Business, logger log.Logger) *AccounterUsecase {
-	return &AccounterUsecase{repo: repo, dingTalkRepo: dingTalkRepo, appAuth: appAuth, wpsSync: wpsSync, wps: wps, bizConf: bizConf, log: log.NewHelper(logger)}
+func NewAccounterUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, appAuth auth.Authenticator, wpsSync wps.WpsSync, wps wps.Wps, bizConf *conf.Service_Business, redisRepo RedisCacheRepo, logger log.Logger) *AccounterUsecase {
+	return &AccounterUsecase{repo: repo, dingTalkRepo: dingTalkRepo, appAuth: appAuth, wpsSync: wpsSync, wps: wps, bizConf: bizConf, redisRepo: redisRepo, log: log.NewHelper(logger)}
 }
 
 func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
@@ -197,8 +198,25 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 
 func (uc *AccounterUsecase) GetSyncAccount(ctx context.Context, req *v1.GetSyncAccountRequest) (*v1.GetSyncAccountReply, error) {
 	uc.log.WithContext(ctx).Infof("GetSyncAccount: %v", req)
+
+	prefix := "nancalacc:cache:"
+	status := v1.GetSyncAccountReply_Status(v1.GetSyncAccountReply_SUCCESS)
+	key1 := prefix + "taskId:" + req.TaskId
+	uc.log.Debugf("key1: %s", key1)
+	uc.redisRepo.Set(ctx, key1, status, 50*time.Minute)
+	var taskStatus v1.GetSyncAccountReply_Status
+	uc.redisRepo.Get(ctx, key1, &taskStatus)
+
+	var userCount int64
+	key2 := key1 + ":userCount"
+	uc.log.Debugf("key2: %s", key2)
+	uc.redisRepo.Get(ctx, key2, &userCount)
+	uc.log.WithContext(ctx).Infof("GetSyncAccount: taskStatus: %v", taskStatus)
 	return &v1.GetSyncAccountReply{
-		Status: v1.GetSyncAccountReply_SUCCESS,
+		Status:                      taskStatus,
+		UserCount:                   userCount,
+		DepartmentCount:             1,
+		UserDepartmentRelationCount: 1,
 	}, nil
 }
 

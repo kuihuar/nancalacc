@@ -206,8 +206,6 @@ func diffConfigs(old, new *Bootstrap) string {
 
 // etcdctl put /configs/app.json '{"server":{"port":8080}}'
 func unmarshalKeyValues(kvs []*config.KeyValue, target interface{}) error {
-	// 这里需要根据您的实际配置格式(JSON/YAML等)来解析
-	// 假设使用JSON格式
 	if len(kvs) == 0 {
 		return fmt.Errorf("empty config values")
 	}

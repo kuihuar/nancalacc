@@ -31,7 +31,10 @@ require (
 	gorm.io/gorm v1.30.0
 )
 
-require github.com/go-kratos/kratos/contrib/config/etcd/v2 v2.0.0-20250731084034-f7f150c3f139
+require (
+	github.com/go-kratos/kratos/contrib/config/etcd/v2 v2.0.0-20250731084034-f7f150c3f139
+	github.com/google/go-cmp v0.7.0
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -40,7 +43,6 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.4 // indirect
 	github.com/tiendc/go-deepcopy v1.6.0 // indirect
