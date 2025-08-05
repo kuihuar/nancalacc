@@ -9,7 +9,6 @@ import (
 	"nancalacc/internal/conf"
 	"nancalacc/internal/service"
 	"nancalacc/internal/task"
-	"nancalacc/internal/tracer"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
@@ -66,53 +65,37 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, cronService *ta
 			eventService.Stop()
 			return nil
 		}),
-		// kratos.BeforeStart(func(ctx context.Context) error {
-		// 	tracer.Init()
-		// 	return nil
-		// }),
-		// kratos.AfterStop(func(ctx context.Context) error {
-		// 	tracer.Shutdown()
-		// 	return nil
-		// }),
 	)
 }
 
 func main() {
 	flag.Parse()
 	var bc *conf.Bootstrap
-	// cfg := conf.NewLoader(
-	// conf.WithConfigPath(flagconf),
-	// conf.WithEnvPrefix("NANCALACC_"), // 环境变量前缀
-	// conf.WithEtcdEnable(true),        // 启用etcd
-	// conf.WithEtcdConfig( // 自定义etcd配置
-	// 	[]string{"192.168.1.142:2379"}, // etcd端点
-	// 	"/configs/nancalacc/",          // etcd路径前缀
-	// 	5*time.Second,                  // 超时时间
-	// ),
-	// conf.WithLogger(log.NewHelper(log.DefaultLogger)), // 自定义日志
-	// )
-	// fmt.Printf("cfg: %+v\n", cfg)
 	bc, err := conf.Load(flagconf)
 
+	fmt.Println("AAAAAAAAAAA")
 	if err != nil {
 		panic("failed to load config: " + err.Error())
 	}
+	fmt.Println("BBBBBBBBBBBBBBB")
+	//serverJson, _ := json.Marshal(bc.Server)
+	//fmt.Printf("key: %s\n, value: %s\n", "/configs/nancalacc/server.json", string(serverJson))
 	//cfg.Watch(configSource, bc)
 
 	stdLogger := log.NewStdLogger(os.Stdout)
 
+	//fmt.Println(bc.App.GetLogLevel())
 	// 创建级别过滤器
-	lv := log.ParseLevel(bc.App.GetLogLevel())
-	levelFilter := log.NewFilter(stdLogger, log.FilterLevel(lv))
+	//_ = log.NewFilter(stdLogger, log.FilterLevel(log.LevelDebug), log.FilterLevel(log.LevelError), log.FilterLevel(log.LevelFatal))
 
 	id := bc.App.GetId()
 	Name := bc.App.GetName()
 	Version := bc.App.GetVersion()
 	Env := bc.App.GetEnv()
 
-	fmt.Print(Env)
+	fmt.Println(Env)
 
-	logger := log.With(levelFilter,
+	logger := log.With(stdLogger,
 		"ts", log.DefaultTimestamp,
 		"caller", log.DefaultCaller,
 		"service.id", id,
@@ -130,9 +113,9 @@ func main() {
 
 	//app.Use(middleware.LogMiddleware(log.LevelError))
 
-	ttc := tracer.NewTracerManager()
-	ttc.Init(Env, Name)
-	defer ttc.Shutdown()
+	// ttc := tracer.NewTracerManager()
+	// ttc.Init(Env, Name)
+	// defer ttc.Shutdown()
 
 	// start and wait for stop signal
 	if err := app.Run(); err != nil {

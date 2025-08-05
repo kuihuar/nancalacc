@@ -34,30 +34,37 @@ message Data {
     string source = 2;
     int32 max_open_conns = 3;
     int32 max_idle_conns = 4;
-    string tag = 5;
+    string conn_max_lifetime = 5;
+    string tag = 6;
+    string source_key = 7;
+    string env = 8;
+    bool enable = 9;
   }
   message DatabaseSync {
     string driver = 1;
     string source = 2;
     int32 max_open_conns = 3;
     int32 max_idle_conns = 4;
-    string tag = 5;
-    string source_key = 6;
-    string env = 7;
+    string conn_max_lifetime = 5;
+    string tag = 6;
+    string source_key = 7;
+    string env = 8;
   }
   message Redis {
     string network = 1;
     string addr = 2;
     string password = 3;
     int32 db = 4;
-    google.protobuf.Duration read_timeout = 5;
-    google.protobuf.Duration write_timeout = 6;
+    bool enable = 5;
+    google.protobuf.Duration read_timeout = 6;
+    google.protobuf.Duration write_timeout = 7;
   }
   message Etcd {
     repeated string endpoints = 1;
     string dial_timeout = 2;
     string config_prefix = 3;
     bool enable_config_watch = 4;
+    bool enable = 5;
   }
   message Auth {
     string app_id = 1;

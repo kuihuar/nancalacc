@@ -46,7 +46,7 @@ func (es *DingTalkEventService) Start() {
 		if e != nil {
 			log.Error("DingTalkEventService.Start failed", e.Error())
 		}
-		log.Info("=====DingTalkEventService.Start, please commit sub event===")
+		log.Info("DingTalkEventService Start")
 	}()
 	log.Info("DingTalkEventService.Starting...")
 

@@ -1,7 +1,6 @@
 package conf
 
 import (
-	"fmt"
 	sync "sync"
 
 	"github.com/go-kratos/kratos/v2/config"
@@ -24,10 +23,10 @@ func GetEnv(key string) (string, error) {
 		}
 		var data map[string]interface{}
 		if err := envConfig.Scan(&data); err == nil {
-			fmt.Println("All Environment Variables:")
-			for k, v := range data {
-				fmt.Printf("%s=%v\n", k, v)
-			}
+			// fmt.Println("All Environment Variables:")
+			// for k, v := range data {
+			// 	fmt.Printf("%s=%v\n", k, v)
+			// }
 		}
 	})
 	return envConfig.Value(key).String()

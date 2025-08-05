@@ -44,7 +44,7 @@ func Load(configPath string) (*Bootstrap, error) {
 		}
 
 		// 2. 如果配置了ETCD，尝试加载ETCD配置
-		if fileConf.Data != nil && fileConf.Data.Etcd != nil && len(fileConf.Data.Etcd.Endpoints) > 0 {
+		if fileConf.Data != nil && fileConf.Data.Etcd != nil && fileConf.Data.Etcd.Enable && len(fileConf.Data.Etcd.Endpoints) > 0 {
 			etcdConf, cli, src, err := loadEtcdConfig(fileConf)
 			if err != nil {
 				log.Warnf("Failed to load etcd config: %v, using file config only", err)
@@ -90,6 +90,7 @@ func Close() {
 
 // loadFileConfig 从文件加载配置
 func loadFileConfig(configPath string) (*Bootstrap, error) {
+	fmt.Printf("load file config: %s\n", configPath)
 	fileSource := file.NewSource(configPath)
 	fileConf := config.New(
 		config.WithSource(
@@ -112,6 +113,7 @@ func loadFileConfig(configPath string) (*Bootstrap, error) {
 
 // loadEtcdConfig 从ETCD加载配置，返回配置、客户端和source
 func loadEtcdConfig(baseConf *Bootstrap) (*Bootstrap, *clientv3.Client, config.Source, error) {
+	fmt.Printf("load etcd config: %+vv\n", baseConf.Data.Etcd)
 	// 1. 创建ETCD客户端
 	cli, err := clientv3.New(clientv3.Config{
 		Endpoints:   baseConf.Data.Etcd.Endpoints,

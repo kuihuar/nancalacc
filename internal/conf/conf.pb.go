@@ -475,14 +475,18 @@ func (x *Server_GRPC) GetTimeout() *durationpb.Duration {
 }
 
 type Data_Database struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Driver        string                 `protobuf:"bytes,1,opt,name=driver,proto3" json:"driver,omitempty"`
-	Source        string                 `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
-	MaxOpenConns  int32                  `protobuf:"varint,3,opt,name=max_open_conns,json=maxOpenConns,proto3" json:"max_open_conns,omitempty"`
-	MaxIdleConns  int32                  `protobuf:"varint,4,opt,name=max_idle_conns,json=maxIdleConns,proto3" json:"max_idle_conns,omitempty"`
-	Tag           string                 `protobuf:"bytes,5,opt,name=tag,proto3" json:"tag,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Driver          string                 `protobuf:"bytes,1,opt,name=driver,proto3" json:"driver,omitempty"`
+	Source          string                 `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
+	MaxOpenConns    int32                  `protobuf:"varint,3,opt,name=max_open_conns,json=maxOpenConns,proto3" json:"max_open_conns,omitempty"`
+	MaxIdleConns    int32                  `protobuf:"varint,4,opt,name=max_idle_conns,json=maxIdleConns,proto3" json:"max_idle_conns,omitempty"`
+	ConnMaxLifetime string                 `protobuf:"bytes,5,opt,name=conn_max_lifetime,json=connMaxLifetime,proto3" json:"conn_max_lifetime,omitempty"`
+	Tag             string                 `protobuf:"bytes,6,opt,name=tag,proto3" json:"tag,omitempty"`
+	SourceKey       string                 `protobuf:"bytes,7,opt,name=source_key,json=sourceKey,proto3" json:"source_key,omitempty"`
+	Env             string                 `protobuf:"bytes,8,opt,name=env,proto3" json:"env,omitempty"`
+	Enable          bool                   `protobuf:"varint,9,opt,name=enable,proto3" json:"enable,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Data_Database) Reset() {
@@ -543,6 +547,13 @@ func (x *Data_Database) GetMaxIdleConns() int32 {
 	return 0
 }
 
+func (x *Data_Database) GetConnMaxLifetime() string {
+	if x != nil {
+		return x.ConnMaxLifetime
+	}
+	return ""
+}
+
 func (x *Data_Database) GetTag() string {
 	if x != nil {
 		return x.Tag
@@ -550,17 +561,39 @@ func (x *Data_Database) GetTag() string {
 	return ""
 }
 
+func (x *Data_Database) GetSourceKey() string {
+	if x != nil {
+		return x.SourceKey
+	}
+	return ""
+}
+
+func (x *Data_Database) GetEnv() string {
+	if x != nil {
+		return x.Env
+	}
+	return ""
+}
+
+func (x *Data_Database) GetEnable() bool {
+	if x != nil {
+		return x.Enable
+	}
+	return false
+}
+
 type Data_DatabaseSync struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Driver        string                 `protobuf:"bytes,1,opt,name=driver,proto3" json:"driver,omitempty"`
-	Source        string                 `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
-	MaxOpenConns  int32                  `protobuf:"varint,3,opt,name=max_open_conns,json=maxOpenConns,proto3" json:"max_open_conns,omitempty"`
-	MaxIdleConns  int32                  `protobuf:"varint,4,opt,name=max_idle_conns,json=maxIdleConns,proto3" json:"max_idle_conns,omitempty"`
-	Tag           string                 `protobuf:"bytes,5,opt,name=tag,proto3" json:"tag,omitempty"`
-	SourceKey     string                 `protobuf:"bytes,6,opt,name=source_key,json=sourceKey,proto3" json:"source_key,omitempty"`
-	Env           string                 `protobuf:"bytes,7,opt,name=env,proto3" json:"env,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Driver          string                 `protobuf:"bytes,1,opt,name=driver,proto3" json:"driver,omitempty"`
+	Source          string                 `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
+	MaxOpenConns    int32                  `protobuf:"varint,3,opt,name=max_open_conns,json=maxOpenConns,proto3" json:"max_open_conns,omitempty"`
+	MaxIdleConns    int32                  `protobuf:"varint,4,opt,name=max_idle_conns,json=maxIdleConns,proto3" json:"max_idle_conns,omitempty"`
+	ConnMaxLifetime string                 `protobuf:"bytes,5,opt,name=conn_max_lifetime,json=connMaxLifetime,proto3" json:"conn_max_lifetime,omitempty"`
+	Tag             string                 `protobuf:"bytes,6,opt,name=tag,proto3" json:"tag,omitempty"`
+	SourceKey       string                 `protobuf:"bytes,7,opt,name=source_key,json=sourceKey,proto3" json:"source_key,omitempty"`
+	Env             string                 `protobuf:"bytes,8,opt,name=env,proto3" json:"env,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Data_DatabaseSync) Reset() {
@@ -621,6 +654,13 @@ func (x *Data_DatabaseSync) GetMaxIdleConns() int32 {
 	return 0
 }
 
+func (x *Data_DatabaseSync) GetConnMaxLifetime() string {
+	if x != nil {
+		return x.ConnMaxLifetime
+	}
+	return ""
+}
+
 func (x *Data_DatabaseSync) GetTag() string {
 	if x != nil {
 		return x.Tag
@@ -648,8 +688,9 @@ type Data_Redis struct {
 	Addr          string                 `protobuf:"bytes,2,opt,name=addr,proto3" json:"addr,omitempty"`
 	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
 	Db            int32                  `protobuf:"varint,4,opt,name=db,proto3" json:"db,omitempty"`
-	ReadTimeout   *durationpb.Duration   `protobuf:"bytes,5,opt,name=read_timeout,json=readTimeout,proto3" json:"read_timeout,omitempty"`
-	WriteTimeout  *durationpb.Duration   `protobuf:"bytes,6,opt,name=write_timeout,json=writeTimeout,proto3" json:"write_timeout,omitempty"`
+	Enable        bool                   `protobuf:"varint,5,opt,name=enable,proto3" json:"enable,omitempty"`
+	ReadTimeout   *durationpb.Duration   `protobuf:"bytes,6,opt,name=read_timeout,json=readTimeout,proto3" json:"read_timeout,omitempty"`
+	WriteTimeout  *durationpb.Duration   `protobuf:"bytes,7,opt,name=write_timeout,json=writeTimeout,proto3" json:"write_timeout,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -712,6 +753,13 @@ func (x *Data_Redis) GetDb() int32 {
 	return 0
 }
 
+func (x *Data_Redis) GetEnable() bool {
+	if x != nil {
+		return x.Enable
+	}
+	return false
+}
+
 func (x *Data_Redis) GetReadTimeout() *durationpb.Duration {
 	if x != nil {
 		return x.ReadTimeout
@@ -732,6 +780,7 @@ type Data_Etcd struct {
 	DialTimeout       string                 `protobuf:"bytes,2,opt,name=dial_timeout,json=dialTimeout,proto3" json:"dial_timeout,omitempty"`
 	ConfigPrefix      string                 `protobuf:"bytes,3,opt,name=config_prefix,json=configPrefix,proto3" json:"config_prefix,omitempty"`
 	EnableConfigWatch bool                   `protobuf:"varint,4,opt,name=enable_config_watch,json=enableConfigWatch,proto3" json:"enable_config_watch,omitempty"`
+	Enable            bool                   `protobuf:"varint,5,opt,name=enable,proto3" json:"enable,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -790,6 +839,13 @@ func (x *Data_Etcd) GetConfigPrefix() string {
 func (x *Data_Etcd) GetEnableConfigWatch() bool {
 	if x != nil {
 		return x.EnableConfigWatch
+	}
+	return false
+}
+
+func (x *Data_Etcd) GetEnable() bool {
+	if x != nil {
+		return x.Enable
 	}
 	return false
 }
@@ -1407,40 +1463,49 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\x04GRPC\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x123\n" +
-	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\xaf\b\n" +
+	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\x80\n" +
+	"\n" +
 	"\x04Data\x125\n" +
 	"\bdatabase\x18\x01 \x01(\v2\x19.kratos.api.Data.DatabaseR\bdatabase\x12B\n" +
 	"\rdatabase_sync\x18\x02 \x01(\v2\x1d.kratos.api.Data.DatabaseSyncR\fdatabaseSync\x12,\n" +
 	"\x05redis\x18\x03 \x01(\v2\x16.kratos.api.Data.RedisR\x05redis\x12)\n" +
 	"\x04etcd\x18\x04 \x01(\v2\x15.kratos.api.Data.EtcdR\x04etcd\x12)\n" +
-	"\x04auth\x18\x05 \x01(\v2\x15.kratos.api.Data.AuthR\x04auth\x1a\x98\x01\n" +
+	"\x04auth\x18\x05 \x01(\v2\x15.kratos.api.Data.AuthR\x04auth\x1a\x8d\x02\n" +
 	"\bDatabase\x12\x16\n" +
 	"\x06driver\x18\x01 \x01(\tR\x06driver\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12$\n" +
 	"\x0emax_open_conns\x18\x03 \x01(\x05R\fmaxOpenConns\x12$\n" +
-	"\x0emax_idle_conns\x18\x04 \x01(\x05R\fmaxIdleConns\x12\x10\n" +
-	"\x03tag\x18\x05 \x01(\tR\x03tag\x1a\xcd\x01\n" +
+	"\x0emax_idle_conns\x18\x04 \x01(\x05R\fmaxIdleConns\x12*\n" +
+	"\x11conn_max_lifetime\x18\x05 \x01(\tR\x0fconnMaxLifetime\x12\x10\n" +
+	"\x03tag\x18\x06 \x01(\tR\x03tag\x12\x1d\n" +
+	"\n" +
+	"source_key\x18\a \x01(\tR\tsourceKey\x12\x10\n" +
+	"\x03env\x18\b \x01(\tR\x03env\x12\x16\n" +
+	"\x06enable\x18\t \x01(\bR\x06enable\x1a\xf9\x01\n" +
 	"\fDatabaseSync\x12\x16\n" +
 	"\x06driver\x18\x01 \x01(\tR\x06driver\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12$\n" +
 	"\x0emax_open_conns\x18\x03 \x01(\x05R\fmaxOpenConns\x12$\n" +
-	"\x0emax_idle_conns\x18\x04 \x01(\x05R\fmaxIdleConns\x12\x10\n" +
-	"\x03tag\x18\x05 \x01(\tR\x03tag\x12\x1d\n" +
+	"\x0emax_idle_conns\x18\x04 \x01(\x05R\fmaxIdleConns\x12*\n" +
+	"\x11conn_max_lifetime\x18\x05 \x01(\tR\x0fconnMaxLifetime\x12\x10\n" +
+	"\x03tag\x18\x06 \x01(\tR\x03tag\x12\x1d\n" +
 	"\n" +
-	"source_key\x18\x06 \x01(\tR\tsourceKey\x12\x10\n" +
-	"\x03env\x18\a \x01(\tR\x03env\x1a\xdf\x01\n" +
+	"source_key\x18\a \x01(\tR\tsourceKey\x12\x10\n" +
+	"\x03env\x18\b \x01(\tR\x03env\x1a\xf7\x01\n" +
 	"\x05Redis\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x12\x1a\n" +
 	"\bpassword\x18\x03 \x01(\tR\bpassword\x12\x0e\n" +
-	"\x02db\x18\x04 \x01(\x05R\x02db\x12<\n" +
-	"\fread_timeout\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\vreadTimeout\x12>\n" +
-	"\rwrite_timeout\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x1a\x9c\x01\n" +
+	"\x02db\x18\x04 \x01(\x05R\x02db\x12\x16\n" +
+	"\x06enable\x18\x05 \x01(\bR\x06enable\x12<\n" +
+	"\fread_timeout\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\vreadTimeout\x12>\n" +
+	"\rwrite_timeout\x18\a \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x1a\xb4\x01\n" +
 	"\x04Etcd\x12\x1c\n" +
 	"\tendpoints\x18\x01 \x03(\tR\tendpoints\x12!\n" +
 	"\fdial_timeout\x18\x02 \x01(\tR\vdialTimeout\x12#\n" +
 	"\rconfig_prefix\x18\x03 \x01(\tR\fconfigPrefix\x12.\n" +
-	"\x13enable_config_watch\x18\x04 \x01(\bR\x11enableConfigWatch\x1a<\n" +
+	"\x13enable_config_watch\x18\x04 \x01(\bR\x11enableConfigWatch\x12\x16\n" +
+	"\x06enable\x18\x05 \x01(\bR\x06enable\x1a<\n" +
 	"\x04Auth\x12\x15\n" +
 	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12\x1d\n" +
 	"\n" +

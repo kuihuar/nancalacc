@@ -10,27 +10,32 @@ data:
     driver: mysql
     # source: root:|$tN_Rw!-"Eu<[50@tcp(127.0.0.1:3306)/nancalacc?timeout=15s&charset=utf8mb4&parseTime=True
     source: root:liujianfeng@tcp(192.168.1.142:3306)/nancalacc?timeout=15s&charset=utf8mb4&parseTime=True
-    max_open_conns: 100
-    max_idle_conns: 20
+    max_open_conns: 10
+    max_idle_conns: 5
+    conn_max_lifetime: 6h
     tag: migrate
+    enable: false
   database_sync:
     driver: mysql
     source: root:liujianfeng@tcp(192.168.1.141:3306)/nancalacc?timeout=15s&charset=utf8mb4&parseTime=True
     source_key: ECIS_ECISACCOUNTSYNC_DB
-    max_open_conns: 100
-    max_idle_conns: 20
-    env: "dev"
+    max_open_conns: 10
+    max_idle_conns: 5
+    conn_max_lifetime: 6h
+    env: "nodev"
   redis:
     addr: 192.168.1.142:6379
     password: liujianfeng
     read_timeout: 0.2s
     write_timeout: 0.2s
+    enable: false
   etcd:
     endpoints:
       - "http://192.168.1.142:2379"  # etcd 集群地址
     dial_timeout: "5s"            # 连接超时
     config_prefix: "/configs/nancalacc/"     # etcd 中的配置根路径
-    enable_config_watch: true     # 是否启用配置监听  
+    enable_config_watch: true     # 是否启用配置监听
+    enable: false  
   auth:
    app_id: "com.acc.async"
    app_secret: "dSv5TAv7fDArmoI9GQY0dxImQcb85SiO"
@@ -40,7 +45,7 @@ app:
   name: "nancalacc"
   version: "v1.0.0"
   env: "dev" #dev #prov
-  log_level: "DEBUG" # DEBUG INFO WARN ERROR FATAL
+  log_level: "INFO" # DEBUG INFO WARN ERROR FATAL
   logout : "stdout"
 service:
   business:

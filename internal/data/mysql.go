@@ -14,6 +14,11 @@ import (
 )
 
 func NewMysqlDB(c *conf.Data, logger log.Logger) (*MainDB, error) {
+
+	if !c.Database.Enable {
+		logger.Log(log.LevelWarn, "database Enable", c.Database.Enable)
+		return &MainDB{}, nil
+	}
 	db, err := gorm.Open(mysql.Open(c.Database.Source), &gorm.Config{
 		Logger: gormlogger.Default.LogMode(gormlogger.Info),
 	})
@@ -28,39 +33,45 @@ func NewMysqlDB(c *conf.Data, logger log.Logger) (*MainDB, error) {
 	}
 	sqlDB.SetMaxOpenConns(10)
 	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetConnMaxLifetime(time.Hour)
+	duration, err := time.ParseDuration(c.GetDatabaseSync().GetConnMaxLifetime())
+	if err != nil {
+		return nil, err
+	}
+	sqlDB.SetConnMaxLifetime(duration)
 
 	return &MainDB{DB: db}, nil
 }
 
 func NewMysqlSyncDB(c *conf.Data, logger log.Logger) (*SyncDB, error) {
+	var dsn string
 	if c.GetDatabaseSync().Env == "dev" {
-		return newMysqlDBSyncTest(c, logger)
-	}
-	envkey := c.DatabaseSync.Source
-	encryptedDsn, err := conf.GetEnv(envkey)
+		dsn = c.Database.Source
+	} else {
+		envkey := c.DatabaseSync.SourceKey
+		encryptedDsn, err := conf.GetEnv(envkey)
 
-	logger.Log(log.LevelDebug, "envkey:", envkey, "encryptedDsn:", encryptedDsn, "err", err)
-	if err != nil {
-		logger.Log(log.LevelError, envkey, err)
-		return nil, err
-	}
-	appSecret := c.Auth.AppSecret
-	dsn, err := cipherutil.DecryptByAes(encryptedDsn, appSecret)
-	if err != nil {
-		logger.Log(log.LevelError, envkey, err)
-		return nil, err
-	}
-	if len(dsn) == 0 {
-		logger.Log(log.LevelError, "ECIS_ECISACCOUNTSYNC_DB len(dsn) == 0")
-		return nil, errors.New("ECIS_ECISACCOUNTSYNC_DB len(dsn) == 0")
-	}
+		//logger.Log(log.LevelDebug, "envkey:", envkey, "encryptedDsn:", encryptedDsn, "err", err)
+		if err != nil {
+			logger.Log(log.LevelError, envkey, err)
+			return nil, err
+		}
+		appSecret := c.Auth.AppSecret
+		dsn, err = cipherutil.DecryptByAes(encryptedDsn, appSecret)
+		if err != nil {
+			logger.Log(log.LevelError, envkey, err)
+			return nil, err
+		}
+		if len(dsn) == 0 {
+			logger.Log(log.LevelError, "ECIS_ECISACCOUNTSYNC_DB len(dsn) == 0")
+			return nil, errors.New("ECIS_ECISACCOUNTSYNC_DB len(dsn) == 0")
+		}
 
-	if !strings.Contains(dsn, "parseTime=True") {
-		dsn = dsn + "&parseTime=True"
+		if !strings.Contains(dsn, "parseTime=True") {
+			dsn = dsn + "&parseTime=True"
+		}
 	}
-
-	db, err := gorm.Open(mysql.Open(c.Database.Source), &gorm.Config{
+	//logger.Log(log.LevelInfo, "sync dsn: %s", dsn)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: gormlogger.Default.LogMode(gormlogger.Info),
 	})
 	if err != nil {
@@ -72,29 +83,14 @@ func NewMysqlSyncDB(c *conf.Data, logger log.Logger) (*SyncDB, error) {
 	if err != nil {
 		return nil, err
 	}
-	sqlDB.SetMaxOpenConns(10)
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetConnMaxLifetime(time.Hour)
-
-	return &SyncDB{DB: db}, nil
-}
-
-func newMysqlDBSyncTest(c *conf.Data, logger log.Logger) (*SyncDB, error) {
-	db, err := gorm.Open(mysql.Open(c.DatabaseSync.Source), &gorm.Config{
-		Logger: gormlogger.Default.LogMode(gormlogger.Info),
-	})
-	if err != nil {
-		logger.Log(log.LevelError, "open mysql failed", err)
-		return nil, nil
-	}
-
-	sqlDB, err := db.DB()
+	sqlDB.SetMaxOpenConns(int(c.GetDatabaseSync().GetMaxOpenConns()))
+	sqlDB.SetMaxIdleConns(int(c.GetDatabaseSync().GetMaxIdleConns()))
+	duration, err := time.ParseDuration(c.GetDatabaseSync().GetConnMaxLifetime())
 	if err != nil {
 		return nil, err
 	}
-	sqlDB.SetMaxOpenConns(int(c.DatabaseSync.GetMaxOpenConns()))
-	sqlDB.SetMaxIdleConns(int(c.DatabaseSync.GetMaxOpenConns()))
-	sqlDB.SetConnMaxLifetime(time.Hour)
+
+	sqlDB.SetConnMaxLifetime(duration)
 
 	return &SyncDB{DB: db}, nil
 }

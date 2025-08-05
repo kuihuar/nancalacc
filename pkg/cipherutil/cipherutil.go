@@ -25,7 +25,9 @@ var (
 )
 
 func DecryptByAes(content string, key string) (string, error) {
-	fmt.Printf("=====DecryptByAes.content: %s, key: %s\n", content, key)
+	fmt.Printf("DecryptByAes.content: %s\n", content)
+	fmt.Printf("DecryptByAes.key: %s\n", key)
+
 	if len(content) < 24 {
 		return "", ErrEmptyPlaintext
 	}
@@ -66,7 +68,7 @@ func DecryptByAes(content string, key string) (string, error) {
 		return "", ErrInvalidPadding
 	}
 	res := string(dst[:(length - unpadding)])
-	fmt.Printf("=====DecryptByAes.res: %s\n", res)
+	// fmt.Printf("=====DecryptByAes.res: %s\n", res)
 	// 输出解密结果
 	return res, nil
 }
