@@ -204,11 +204,13 @@ func (r *WPSRequest) Do(ctx context.Context) ([]byte, error) {
 	command, _ := http2curl.GetCurlCommand(req)
 	// fmt.Println()
 
-	r.logger.Infof("request command: %s\n", command)
+	//r.logger.Infof("request command: %s\n", command)
+	fmt.Printf("request command: %s\n", command)
+
 	// Execute request
 	resp, err := r.client.Do(req.WithContext(ctx))
 
-	r.logger.Infof("request resp: %+v, err: %+v\n", resp, err)
+	fmt.Printf("request resp: %+v, err: %+v\n", resp, err)
 	// fmt.Println()
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrHTTPRequest, err)
@@ -216,7 +218,7 @@ func (r *WPSRequest) Do(ctx context.Context) ([]byte, error) {
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
-	r.logger.Infof("reques resp.StatusCode: %d, detail: %s\n", resp.StatusCode, string(body))
+	fmt.Printf("request resp.StatusCode: %d, detail: %s, err:%+v\n", resp.StatusCode, string(body), err)
 	if resp.StatusCode >= http.StatusBadRequest {
 
 		return nil, fmt.Errorf("%w: status %d", ErrHTTPRequest, resp.StatusCode)
