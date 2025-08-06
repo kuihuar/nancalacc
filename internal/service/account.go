@@ -38,6 +38,10 @@ func (s *AccountService) CreateSyncAccount(ctx context.Context, req *v1.CreateSy
 	if req.GetTaskName() != "" && len(req.GetTaskName()) != 14 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid taskname: %s", req.GetTaskName())
 	}
+	if req.GetTaskName() == "" {
+		taskId := time.Now().Add(time.Duration(1) * time.Second).Format("20060102150405")
+		req.TaskName = &taskId
+	}
 	// 这里设置传进来的最大分钟数
 	ctx, cancel := context.WithTimeout(ctx, 50*time.Minute)
 	defer cancel()
