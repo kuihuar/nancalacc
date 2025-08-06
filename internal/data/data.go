@@ -16,9 +16,8 @@ var ProviderSet = wire.NewSet(
 	NewRedisClient,
 	NewAccounterRepo,
 	// cache.NewRedisRepo,
-	NewCLocalCacheService,
+	NewLocalCacheService,
 	NewData,
-	NewRedisCacheService,
 )
 
 type (

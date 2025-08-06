@@ -7,9 +7,10 @@
 package main
 
 import (
+	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/log"
 	"nancalacc/internal/auth"
 	"nancalacc/internal/biz"
-	"nancalacc/internal/biz/cache"
 	"nancalacc/internal/conf"
 	"nancalacc/internal/data"
 	"nancalacc/internal/dingtalk"
@@ -17,11 +18,9 @@ import (
 	"nancalacc/internal/service"
 	"nancalacc/internal/task"
 	"nancalacc/internal/wps"
-	"time"
+)
 
-	"github.com/go-kratos/kratos/v2"
-	"github.com/go-kratos/kratos/v2/log"
-
+import (
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -45,8 +44,6 @@ func wireApp(confServer *conf.Server, confService *conf.Service, confData *conf.
 	if err != nil {
 		return nil, nil, err
 	}
-	NewCLocalCacheService := cache.NewCLocalCacheService(5*time.Minute, 10*time.Minute)
-	// localCacheService := cache.NewCLocalCacheService(5*time.Minute, 10*time.Minute)
 	accounterRepo := data.NewAccounterRepo(confService, dataData, logger)
 	service_Auth_Dingtalk := conf.ProvideDingtalkConfig(confService)
 	dingtalkDingtalk := dingtalk.NewDingTalkRepo(service_Auth_Dingtalk, logger)
@@ -54,8 +51,8 @@ func wireApp(confServer *conf.Server, confService *conf.Service, confData *conf.
 	wpsSync := wps.NewWpsSync(confService, logger)
 	wpsWps := wps.NewWps(confService, logger)
 	service_Business := conf.ProvideBusinessConfig(confService)
-	// redisCacheRepo := data.NewRedisRepo(dataData, logger)
-	accounterUsecase := biz.NewAccounterUsecase(accounterRepo, dingtalkDingtalk, authenticator, wpsSync, wpsWps, service_Business, localCacheService, logger)
+	cacheService := data.NewLocalCacheService(logger)
+	accounterUsecase := biz.NewAccounterUsecase(accounterRepo, dingtalkDingtalk, authenticator, wpsSync, wpsWps, service_Business, cacheService, logger)
 	oauth2Usecase := biz.NewOauth2Usecase(dingtalkDingtalk, service_Business, logger)
 	accountService := service.NewAccountService(accounterUsecase, oauth2Usecase, logger)
 	grpcServer := server.NewGRPCServer(confServer, accountService, logger)
