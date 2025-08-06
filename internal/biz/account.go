@@ -396,8 +396,8 @@ func (uc *AccounterUsecase) transUser(ctx context.Context, taskId string, rows *
 			return fmt.Errorf("err: %w", err)
 		}
 		log.Info(row)
-		if len(row) < 4 {
-			log.Warnf("row len 3: %v", row)
+		if len(row) < 3 {
+			log.Warnf("row len < 3: %v", row)
 			continue
 		}
 
@@ -450,7 +450,7 @@ func (uc *AccounterUsecase) transDept(ctx context.Context, taskId string, rows *
 
 		log.Info(row)
 		if len(row) < 3 {
-			log.Warnf("row len < 4: %v", row)
+			log.Warnf("row len < 3: %v", row)
 			continue
 		}
 
@@ -502,7 +502,7 @@ func (uc *AccounterUsecase) transUserDept(ctx context.Context, taskId string, ro
 			return fmt.Errorf("err: %w", err)
 		}
 		log.Info(row)
-		if len(row) < 4 {
+		if len(row) < 2 {
 			log.Warnf("row len < 2: %v", row)
 			continue
 		}
