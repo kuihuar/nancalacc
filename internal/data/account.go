@@ -515,7 +515,7 @@ func (r *accounterRepo) BatchSaveUsers(ctx context.Context, users []*models.TbLa
 	// 	r.log.Warn(user)
 	// }
 
-	result := r.data.nancalDB.WithContext(ctx).Create(users)
+	result := r.data.db.WithContext(ctx).Create(users)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
@@ -541,7 +541,7 @@ func (r *accounterRepo) BatchSaveDepts(ctx context.Context, depts []*models.TbLa
 	// 	r.log.Info(dept)
 	// }
 
-	result := r.data.nancalDB.WithContext(ctx).Create(depts)
+	result := r.data.db.WithContext(ctx).Create(depts)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
@@ -566,7 +566,7 @@ func (r *accounterRepo) BatchSaveDeptUsers(ctx context.Context, usersdepts []*mo
 	// for _, userdept := range usersdepts {
 	// 	r.log.Info(userdept)
 	// }
-	result := r.data.nancalDB.WithContext(ctx).Create(usersdepts)
+	result := r.data.db.WithContext(ctx).Create(usersdepts)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
 			r.log.Error("deptuser already exists")

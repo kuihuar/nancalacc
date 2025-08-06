@@ -2,7 +2,6 @@ package biz
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	v1 "nancalacc/api/account/v1"
@@ -85,6 +84,7 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	log.Infof("CreateSyncAccount: %v", req)
 
 	taskId := req.GetTaskName()
+
 	taskCachekey := prefix + taskId
 
 	_, ok, err := uc.localCache.Get(ctx, taskCachekey)
@@ -227,37 +227,27 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 func (uc *AccounterUsecase) GetSyncAccount(ctx context.Context, req *v1.GetSyncAccountRequest) (*v1.GetSyncAccountReply, error) {
 	uc.log.WithContext(ctx).Infof("GetSyncAccount: %v", req)
 
-	status := v1.GetSyncAccountReply_Status(v1.GetSyncAccountReply_SUCCESS)
-	key1 := prefix + "taskId:" + req.TaskId
-	uc.log.Debugf("key1: %s", key1)
-	uc.localCache.Set(ctx, key1, status, 50*time.Minute)
-	//var taskStatus v1.GetSyncAccountReply_Status
-	taskStatus, _, err := uc.localCache.Get(ctx, key1)
-	if err != nil {
-		return nil, err
-	}
-	taskStatusInt, ok := taskStatus.(v1.GetSyncAccountReply_Status)
-	if !ok {
-		return nil, errors.New("taskStatus type assertion failed")
-	}
+	taskId := req.GetTaskId()
 
-	key2 := key1 + ":userCount"
-	uc.log.Debugf("key2: %s", key2)
-	userCount, _, err := uc.localCache.Get(ctx, key2)
+	taskCachekey := prefix + taskId
+
+	taskCacheInfo, ok, err := uc.localCache.Get(ctx, taskCachekey)
 	if err != nil {
 		return nil, err
 	}
-	userCountInt, ok := userCount.(int64)
-	if !ok {
-		return nil, errors.New("userCount type assertion failed")
+	if ok {
+		taskInfo, ok1 := taskCacheInfo.(*models.Task)
+		if ok1 {
+			return &v1.GetSyncAccountReply{
+				Status:                      v1.GetSyncAccountReply_Status(taskInfo.Progress),
+				UserCount:                   1,
+				DepartmentCount:             1,
+				UserDepartmentRelationCount: 1,
+			}, nil
+		}
+
 	}
-	uc.log.WithContext(ctx).Infof("GetSyncAccount: taskStatus: %v", taskStatus)
-	return &v1.GetSyncAccountReply{
-		Status:                      taskStatusInt,
-		UserCount:                   userCountInt,
-		DepartmentCount:             1,
-		UserDepartmentRelationCount: 1,
-	}, nil
+	return nil, status.Error(codes.NotFound, "task "+taskId+" not found")
 }
 
 func (uc *AccounterUsecase) CreateTask(ctx context.Context, taskName string) (int, error) {
@@ -268,40 +258,45 @@ func (uc *AccounterUsecase) CreateTask(ctx context.Context, taskName string) (in
 func (uc *AccounterUsecase) GetTask(ctx context.Context, taskName string) (*v1.GetTaskReply_Task, error) {
 	uc.log.WithContext(ctx).Infof("GetTask taskName: %s", taskName)
 
-	taskInfo := &models.Task{
-		ID:          1,
-		Title:       taskName,
-		Description: "desc1",
-		Status:      "in_progress",
-		CreatorID:   1,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		DueDate:     time.Now(),
-		StartDate:   time.Now(),
-		Progress:    30,
-		ActualTime:  0,
-	}
-	taskInfoJson, _ := json.Marshal(taskInfo)
-	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
-	if err != nil {
-		return nil, err
-	}
-	err = uc.wps.CacheSet(ctx, appAccessToken.AccessToken, taskName, string(taskInfoJson), 24*time.Hour)
-
+	taskInfo, err := uc.GetCacheTask(ctx, taskName)
 	if err != nil {
 		return nil, err
 	}
 
-	taskInfoJsonRes, err := uc.wps.CacheGet(ctx, appAccessToken.AccessToken, taskName)
-	if err != nil {
-		return nil, err
-	}
-	uc.log.Infof("taskInfoJsonRes: %v", taskInfoJsonRes)
+	// taskInfo := &models.Task{
+	// 	ID:          1,
+	// 	Title:       taskName,
+	// 	Description: "desc1",
+	// 	Status:      "in_progress",
+	// 	CreatorID:   1,
+	// 	CreatedAt:   time.Now(),
+	// 	UpdatedAt:   time.Now(),
+	// 	DueDate:     time.Now(),
+	// 	StartDate:   time.Now(),
+	// 	Progress:    30,
+	// 	ActualTime:  0,
+	// }
+	// taskInfoJson, _ := json.Marshal(taskInfo)
+	// appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// err = uc.wps.CacheSet(ctx, appAccessToken.AccessToken, taskName, string(taskInfoJson), 24*time.Hour)
 
-	err = uc.wps.CacheDel(ctx, appAccessToken.AccessToken, taskName)
-	if err != nil {
-		return nil, err
-	}
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// taskInfoJsonRes, err := uc.wps.CacheGet(ctx, appAccessToken.AccessToken, taskName)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// uc.log.Infof("taskInfoJsonRes: %v", taskInfoJsonRes)
+
+	// err = uc.wps.CacheDel(ctx, appAccessToken.AccessToken, taskName)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return &v1.GetTaskReply_Task{
 		Name:          taskInfo.Title,
@@ -318,8 +313,15 @@ func (uc *AccounterUsecase) UpdateTask(ctx context.Context, taskName, status str
 	return uc.repo.UpdateTask(ctx, taskName, status)
 
 }
-func (uc *AccounterUsecase) ParseExecell(ctx context.Context, taskId, filename string) error {
+func (uc *AccounterUsecase) ParseExecell(ctx context.Context, taskId, filename string) (err error) {
 
+	defer func() {
+		if err != nil {
+			uc.UpdateCacheTask(ctx, taskId, models.TaskStatusCancelled)
+		} else {
+			uc.UpdateCacheTask(ctx, taskId, models.TaskStatusCompleted)
+		}
+	}()
 	log := uc.log.WithContext(ctx)
 	log.Infof("ParseExecell taskId: %s,filename:%s", taskId, filename)
 
@@ -334,9 +336,9 @@ func (uc *AccounterUsecase) ParseExecell(ctx context.Context, taskId, filename s
 	}()
 
 	processSheet := map[string]bool{
-		"tb_las_user":            true,
-		"tb_las_department":      true,
-		"tb_las_department_user": true,
+		"user":            true,
+		"department":      true,
+		"department_user": true,
 	}
 	sheets := f.GetSheetList()
 	for _, sheet := range sheets {
@@ -351,21 +353,21 @@ func (uc *AccounterUsecase) ParseExecell(ctx context.Context, taskId, filename s
 		defer rows.Close()
 		rows.Next()
 		switch sheet {
-		case "tb_las_user":
+		case "user":
 			uc.transUser(ctx, taskId, rows)
-		case "tb_las_department":
+		case "department":
 			uc.transDept(ctx, taskId, rows)
-		case "tb_las_department_user":
+		case "department_user":
 			uc.transUserDept(ctx, taskId, rows)
 		default:
 			log.Infof("not found sheetname: %s\n", sheet)
 		}
 
 	}
-	err = uc.repo.UpdateTask(ctx, taskId, models.TaskStatusCompleted)
-	if err != nil {
-		return err
-	}
+	// err = uc.repo.UpdateTask(ctx, taskId, models.TaskStatusCompleted)
+	// if err != nil {
+	// 	return err
+	// }
 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
 	if err != nil {
 		return err
@@ -383,7 +385,7 @@ func (uc *AccounterUsecase) transUser(ctx context.Context, taskId string, rows *
 	log := uc.log.WithContext(ctx)
 	log.Infof("transUser taskId: %s", taskId)
 
-	uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
+	//uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
 	thirdCompanyId := uc.bizConf.ThirdCompanyId
 	platformIds := uc.bizConf.PlatformIds
 	users := make([]*models.TbLasUser, 0, 100)
@@ -393,15 +395,19 @@ func (uc *AccounterUsecase) transUser(ctx context.Context, taskId string, rows *
 		if err != nil {
 			return fmt.Errorf("err: %w", err)
 		}
-		//log.Info(row)
+		log.Info(row)
+		if len(row) < 4 {
+			log.Warnf("row len 3: %v", row)
+			continue
+		}
 
 		users = append(users, &models.TbLasUser{
 			TaskID:           taskId,
 			ThirdCompanyID:   thirdCompanyId,
 			PlatformID:       platformIds,
-			Uid:              row[4],
-			Account:          row[7],
-			NickName:         row[8],
+			Uid:              row[0],
+			Account:          row[1],
+			NickName:         row[2],
 			EmploymentStatus: "active",
 			Source:           "sync",
 			Ctime:            now,
@@ -431,7 +437,7 @@ func (uc *AccounterUsecase) transDept(ctx context.Context, taskId string, rows *
 	log := uc.log.WithContext(ctx)
 	log.Infof("transDept taskId: %s", taskId)
 
-	uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
+	//uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
 	thirdCompanyId := uc.bizConf.ThirdCompanyId
 	platformIds := uc.bizConf.PlatformIds
 	depts := make([]*models.TbLasDepartment, 0, 100)
@@ -441,16 +447,23 @@ func (uc *AccounterUsecase) transDept(ctx context.Context, taskId string, rows *
 		if err != nil {
 			return fmt.Errorf("err: %w", err)
 		}
+
+		log.Info(row)
+		if len(row) < 3 {
+			log.Warnf("row len < 4: %v", row)
+			continue
+		}
+
 		//log.Info(row)
 
 		depts = append(depts, &models.TbLasDepartment{
 			TaskID:         taskId,
 			ThirdCompanyID: thirdCompanyId,
 			PlatformID:     platformIds,
-			Did:            row[1],
-			Pid:            row[5],
-			Name:           row[6],
-			//Order:          row[7],
+			Did:            row[0],
+			Pid:            row[1],
+			Name:           row[2],
+			// Order:          row[3],
 			Source:    "sync",
 			Ctime:     now,
 			Mtime:     now,
@@ -478,7 +491,7 @@ func (uc *AccounterUsecase) transUserDept(ctx context.Context, taskId string, ro
 	log := uc.log.WithContext(ctx)
 	log.Infof("transUserDept taskId: %s", taskId)
 
-	uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
+	//uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
 	thirdCompanyId := uc.bizConf.ThirdCompanyId
 	platformIds := uc.bizConf.PlatformIds
 	deptusers := make([]*models.TbLasDepartmentUser, 0, 100)
@@ -488,14 +501,18 @@ func (uc *AccounterUsecase) transUserDept(ctx context.Context, taskId string, ro
 		if err != nil {
 			return fmt.Errorf("err: %w", err)
 		}
-		//log.Info(row)
+		log.Info(row)
+		if len(row) < 4 {
+			log.Warnf("row len < 2: %v", row)
+			continue
+		}
 
 		deptusers = append(deptusers, &models.TbLasDepartmentUser{
 			TaskID:         taskId,
 			ThirdCompanyID: thirdCompanyId,
 			PlatformID:     platformIds,
-			Uid:            row[4],
-			Did:            row[5],
+			Uid:            row[0],
+			Did:            row[1],
 			Ctime:          now,
 			CheckType:      1,
 		})
@@ -516,4 +533,80 @@ func (uc *AccounterUsecase) transUserDept(ctx context.Context, taskId string, ro
 		return fmt.Errorf("err: %w", err)
 	}
 	return nil
+}
+
+func (uc *AccounterUsecase) CreateCacheTask(ctx context.Context, taskName, status string) error {
+
+	cacheKey := prefix + taskName
+	task := &models.Task{
+		Title:         taskName,
+		Description:   taskName,
+		CreatedAt:     time.Now(),
+		Status:        models.TaskStatusInProgress,
+		Progress:      0,
+		StartDate:     time.Now(),
+		DueDate:       time.Now().Add(time.Minute * 30),
+		CompletedAt:   time.Now(),
+		CreatorID:     99,
+		EstimatedTime: 10,
+		ActualTime:    0,
+	}
+	return uc.localCache.Set(ctx, cacheKey, task, 300*time.Minute)
+}
+func (uc *AccounterUsecase) UpdateCacheTask(ctx context.Context, taskName, status string) error {
+
+	cacheKey := prefix + taskName
+	oldTask, ok, err := uc.localCache.Get(ctx, cacheKey)
+	if err != nil {
+		return err
+	}
+	var task *models.Task
+	var startDate time.Time
+	now := time.Now()
+	if ok {
+		task, ok1 := oldTask.(*models.Task)
+		if ok1 {
+			startDate = task.StartDate
+			task.ActualTime = int(now.Sub(startDate).Seconds()) + 20
+			task.Status = status
+			task.Progress = 100
+			task.CompletedAt = now
+			task.UpdatedAt = now
+		}
+	}
+
+	if task == nil {
+		task = &models.Task{
+			Title:         taskName,
+			Description:   taskName,
+			Status:        status,
+			Progress:      100,
+			StartDate:     time.Now(),
+			DueDate:       time.Now().Add(time.Minute * 30),
+			CompletedAt:   time.Now(),
+			CreatorID:     99,
+			EstimatedTime: 10,
+			ActualTime:    0,
+		}
+	}
+	return uc.localCache.Set(ctx, cacheKey, task, 300*time.Minute)
+}
+
+func (uc *AccounterUsecase) GetCacheTask(ctx context.Context, taskName string) (*models.Task, error) {
+
+	cacheKey := prefix + taskName
+	var task *models.Task
+	taskInfo, ok, err := uc.localCache.Get(ctx, cacheKey)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, errors.New("notfound")
+	}
+	task, ok1 := taskInfo.(*models.Task)
+	if !ok1 {
+		return nil, errors.New("type error")
+	}
+	return task, nil
+
 }

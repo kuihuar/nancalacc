@@ -12,8 +12,10 @@ import (
 	v1 "nancalacc/api/account/v1"
 	"nancalacc/internal/biz"
 	"nancalacc/internal/conf"
+	"nancalacc/internal/pkg/limiter"
 
 	"github.com/go-kratos/kratos/v2/log"
+	"golang.org/x/time/rate"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -25,11 +27,13 @@ type AccountService struct {
 	v1.UnimplementedAccountServer
 	accounterUsecase *biz.AccounterUsecase
 	oauth2Usecase    *biz.Oauth2Usecase
+	limiter          *limiter.RateLimiter
 	log              *log.Helper
 }
 
 func NewAccountService(accounterUsecase *biz.AccounterUsecase, oauth2Usecase *biz.Oauth2Usecase, logger log.Logger) *AccountService {
-	return &AccountService{accounterUsecase: accounterUsecase, log: log.NewHelper(logger)}
+	limiter := limiter.NewRateLimiter()
+	return &AccountService{accounterUsecase: accounterUsecase, oauth2Usecase: oauth2Usecase, limiter: limiter, log: log.NewHelper(logger)}
 }
 
 func (s *AccountService) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
@@ -114,11 +118,18 @@ func (s *AccountService) UploadFile(ctx context.Context, req *v1.UploadRequest) 
 
 	log := s.log.WithContext(ctx)
 	log.Infof("UploadFile req: %v", req.Filename)
+
+	limiter := s.limiter.GetLimiter("UploadFile", rate.Every(time.Minute*10), 5)
+	if !limiter.Allow() {
+		return nil, status.Errorf(codes.ResourceExhausted, "upload too frequently")
+	}
 	// maxUploadSize := 4
 	// if len(req.File) > maxUploadSize {
 	// 	return nil, status.Errorf(codes.InvalidArgument,
 	// 		"max support file size  %dMB", maxUploadSize/(1<<20))
 	// }
+	taskId := time.Now().Add(time.Duration(1) * time.Second).Format("20060102150405")
+
 	filename := req.Filename
 
 	uploadDir := "/tmp"
@@ -144,12 +155,15 @@ func (s *AccountService) UploadFile(ctx context.Context, req *v1.UploadRequest) 
 	if err := os.WriteFile(filePath, req.GetFile(), 0644); err != nil {
 		return nil, status.Errorf(codes.Internal, "safe file failed: %v", err)
 	}
-	taskId := time.Now().Add(time.Duration(1) * time.Second).Format("20060102150405")
-	_, err := s.accounterUsecase.CreateTask(ctx, taskId)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "create task failed: %v", err)
-	}
-	s.accounterUsecase.ParseExecell(ctx, taskId, filePath)
+	// _, err := s.accounterUsecase.CreateTask(ctx, taskId)
+	// if err != nil {
+	// 	return nil, status.Errorf(codes.Internal, "create task failed: %v", err)
+	// }
+	s.accounterUsecase.CreateCacheTask(ctx, taskId, "")
+	//taskCachekey := prefix + taskId
+	//uc.localCache.Set(ctx, taskCachekey, taskId, 300*time.Minute)
+
+	go s.accounterUsecase.ParseExecell(ctx, taskId, filePath)
 	return &v1.UploadReply{
 		Url:  filePath,
 		Task: taskId,
@@ -170,6 +184,7 @@ func (s *AccountService) GetTask(ctx context.Context, in *v1.GetTaskRequest) (*v
 	if len(taskName) != 14 {
 		return nil, status.Errorf(codes.InvalidArgument, "taskName invalid")
 	}
+
 	task, err := s.accounterUsecase.GetTask(ctx, taskName)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "create task failed: %v", err)
