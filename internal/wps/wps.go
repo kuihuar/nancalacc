@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"nancalacc/internal/conf"
+	"time"
 
 	//httpwps "nancalacc/pkg/httputil/wps"
 
@@ -210,4 +211,83 @@ func (ws *wps) GetUserByUserId(ctx context.Context, accessToken string, req GetU
 
 	return resp, nil
 
+}
+
+// TODO 内部网关的签名是不是不对
+func (ws *wps) CacheSet(ctx context.Context, accessToken string, key string, value interface{}, expiration time.Duration) error {
+
+	log := ws.log.WithContext(ctx)
+	log.Infof("CacheSet key: %s, value: %v", key, value)
+
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
+
+	bs, err := wpsReq.PostJSON(context.Background(), POST_CACHE_SET, accessToken, map[string]interface{}{
+		"key":       key,
+		"value":     value,
+		"expire":    expiration,
+		"namespace": "nancalacc",
+	})
+
+	log.Infof("CacheSet: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+func (ws *wps) CacheGet(ctx context.Context, accessToken string, key string) (interface{}, error) {
+
+	log := ws.log.WithContext(ctx)
+	log.Infof("CacheGet key %v", key)
+
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
+
+	bs, err := wpsReq.PostJSON(context.Background(), POST_CACHE_GET, accessToken, map[string]interface{}{
+		"key":       key,
+		"namespace": "nancalacc",
+	})
+
+	log.Infof("CacheGet: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp map[string]interface{}
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (ws *wps) CacheDel(ctx context.Context, accessToken, key string) error {
+
+	log := ws.log.WithContext(ctx)
+	log.Infof("CacheDel key %v", key)
+
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
+
+	bs, err := wpsReq.PostJSON(context.Background(), POST_CACHE_DEL, accessToken, map[string]interface{}{
+		"key":       key,
+		"namespace": "nancalacc",
+	})
+
+	log.Infof("CacheDel: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return err
+	}
+
+	var resp map[string]interface{}
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return err
+	}
+	return nil
 }

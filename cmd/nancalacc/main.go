@@ -73,11 +73,9 @@ func main() {
 	var bc *conf.Bootstrap
 	bc, err := conf.Load(flagconf)
 
-	fmt.Println("AAAAAAAAAAA")
 	if err != nil {
 		panic("failed to load config: " + err.Error())
 	}
-	fmt.Println("BBBBBBBBBBBBBBB")
 	//serverJson, _ := json.Marshal(bc.Server)
 	//fmt.Printf("key: %s\n, value: %s\n", "/configs/nancalacc/server.json", string(serverJson))
 	//cfg.Watch(configSource, bc)

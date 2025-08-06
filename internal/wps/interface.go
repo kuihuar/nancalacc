@@ -2,6 +2,7 @@ package wps
 
 import (
 	"context"
+	"time"
 )
 
 type WpsSync interface {
@@ -23,4 +24,8 @@ type Wps interface {
 	PostBatchDepartmentsByExDepIds(ctx context.Context, accessToken string, input PostBatchDepartmentsByExDepIdsRequest) (*PostBatchDepartmentsByExDepIdsResponse, error)
 
 	GetUserByUserId(ctx context.Context, accessToken string, req GetUserByUserIdRequest) (GetUserByUserIdResponse, error)
+
+	CacheSet(ctx context.Context, accessToken string, key string, value interface{}, expiration time.Duration) error
+	CacheGet(ctx context.Context, accessToken string, key string) (interface{}, error)
+	CacheDel(ctx context.Context, accessToken string, key string) error
 }

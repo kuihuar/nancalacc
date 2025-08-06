@@ -81,7 +81,7 @@ https://login.dingtalk.com/oauth2/auth?response_type=code&client_id=YOUR_APPID&r
 curl -X POST http://119.3.173.229/c/asyncacc/v1/account -H "Content-Type: application/json" -d '{"trigger_type":"1","sync_type":"1"}'
 {"taskId":"20250716051038","createTime":"2025-07-16T05:10:37.591762493Z"} -->
 
-
+#单点登录配置
 https://login.dingtalk.com/oauth2/auth?response_type=code&client_id=dinglz1setxqhrpp7aa0&scope=openid&prompt=consent
 redirect_uri
 state

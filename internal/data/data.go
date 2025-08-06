@@ -15,8 +15,10 @@ var ProviderSet = wire.NewSet(
 	NewMysqlSyncDB, // 会绑定到 SyncDB
 	NewRedisClient,
 	NewAccounterRepo,
-	NewRedisRepo,
+	// cache.NewRedisRepo,
+	NewCLocalCacheService,
 	NewData,
+	NewRedisCacheService,
 )
 
 type (

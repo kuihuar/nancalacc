@@ -2,6 +2,8 @@ package biz
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	v1 "nancalacc/api/account/v1"
 	"nancalacc/internal/auth"
@@ -61,13 +63,17 @@ type AccounterUsecase struct {
 	wpsSync      wps.WpsSync
 	wps          wps.Wps
 	bizConf      *conf.Service_Business
-	redisRepo    RedisCacheRepo
+	localCache   CacheService
 	log          *log.Helper
 }
 
+var (
+	prefix = "nancalacc:cache:"
+)
+
 // NewGreeterUsecase new a Greeter usecase.
-func NewAccounterUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, appAuth auth.Authenticator, wpsSync wps.WpsSync, wps wps.Wps, bizConf *conf.Service_Business, redisRepo RedisCacheRepo, logger log.Logger) *AccounterUsecase {
-	return &AccounterUsecase{repo: repo, dingTalkRepo: dingTalkRepo, appAuth: appAuth, wpsSync: wpsSync, wps: wps, bizConf: bizConf, redisRepo: redisRepo, log: log.NewHelper(logger)}
+func NewAccounterUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, appAuth auth.Authenticator, wpsSync wps.WpsSync, wps wps.Wps, bizConf *conf.Service_Business, cache CacheService, logger log.Logger) *AccounterUsecase {
+	return &AccounterUsecase{repo: repo, dingTalkRepo: dingTalkRepo, appAuth: appAuth, wpsSync: wpsSync, wps: wps, bizConf: bizConf, localCache: cache, log: log.NewHelper(logger)}
 }
 
 func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
@@ -79,14 +85,22 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	log.Infof("CreateSyncAccount: %v", req)
 
 	taskId := req.GetTaskName()
+	taskCachekey := prefix + taskId
 
-	num, err := uc.repo.CreateTask(ctx, taskId)
+	_, ok, err := uc.localCache.Get(ctx, taskCachekey)
 	if err != nil {
 		return nil, err
 	}
-	if num == 0 {
-		return nil, status.Error(codes.AlreadyExists, "taskId  exists")
+	if ok {
+		return nil, status.Error(codes.AlreadyExists, "task name "+taskId+" exists")
 	}
+	// num, err := uc.repo.CreateTask(ctx, taskId)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if num == 0 {
+	// 	return nil, status.Error(codes.AlreadyExists, "taskId  exists")
+	// }
 
 	uc.log.WithContext(ctx).Info("CreateSyncAccount.SaveCompanyCfg")
 	err = uc.repo.SaveCompanyCfg(ctx, &dingtalk.DingtalkCompanyCfg{})
@@ -190,6 +204,20 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	if err != nil {
 		return nil, err
 	}
+	taskInfo := &models.Task{
+		ID:          1,
+		Title:       req.GetTaskName(),
+		Description: req.GetTaskName(),
+		Status:      "in_progress",
+		CreatorID:   1,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		DueDate:     time.Now(),
+		StartDate:   time.Now(),
+		Progress:    30,
+		ActualTime:  0,
+	}
+	uc.localCache.Set(ctx, taskCachekey, taskInfo, 300*time.Minute)
 	return &v1.CreateSyncAccountReply{
 		TaskId:     taskId,
 		CreateTime: timestamppb.Now(),
@@ -199,22 +227,34 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 func (uc *AccounterUsecase) GetSyncAccount(ctx context.Context, req *v1.GetSyncAccountRequest) (*v1.GetSyncAccountReply, error) {
 	uc.log.WithContext(ctx).Infof("GetSyncAccount: %v", req)
 
-	prefix := "nancalacc:cache:"
 	status := v1.GetSyncAccountReply_Status(v1.GetSyncAccountReply_SUCCESS)
 	key1 := prefix + "taskId:" + req.TaskId
 	uc.log.Debugf("key1: %s", key1)
-	uc.redisRepo.Set(ctx, key1, status, 50*time.Minute)
-	var taskStatus v1.GetSyncAccountReply_Status
-	uc.redisRepo.Get(ctx, key1, &taskStatus)
+	uc.localCache.Set(ctx, key1, status, 50*time.Minute)
+	//var taskStatus v1.GetSyncAccountReply_Status
+	taskStatus, _, err := uc.localCache.Get(ctx, key1)
+	if err != nil {
+		return nil, err
+	}
+	taskStatusInt, ok := taskStatus.(v1.GetSyncAccountReply_Status)
+	if !ok {
+		return nil, errors.New("taskStatus type assertion failed")
+	}
 
-	var userCount int64
 	key2 := key1 + ":userCount"
 	uc.log.Debugf("key2: %s", key2)
-	uc.redisRepo.Get(ctx, key2, &userCount)
+	userCount, _, err := uc.localCache.Get(ctx, key2)
+	if err != nil {
+		return nil, err
+	}
+	userCountInt, ok := userCount.(int64)
+	if !ok {
+		return nil, errors.New("userCount type assertion failed")
+	}
 	uc.log.WithContext(ctx).Infof("GetSyncAccount: taskStatus: %v", taskStatus)
 	return &v1.GetSyncAccountReply{
-		Status:                      taskStatus,
-		UserCount:                   userCount,
+		Status:                      taskStatusInt,
+		UserCount:                   userCountInt,
 		DepartmentCount:             1,
 		UserDepartmentRelationCount: 1,
 	}, nil
@@ -228,7 +268,37 @@ func (uc *AccounterUsecase) CreateTask(ctx context.Context, taskName string) (in
 func (uc *AccounterUsecase) GetTask(ctx context.Context, taskName string) (*v1.GetTaskReply_Task, error) {
 	uc.log.WithContext(ctx).Infof("GetTask taskName: %s", taskName)
 
-	taskInfo, err := uc.repo.GetTask(ctx, taskName)
+	taskInfo := &models.Task{
+		ID:          1,
+		Title:       taskName,
+		Description: "desc1",
+		Status:      "in_progress",
+		CreatorID:   1,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		DueDate:     time.Now(),
+		StartDate:   time.Now(),
+		Progress:    30,
+		ActualTime:  0,
+	}
+	taskInfoJson, _ := json.Marshal(taskInfo)
+	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = uc.wps.CacheSet(ctx, appAccessToken.AccessToken, taskName, string(taskInfoJson), 24*time.Hour)
+
+	if err != nil {
+		return nil, err
+	}
+
+	taskInfoJsonRes, err := uc.wps.CacheGet(ctx, appAccessToken.AccessToken, taskName)
+	if err != nil {
+		return nil, err
+	}
+	uc.log.Infof("taskInfoJsonRes: %v", taskInfoJsonRes)
+
+	err = uc.wps.CacheDel(ctx, appAccessToken.AccessToken, taskName)
 	if err != nil {
 		return nil, err
 	}
