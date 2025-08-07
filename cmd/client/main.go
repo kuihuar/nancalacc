@@ -64,8 +64,9 @@ func main() {
 	fmt.Println(token)
 	// token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTM2MTU2MTgsImNvbXBfaWQiOiIxIiwiY2xpZW50X2lkIjoiY29tLmFjYy5hc3luYyIsInRrX3R5cGUiOiJhcHAiLCJzY29wZSI6Imtzby5hY2NvdW50c3luYy5zeW5jLGtzby5jb250YWN0LnJlYWQsa3NvLmNvbnRhY3QucmVhZHdyaXRlIiwiY29tcGFueV9pZCI6MSwiY2xpZW50X3ByaW5jaXBhbF9pZCI6IjczIiwiaXNfd3BzMzY1Ijp0cnVlfQ.ZOkiwnZ6f1uW45_sq5uT_ZW3dmA6yCXuKetMaUI7mCw"
 
+	CheckBatchGetDepartment(token)
 	//CheckPostBatchUsersByExDepIds(token)
-	CheckPostBatchDepartmentsByExDepIds(token)
+	// CheckPostBatchDepartmentsByExDepIds(token)
 	//CheckGetUserByUserId(token)
 	//CheckBatchPostUsers(token)
 
@@ -254,7 +255,7 @@ func CheckBatchGetDepartment(token string) {
 
 	// 调用 Wps 接口
 	res, err := wpsClient.BatchPostDepartments(ctx, token, wps.BatchPostDepartmentsRequest{
-		DeptIDs: []string{"1005617108", "1006047132", "1"},
+		DeptIDs: []string{"201", "1", "33"},
 	})
 	fmt.Printf("CheckBatchGetDepartment res: %+v, err:%+v\n", res, err)
 

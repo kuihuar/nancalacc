@@ -133,38 +133,53 @@ func (uc *AccounterIncreUsecase) OrgDeptRemove(ctx context.Context, event *clien
 		log.Errorf("OrgDeptRemove.PostBatchDepartmentsByExDepIds err: %v", err)
 		return err
 	}
+	var deptIDs []string
+	tempDeptIDs := make(map[string]int64)
+	for _, depInfo := range depInfos.Data.Items {
+		deptIDs = append(deptIDs, depInfo.ParentID)
+	}
+
+	parentDeptInfos, err := uc.wps.BatchPostDepartments(ctx, token, wps.BatchPostDepartmentsRequest{
+		DeptIDs: deptIDs,
+	})
+	if err != nil {
+		log.Errorf("OrgDeptRemove.BatchPostDepartments err: %v", err)
+		return err
+	}
+
+	for _, pdis := range parentDeptInfos.Data.Items {
+		extpareId, err := strconv.ParseInt(pdis.ExDeptID, 10, 64)
+		if err != nil {
+			log.Errorf("OrgDeptRemove.ParseInt pdis.ExDeptID:%s, err: %v", pdis.ExDeptID, err)
+		}
+		tempDeptIDs[pdis.ID] = extpareId
+	}
+
 	var depts []*dingtalk.DingtalkDept
 
 	for _, depInfo := range depInfos.Data.Items {
-		parentID, err := strconv.ParseInt(depInfo.ParentID, 10, 64)
-		if err != nil {
-			return err
-		}
-		id, err := strconv.ParseInt(depInfo.ID, 10, 64)
-		if err != nil {
-			return err
-		}
+
 		dingtalkID, err := strconv.ParseInt(depInfo.ExDeptID, 10, 64)
 		if err != nil {
 			return err
 		}
-		detp := &dingtalk.DingtalkDept{
-			DeptID:   id,
-			ParentID: parentID,
-			Order:    int64(depInfo.Order),
-			Name:     depInfo.Name,
+		parentID, ok := tempDeptIDs[depInfo.ParentID]
+		if !ok {
+			uc.log.Errorf("OrgDeptRemove not found parentID for DeptID: %s", dingtalkID)
+			continue
 		}
-		detp1 := &dingtalk.DingtalkDept{
+		detp := &dingtalk.DingtalkDept{
 			DeptID:   dingtalkID,
 			ParentID: parentID,
 			Order:    int64(depInfo.Order),
 			Name:     depInfo.Name,
 		}
-		depts = append(depts, detp, detp1)
+
+		depts = append(depts, detp)
 
 	}
 
-	err = uc.repo.SaveIncrementDepartments(ctx, nil, nil, depts)
+	err = uc.repo.SaveIncrementDepartments(ctx, nil, depts, nil)
 	if err != nil {
 		log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
 		return err
@@ -285,7 +300,7 @@ func (uc *AccounterIncreUsecase) UserAddOrg(ctx context.Context, event *clientV2
 		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
 	})
 
-	log.Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+	log.Infof("UserAddOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
 
 	if err != nil {
 		return err
@@ -481,7 +496,7 @@ func (uc *AccounterIncreUsecase) UserModifyOrg(ctx context.Context, event *clien
 		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
 	})
 
-	log.Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+	log.Infof("UserModifyOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
 
 	if err != nil {
 		return err
