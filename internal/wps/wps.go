@@ -74,8 +74,8 @@ func (ws *wps) BatchPostDepartments(ctx context.Context, accessToken string, inp
 	if err != nil {
 		return resp, err
 	}
-	if resp.Code != 200 {
-		return resp, ErrCodeNot200
+	if resp.Code != 0 {
+		return resp, ErrCodeNot0
 	}
 
 	return resp, nil
