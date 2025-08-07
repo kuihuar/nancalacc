@@ -41,8 +41,9 @@ type AccounterRepo interface {
 	ClearAll(ctx context.Context) error
 
 	SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel, deptsUpd []*dingtalk.DingtalkDept) error
+
 	SaveIncrementUsers(ctx context.Context, usersAdd, usersDel, usersUpd []*dingtalk.DingtalkDeptUser) error
-	SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel []*dingtalk.DingtalkDeptUserRelation) error
+	SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel, relationsUpd []*dingtalk.DingtalkDeptUserRelation) error
 
 	BatchSaveUsers(ctx context.Context, users []*models.TbLasUser) (int, error)
 	BatchSaveDepts(ctx context.Context, depts []*models.TbLasDepartment) (int, error)

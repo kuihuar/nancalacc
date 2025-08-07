@@ -171,10 +171,25 @@ type DingTalkUserDetailResponse struct {
 	Errmsg  string           `json:"errmsg"`
 }
 
+// map[
+// diffInfo:[
+//     map[
+//     curr:map[email:kuihuar@163.com jobNumber: name:liu jianfen remark: telephone: workPlace:]
+//     prev:map[email:kuihuar@163.com name:liu jianfen]
+//     userid:manager331
+//     ]
+// ]
+// eventId:c0f46cd0336549428dec56d541ed8e2d
+// optStaffId:manager331
+// timeStamp:1754556812194
+// userId:[manager331]
+// ]
+
 type UserModifyOrgEventData struct {
-	TimeStamp string                `json:"timeStamp"`
-	UserId    []string              `json:"userId"`
-	DiffInfo  UserModifyOrgDiffInfo `json:"diffInfo"`
+	TimeStamp  string                  `json:"timeStamp"`
+	OptStaffId string                  `json:"optStaffId"`
+	UserId     []string                `json:"userId"`
+	DiffInfo   []UserModifyOrgDiffInfo `json:"diffInfo"`
 }
 type UserModifyOrgDiffInfo struct {
 	Prev struct {
@@ -185,14 +200,17 @@ type UserModifyOrgDiffInfo struct {
 		Email         string `json:"email"`
 		JobNumber     string `json:"jobNumber"`
 		WorkPlace     string `json:"workPlace"`
+		Remark        string `json:"remark"`
 	} `json:"prev"`
 	Curr struct {
 		ManagerUserid string `json:"managerUserid"`
 		HiredDate     string `json:"hiredDate"`
 		Name          string `json:"name"`
+		Telephone     string `json:"telephone"`
 		Email         string `json:"email"`
 		JobNumber     string `json:"jobNumber"`
 		WorkPlace     string `json:"workPlace"`
+		Remark        string `json:"remark"`
 	} `json:"curr"`
 	Userid string `json:"userid"`
 }
