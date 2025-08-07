@@ -34,6 +34,7 @@ require (
 require (
 	github.com/go-kratos/kratos/contrib/config/etcd/v2 v2.0.0-20250731084034-f7f150c3f139
 	github.com/google/go-cmp v0.7.0
+	golang.org/x/time v0.12.0
 )
 
 require (
@@ -54,7 +55,6 @@ require (
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/time v0.12.0 // indirect
 )
 
 require (

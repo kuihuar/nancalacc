@@ -12,38 +12,27 @@ type ListDeptIDResponse struct {
 	RequestID string `json:"request_id"`
 }
 type DingtalkDept struct {
-	DeptID   int64  `json:"dept_id"`
-	Name     string `json:"name"`
-	ParentID int64  `json:"parent_id"`
-
-	SourceIdentifier  string `json:"source_identifier"`
-	CreateDeptGroup   bool   `json:"create_dept_group"`
-	AutoAddUser       bool   `json:"auto_add_user"`
-	Order             int64  `json:"order"`
-	MemberCount       int64  `json:"member_count"`
-	OwningMemberCount int64  `json:"owning_member_count"`
-	//Tags             string `json:"tags"`
-	//FromUnionOrg     bool   `json:"from_union_org"`
-
-	//DeptGroupChatID     string   `json:"dept_group_chat_id"`
-	//DeptPermits          []int64         `json:"dept_permits"`
-	// GroupContainSubDept bool `json:"group_contain_sub_dept"`
-	// OrgDeptOwner       string   `json:"org_dept_owner"`
-	//OuterPermitUsers []string `json:"outer_permit_users"`
-	//DeptManagerUserIDs []string `json:"dept_manager_userid_list"`
-
-	//OuterDept bool `json:"outer_dept"`
-
-	//HideDept bool `json:"hide_dept"`
-
-	//OuterPermitDepts []int64  `json:"outer_permit_depts"`
-	//UserPermits      []string `json:"user_permits"`
-
-	Code         string `json:"code"`
-	UnionDeptExt struct {
-		CorpID string `json:"corp_id"`
-		DeptID int64  `json:"dept_id"`
-	} `json:"union_dept_ext"`
+	AutoAddUser           bool     `json:"auto_add_user"`
+	AutoApproveApply      bool     `json:"auto_approve_apply"`
+	Brief                 string   `json:"brief"`
+	CreateDeptGroup       bool     `json:"create_dept_group"`
+	DeptGroupChatID       string   `json:"dept_group_chat_id"`
+	DeptID                int64    `json:"dept_id"`
+	DeptManagerUseridList []string `json:"dept_manager_userid_list"`
+	DeptPermits           []string `json:"dept_permits"`
+	EmpApplyJoinDept      bool     `json:"emp_apply_join_dept"`
+	GroupContainSubDept   bool     `json:"group_contain_sub_dept"`
+	HideDept              bool     `json:"hide_dept"`
+	MemberCount           int      `json:"member_count"`
+	Name                  string   `json:"name"`
+	Order                 int64    `json:"order"`
+	OrgDeptOwner          string   `json:"org_dept_owner"`
+	OuterDept             bool     `json:"outer_dept"`
+	OuterPermitDepts      []string `json:"outer_permit_depts"`
+	OuterPermitUsers      []string `json:"outer_permit_users"`
+	OwningMemberCount     int      `json:"owning_member_count"`
+	ParentID              int64    `json:"parent_id"`
+	UserPermits           []string `json:"user_permits"`
 }
 
 type DingtalkDeptRequest struct {
@@ -66,40 +55,44 @@ type DingtalkDeptResponse struct {
 // 	DeptID int64 `json:"dept_id"`
 // }
 
+type FetchUserDetailRequest struct {
+	UserIDs []string `json:"userid"`
+}
+type FetchUserDetailResponse struct {
+	UserIDs []string `json:"userid"`
+}
+
 type DingtalkDeptUser struct {
-	Userid     string  `json:"userid"`  //zhangsan 用户的userId
-	Unionid    string  `json:"unionid"` //用户姓名
-	Name       string  `json:"name"`
-	Avatar     string  `json:"avatar"`
-	Mobile     string  `json:"mobile"`
-	Email      string  `json:"email"`
-	Remark     string  `json:"remark"`
-	DeptIDList []int64 `json:"dept_id_list"`
-	Extension  string  `json:"extension"`
-	Active     bool    `json:"active"`
-	Boss       bool    `json:"boss"`
-	Admin      bool    `json:"admin"`
-	Title      string  `json:"title"`
-	Leader     bool    `json:"leader"`
-	Nickname   string  `json:"nickname"`
-
-	//ExclusiveAccountType string `json:"exclusive_account_type"`
-
-	//ExclusiveAccount string `json:"exclusive_account"`
-	//HiredDate        string `json:"hired_date"`
-
-	//WorkPlace string `json:"work_place"`
-
-	//JobNumber string `json:"job_number"`
-	DeptOrder int `json:"dept_order"`
-	//LoginID                  string `json:"login_id"`
-	//ExclusiveAccountCorpName string `json:"exclusive_account_corp_name"`
-	//Telephone                string `json:"telephone"`
-
-	//HideMobile             string `json:"hide_mobile"`
-	//ExclusiveAccountCorpID string `json:"exclusive_account_corp_id"`
-	//OrgEmail               string `json:"org_email"`
-	StateCode string `json:"state_code"`
+	Active        bool    `json:"active"`
+	Admin         bool    `json:"admin"`
+	Avatar        string  `json:"avatar"`
+	Boss          bool    `json:"boss"`
+	CreateTime    string  `json:"create_time"`
+	DeptIDList    []int64 `json:"dept_id_list"`
+	DeptOrderList []struct {
+		DeptID int64 `json:"dept_id"`
+		Order  int64 `json:"order"`
+	} `json:"dept_order_list"`
+	Email            string `json:"email"`
+	ExclusiveAccount bool   `json:"exclusive_account"`
+	HideMobile       bool   `json:"hide_mobile"`
+	HiredDate        int64  `json:"hired_date"`
+	JobNumber        string `json:"job_number"`
+	LeaderInDept     []struct {
+		DeptID int64 `json:"dept_id"`
+		Leader bool  `json:"leader"`
+	} `json:"leader_in_dept"`
+	Mobile     string `json:"mobile"`
+	Name       string `json:"name"`
+	RealAuthed bool   `json:"real_authed"`
+	Remark     string `json:"remark"`
+	Senior     bool   `json:"senior"`
+	StateCode  string `json:"state_code"`
+	Telephone  string `json:"telephone"`
+	Title      string `json:"title"`
+	Unionid    string `json:"unionid"`
+	Userid     string `json:"userid"`
+	WorkPlace  string `json:"work_place"`
 }
 
 type DingtalkDeptUserRelation struct {
@@ -108,7 +101,7 @@ type DingtalkDeptUserRelation struct {
 	ThirdCompanyID string `json:"third_company_id"`
 
 	PlatformID string `json:"platform_id"`
-	Order      int    `json:"order"`
+	Order      int64  `json:"order"`
 }
 
 type ListDeptUserRequest struct {
@@ -176,4 +169,37 @@ type DingTalkUserDetailResponse struct {
 	Errcode int              `json:"errcode"`
 	Result  DingtalkDeptUser `json:"result"`
 	Errmsg  string           `json:"errmsg"`
+}
+
+type UserModifyOrgEventData struct {
+	TimeStamp string   `json:"timeStamp"`
+	UserId    []string `json:"userId"`
+	DiffInfo  struct {
+		Prev struct {
+			ManagerUserid string `json:"managerUserid"`
+			HiredDate     string `json:"hiredDate"`
+			Name          string `json:"name"`
+			Telephone     string `json:"telephone"`
+			Email         string `json:"email"`
+			JobNumber     string `json:"jobNumber"`
+			WorkPlace     string `json:"workPlace"`
+		} `json:"prev"`
+		Curr struct {
+			ManagerUserid string `json:"managerUserid"`
+			HiredDate     string `json:"hiredDate"`
+			Name          string `json:"name"`
+			Email         string `json:"email"`
+			JobNumber     string `json:"jobNumber"`
+			WorkPlace     string `json:"workPlace"`
+		} `json:"curr"`
+		Userid string `json:"userid"`
+	} `json:"diffInfo"`
+}
+type UserModifyOrgEvent struct {
+	EventUnifiedAppId string                 `json:"eventUnifiedAppId"`
+	EventCorpId       string                 `json:"eventCorpId"`
+	EventType         string                 `json:"eventType"`
+	EventId           string                 `json:"eventId"`
+	EventBornTime     int64                  `json:"eventBornTime"`
+	Data              UserModifyOrgEventData `json:"data"`
 }

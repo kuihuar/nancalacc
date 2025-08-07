@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"nancalacc/internal/conf"
+	"strings"
 	"time"
 
 	//httpwps "nancalacc/pkg/httputil/wps"
@@ -107,6 +108,103 @@ func (ws *wps) PostBatchDepartmentsByExDepIds(ctx context.Context, accessToken s
 
 	return resp, nil
 
+}
+
+func (ws *wps) PostBatchDeleteDept(ctx context.Context, accessToken string, input PostBatchDeleteDeptRequest) (*PostBatchDeleteDeptResponse, error) {
+
+	log := ws.log.WithContext(ctx)
+	log.Infof("PostBatchDeleteDepartmentsByDepIds req %v", input)
+	var resp *PostBatchDeleteDeptResponse
+
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
+
+	log.Infof("PostBatchDeleteDepartmentsByDepIds uri: %s, input: %+v\n", POST_DELETE_DEPTS_BY_EXDEPTIDS_PATH, input)
+	bs, err := wpsReq.PostJSON(context.Background(), POST_DELETE_DEPTS_BY_EXDEPTIDS_PATH, accessToken, input)
+
+	log.Infof("PostBatchDeleteDepartmentsByDepIds: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, err
+	}
+	if resp.Code != 0 {
+		return resp, ErrCodeNot0
+	}
+
+	return resp, nil
+}
+func (ws *wps) PostBatchDeleteUser(ctx context.Context, accessToken string, input PostBatchDeleteUserRequest) (*PostBatchDeleteUserResponse, error) {
+	log := ws.log.WithContext(ctx)
+	log.Infof("PostBatchDeleteUser req %v", input)
+	var resp *PostBatchDeleteUserResponse
+
+	return resp, nil
+}
+
+func (ws *wps) PostRomoveUserIdFromDeptId(ctx context.Context, accessToken string, input PostRomoveUserIdFromDeptIdRequest) (*PostRomoveUserIdFromDeptIdResponse, error) {
+	log := ws.log.WithContext(ctx)
+	log.Infof("PostRomoveUserIdFromDeptId req %v", input)
+	var resp *PostRomoveUserIdFromDeptIdResponse
+
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
+
+	uri := strings.Replace(POST_DELETE_USERID_FROM_DEPTID_PATH, "{dept_id}", input.DeptID, 1)
+	uri = strings.Replace(uri, "{user_id}", input.UserID, 1)
+
+	log.Infof("PostRomoveUserIdFromDeptId uri: %s, input: %+v\n", uri, nil)
+	bs, err := wpsReq.PostJSON(context.Background(), uri, accessToken, nil)
+
+	log.Infof("PostRomoveUserIdFromDeptId: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, err
+	}
+	if resp.Code != 0 {
+		return resp, ErrCodeNot0
+	}
+
+	return resp, nil
+}
+func (ws *wps) PostAddUserIdToDeptId(ctx context.Context, accessToken string, input PostAddUserIdToDeptIdRequest) (*PostAddUserIdToDeptIdResponse, error) {
+	log := ws.log.WithContext(ctx)
+	log.Infof("PostAddUserIdToDeptId req %v", input)
+	var resp *PostAddUserIdToDeptIdResponse
+
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
+
+	uri := strings.Replace(POST_ADD_USERID_TO_DEPTID_PATH, "{dept_id}", input.DeptID, 1)
+	uri = strings.Replace(uri, "{user_id}", input.UserID, 1)
+
+	log.Infof("PostAddUserIdToDeptId uri: %s, input: %+v\n", uri, nil)
+	bs, err := wpsReq.PostJSON(context.Background(), uri, accessToken, nil)
+
+	log.Infof("PostAddUserIdToDeptId: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, err
+	}
+	if resp.Code != 0 {
+		return resp, ErrCodeNot0
+	}
+
+	return resp, nil
 }
 func (ws *wps) PostBatchUsersByExDepIds(ctx context.Context, accessToken string, input PostBatchUsersByExDepIdsRequest) (*PostBatchUsersByExDepIdsResponse, error) {
 
@@ -216,78 +314,107 @@ func (ws *wps) GetUserByUserId(ctx context.Context, accessToken string, req GetU
 // TODO 内部网关的签名是不是不对
 func (ws *wps) CacheSet(ctx context.Context, accessToken string, key string, value interface{}, expiration time.Duration) error {
 
-	log := ws.log.WithContext(ctx)
-	log.Infof("CacheSet key: %s, value: %v", key, value)
+	// log := ws.log.WithContext(ctx)
+	// log.Infof("CacheSet key: %s, value: %v", key, value)
 
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
-	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
+	// ak := ws.serviceConf.Auth.App.ClientId
+	// sk := ws.serviceConf.Auth.App.ClientSecret
+	// wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
-	bs, err := wpsReq.PostJSON(context.Background(), POST_CACHE_SET, accessToken, map[string]interface{}{
-		"key":       key,
-		"value":     value,
-		"expire":    expiration,
-		"namespace": "nancalacc",
-	})
+	// bs, err := wpsReq.PostJSON(context.Background(), POST_CACHE_SET, accessToken, map[string]interface{}{
+	// 	"key":       key,
+	// 	"value":     value,
+	// 	"expire":    expiration,
+	// 	"namespace": "nancalacc",
+	// })
 
-	log.Infof("CacheSet: %s, err: %+v\n", string(bs), err)
-	if err != nil {
-		return err
-	}
+	// log.Infof("CacheSet: %s, err: %+v\n", string(bs), err)
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 
 }
 func (ws *wps) CacheGet(ctx context.Context, accessToken string, key string) (interface{}, error) {
 
-	log := ws.log.WithContext(ctx)
-	log.Infof("CacheGet key %v", key)
+	// log := ws.log.WithContext(ctx)
+	// log.Infof("CacheGet key %v", key)
 
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
-	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
+	// ak := ws.serviceConf.Auth.App.ClientId
+	// sk := ws.serviceConf.Auth.App.ClientSecret
+	// wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
-	bs, err := wpsReq.PostJSON(context.Background(), POST_CACHE_GET, accessToken, map[string]interface{}{
-		"key":       key,
-		"namespace": "nancalacc",
-	})
+	// bs, err := wpsReq.PostJSON(context.Background(), POST_CACHE_GET, accessToken, map[string]interface{}{
+	// 	"key":       key,
+	// 	"namespace": "nancalacc",
+	// })
 
-	log.Infof("CacheGet: %s, err: %+v\n", string(bs), err)
-	if err != nil {
-		return nil, err
-	}
+	// log.Infof("CacheGet: %s, err: %+v\n", string(bs), err)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	var resp map[string]interface{}
-	err = json.Unmarshal(bs, &resp)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
+	// var resp map[string]interface{}
+	// err = json.Unmarshal(bs, &resp)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	return nil, nil
 }
 
 func (ws *wps) CacheDel(ctx context.Context, accessToken, key string) error {
 
-	log := ws.log.WithContext(ctx)
-	log.Infof("CacheDel key %v", key)
+	// log := ws.log.WithContext(ctx)
+	// log.Infof("CacheDel key %v", key)
 
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
-	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
+	// ak := ws.serviceConf.Auth.App.ClientId
+	// sk := ws.serviceConf.Auth.App.ClientSecret
+	// wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
-	bs, err := wpsReq.PostJSON(context.Background(), POST_CACHE_DEL, accessToken, map[string]interface{}{
-		"key":       key,
-		"namespace": "nancalacc",
-	})
+	// bs, err := wpsReq.PostJSON(context.Background(), POST_CACHE_DEL, accessToken, map[string]interface{}{
+	// 	"key":       key,
+	// 	"namespace": "nancalacc",
+	// })
 
-	log.Infof("CacheDel: %s, err: %+v\n", string(bs), err)
-	if err != nil {
-		return err
-	}
+	// log.Infof("CacheDel: %s, err: %+v\n", string(bs), err)
+	// if err != nil {
+	// 	return err
+	// }
 
-	var resp map[string]interface{}
-	err = json.Unmarshal(bs, &resp)
-	if err != nil {
-		return err
-	}
+	// var resp map[string]interface{}
+	// err = json.Unmarshal(bs, &resp)
+	// if err != nil {
+	// 	return err
+	// }
 	return nil
+}
+
+func (ws *wps) PostCreateUser(ctx context.Context, accessToken string, input PostCreateUserRequest) (*PostCreateUserResponse, error) {
+	var resp PostCreateUserResponse
+	return &resp, nil
+}
+
+func (ws *wps) PostCreateDept(ctx context.Context, accessToken string, input PostCreateDeptRequest) (*PostCreateDeptResponse, error) {
+	var resp PostCreateDeptResponse
+	return &resp, nil
+}
+
+func (ws *wps) PostUpdateDept(ctx context.Context, accessToken string, input PostUpdateDeptRequest) (*PostUpdateDeptResponse, error) {
+	var resp PostUpdateDeptResponse
+	return &resp, nil
+}
+func (ws *wps) PostUpdateUser(ctx context.Context, accessToken string, input PostUpdateUserRequest) (*PostUpdateUserResponse, error) {
+	var resp PostUpdateUserResponse
+	return &resp, nil
+}
+
+func (ws *wps) PostBatchUserByPage(ctx context.Context, accessToken string, input PostBatchUserByPageRequest) (*PostBatchUserByPageResponse, error) {
+	var resp PostBatchUserByPageResponse
+	return &resp, nil
+}
+
+func (ws *wps) GetDeptByPage(ctx context.Context, accessToken string, input GetDeptByPageRequest) (*GetDeptByPageResponse, error) {
+	var resp GetDeptByPageResponse
+	return &resp, nil
 }

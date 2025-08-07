@@ -40,8 +40,8 @@ type AccounterRepo interface {
 
 	ClearAll(ctx context.Context) error
 
-	SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel []*dingtalk.DingtalkDept) error
-	SaveIncrementUsers(ctx context.Context, usersAdd, usersDel []*dingtalk.DingtalkDeptUser) error
+	SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel, deptsUpd []*dingtalk.DingtalkDept) error
+	SaveIncrementUsers(ctx context.Context, usersAdd, usersDel, usersUpd []*dingtalk.DingtalkDeptUser) error
 	SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel []*dingtalk.DingtalkDeptUserRelation) error
 
 	BatchSaveUsers(ctx context.Context, users []*models.TbLasUser) (int, error)
@@ -164,19 +164,22 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	// 2. 关系数据入库
 	var deptUserRelations []*dingtalk.DingtalkDeptUserRelation
 	for _, deptUser := range deptUsers {
-		order := int(deptUser.DeptOrder)
-		if order > 0 {
-			order = 1
-		} else {
-			order = 0
+		order := make(map[int64]int64, 0)
+		if len(deptUser.DeptOrderList) > 0 {
+			for _, depIdOrder := range deptUser.DeptOrderList {
+				order[depIdOrder.DeptID] = depIdOrder.DeptID
+			}
 		}
 		for _, depId := range deptUser.DeptIDList {
 
-			deptUserRelations = append(deptUserRelations, &dingtalk.DingtalkDeptUserRelation{
-				Uid:   deptUser.Userid,
-				Did:   strconv.FormatInt(depId, 10),
-				Order: order,
-			})
+			reliation := &dingtalk.DingtalkDeptUserRelation{
+				Uid: deptUser.Userid,
+				Did: strconv.FormatInt(depId, 10),
+			}
+			if order, ok := order[depId]; ok {
+				reliation.Order = order
+			}
+			deptUserRelations = append(deptUserRelations, reliation)
 		}
 
 	}
@@ -609,4 +612,54 @@ func (uc *AccounterUsecase) GetCacheTask(ctx context.Context, taskName string) (
 	}
 	return task, nil
 
+}
+
+// 这个方法是把全量数据执插入表后，可以自已调用原生API去同步
+func (uc *AccounterUsecase) ParseExecellAfter(ctx context.Context, taskId, filename string) (err error) {
+
+	// 1. 创建部门
+	uc.wps.PostCreateDept(ctx, taskId, wps.PostCreateDeptRequest{
+		Name: "测试部门",
+	})
+
+	// 2. 创建部门存在的 > 更新部门
+	uc.wps.PostUpdateDept(ctx, taskId, wps.PostUpdateDeptRequest{
+		ExDeptID: "10000000000000000000000000000000",
+		Name:     "测试部门",
+	})
+
+	// 3. 全量的的 减去 创建的， 再减去更新的， 就是删除的
+	uc.wps.PostBatchDeleteDept(ctx, taskId, wps.PostBatchDeleteDeptRequest{
+		DeptIDs: []string{"10000000000000000000000000000000"},
+	})
+
+	// 这里的用户包含所在部门
+	uc.wps.PostCreateUser(ctx, taskId, wps.PostCreateUserRequest{
+		UserName: "测试用户",
+	})
+
+	// 2. 更新用户
+	uc.wps.PostUpdateUser(ctx, taskId, wps.PostUpdateUserRequest{
+		ExUserID: "10000000000000000000000000000000",
+		UserName: "测试部门",
+	})
+
+	// 3. 更新用户
+	uc.wps.PostUpdateUser(ctx, taskId, wps.PostUpdateUserRequest{
+		ExUserID: "10000000000000000000000000000000",
+		UserName: "测试用户",
+	})
+
+	// 全量用户
+
+	uc.wps.PostBatchUserByPage(ctx, taskId, wps.PostBatchUserByPageRequest{
+		PageSize: 100,
+		PageNum:  1,
+	})
+
+	// 5. 全量的的 减去 创建的， 再减去更新的， 就是删除的
+	uc.wps.PostBatchDeleteUser(ctx, taskId, wps.PostBatchDeleteUserRequest{
+		UserIDs: []string{"10000000000000000000000000000000"},
+	})
+	return nil
 }

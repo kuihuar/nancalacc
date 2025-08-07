@@ -56,9 +56,7 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.Dingtal
 		if user.Name == "" {
 			user.Name = user.Userid
 		}
-		if user.Nickname == "" {
-			user.Nickname = user.Name
-		}
+
 		var account string
 		if user.Mobile != "" {
 			account = user.Mobile
@@ -81,7 +79,7 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.Dingtal
 			DefDid:         "-1",
 			DefDidOrder:    0,
 			Account:        account,
-			NickName:       user.Nickname,
+			NickName:       user.Name,
 			Email:          email,
 			Phone:          phone,
 			Title:          user.Title,
@@ -180,6 +178,7 @@ func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relatio
 	platformID := r.serviceConf.Business.PlatformIds
 
 	for _, relation := range relations {
+
 		entities = append(entities, &models.TbLasDepartmentUser{
 			Did:            relation.Did,
 			TaskID:         taskId,
@@ -187,7 +186,7 @@ func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relatio
 			PlatformID:     platformID,
 			Uid:            relation.Uid,
 			Ctime:          time.Now(),
-			Order:          relation.Order,
+			Order:          int(relation.Order),
 			CheckType:      1,
 		})
 	}
@@ -288,7 +287,7 @@ func (r *accounterRepo) ClearAll(ctx context.Context) error {
 	return nil
 }
 
-func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersDel []*dingtalk.DingtalkDeptUser) error {
+func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersDel, usersUpd []*dingtalk.DingtalkDeptUser) error {
 
 	r.log.WithContext(ctx).Infof("SaveIncrementUsers usersAdd: %v", usersAdd)
 	r.log.WithContext(ctx).Infof("SaveIncrementUsers usersDel: %v", usersDel)
@@ -303,9 +302,6 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 	for _, user := range usersAdd {
 		if user.Name == "" {
 			user.Name = user.Userid
-		}
-		if user.Nickname == "" {
-			user.Nickname = user.Name
 		}
 		var account string
 		if user.Mobile != "" {
@@ -330,7 +326,7 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 			DefDid:         "-1",
 			DefDidOrder:    0,
 			Account:        account,
-			NickName:       user.Nickname,
+			NickName:       user.Name,
 			Email:          email,
 			Phone:          phone,
 			Title:          user.Title,
@@ -355,7 +351,7 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 			DefDid:         "-1",
 			DefDidOrder:    0,
 			Account:        user.Userid,
-			NickName:       user.Nickname,
+			NickName:       user.Name,
 			//Email:          "email",
 			//Phone:          "phone",
 			Title: user.Title,
@@ -365,6 +361,30 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 			Mtime:            time.Now(),
 			EmploymentStatus: "active",
 			UpdateType:       "user_del",
+			SyncType:         "auto",
+			SyncTime:         time.Now(),
+			Status:           0,
+			//Type:           sql.NullString{String: "dept", Valid: true},
+		})
+	}
+	for _, user := range usersUpd {
+		entities = append(entities, &models.TbLasUserIncrement{
+			ThirdCompanyID: thirdCompanyID,
+			PlatformID:     platformID,
+			Uid:            user.Userid,
+			DefDid:         "-1",
+			//DefDidOrder:    0,
+			Account:  user.Userid,
+			NickName: user.Name,
+			//Email:          "email",
+			//Phone:          "phone",
+			Title: user.Title,
+			//Leader:         sql.NullString{String: strconv.FormatBool(account.Leader)},
+			Source:           Source,
+			Ctime:            time.Now(),
+			Mtime:            time.Now(),
+			EmploymentStatus: "active",
+			UpdateType:       "user_upd",
 			SyncType:         "auto",
 			SyncTime:         time.Now(),
 			Status:           0,
@@ -384,7 +404,7 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 
 	return nil
 }
-func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel []*dingtalk.DingtalkDept) error {
+func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel, deptsUpd []*dingtalk.DingtalkDept) error {
 
 	r.log.WithContext(ctx).Infof("SaveIncrementDepartments deptsAdd: %v", deptsAdd)
 	r.log.WithContext(ctx).Infof("SaveIncrementDepartments deptsDel: %v", deptsDel)
@@ -427,6 +447,23 @@ func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, 
 			Ctime:          time.Now(),
 			Mtime:          time.Now(),
 			UpdateType:     "dept_add",
+			SyncTime:       time.Now(),
+			SyncType:       "auto",
+			Status:         0,
+		})
+	}
+	for _, dep := range deptsUpd {
+		entities = append(entities, &models.TbLasDepartmentIncrement{
+			Did:            strconv.FormatInt(dep.DeptID, 10),
+			Name:           dep.Name,
+			ThirdCompanyID: thirdCompanyID,
+			PlatformID:     platformID,
+			Pid:            strconv.FormatInt(dep.ParentID, 10),
+			Order:          int32(dep.Order),
+			Source:         "sync",
+			Ctime:          time.Now(),
+			Mtime:          time.Now(),
+			UpdateType:     "dept_upd",
 			SyncTime:       time.Now(),
 			SyncType:       "auto",
 			Status:         0,

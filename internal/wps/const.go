@@ -13,11 +13,15 @@ const (
 	POST_DEPTS_BY_EXDEPTIDS_PATH = "/v7/depts/by_ex_dept_ids"
 	POST_USERS_BY_EXDEPTIDS_PATH = "/v7/users/by_ex_user_ids"
 
+	POST_DELETE_DEPTS_BY_EXDEPTIDS_PATH = "/v7/depts/batch_delete"
+	POST_DELETE_USERID_FROM_DEPTID_PATH = "/v7/depts/{dept_id}/members/{user_id}/delete"
+	POST_ADD_USERID_TO_DEPTID_PATH      = "/v7/depts/{dept_id}/members/{user_id}/create"
+
 	GET_USER_BY_USERID = "/v7/users"
 
-	POST_CACHE_SET = "http://encs-pri-cams-engine/i/cams/sdk/api/v1/cache/set"
-	POST_CACHE_GET = "http://encs-pri-cams-engine/i/cams/sdk/api/v1/cache/get"
-	POST_CACHE_DEL = "http://encs-pri-cams-engine/i/cams/sdk/api/v1/cache/del"
+	// POST_CACHE_SET = "http://encs-pri-cams-engine/i/cams/sdk/api/v1/cache/set"
+	// POST_CACHE_GET = "http://encs-pri-cams-engine/i/cams/sdk/api/v1/cache/get"
+	// POST_CACHE_DEL = "http://encs-pri-cams-engine/i/cams/sdk/api/v1/cache/del"
 )
 
 var (

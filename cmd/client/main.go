@@ -60,8 +60,8 @@ func main() {
 
 	// fmt.Printf("token: %+v\n", token)
 
-	token := GetToken()
-	fmt.Println(token)
+	//token := GetToken()
+	//fmt.Println(token)
 	// token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTM2MTU2MTgsImNvbXBfaWQiOiIxIiwiY2xpZW50X2lkIjoiY29tLmFjYy5hc3luYyIsInRrX3R5cGUiOiJhcHAiLCJzY29wZSI6Imtzby5hY2NvdW50c3luYy5zeW5jLGtzby5jb250YWN0LnJlYWQsa3NvLmNvbnRhY3QucmVhZHdyaXRlIiwiY29tcGFueV9pZCI6MSwiY2xpZW50X3ByaW5jaXBhbF9pZCI6IjczIiwiaXNfd3BzMzY1Ijp0cnVlfQ.ZOkiwnZ6f1uW45_sq5uT_ZW3dmA6yCXuKetMaUI7mCw"
 
 	//CheckPostBatchUsersByExDepIds(token)
@@ -76,7 +76,26 @@ func main() {
 	//CheckBatchGetDepartment(token)
 	// 033014104332101118010 test
 	// CheckCallEcisaccountsync(token)
+	CheckGetDingtalkUserDetail()
 
+}
+func CheckGetDingtalkUserDetail() {
+	confService := bc.GetService()
+	dingtalkRepo := dingtalk.NewDingTalkRepo(confService.Auth.Dingtalk, log.GetLogger())
+	ctx := context.Background()
+	// accessToken, err := dingtalkRepo.GetAccessToken(ctx, "code")
+	// log.Infof("UserAddOrg.GetAccessToken accessToken: %v, err: %v", accessToken, err)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	accessToken := "2a99752c4fd9317f81d4a20c0f1d7c7e"
+	//user, err := dingtalkRepo.FetchUserDetail(ctx, accessToken, []string{"03301410433273270"})
+
+	depts, _ := dingtalkRepo.FetchDeptDetails(ctx, accessToken, []int64{1002216804})
+	fmt.Println()
+	for i, dept := range depts {
+		fmt.Printf("部门 %d: %+v\n", i, *dept)
+	}
 }
 func CheckReadExcell() {
 	f, err := excelize.OpenFile("Book1.xlsx")
@@ -170,6 +189,7 @@ func CheckUserLeaveOrg() {
 func CheckUserAddOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) {
 
 }
+
 func GetToken() string {
 	// fmt.Printf("bc.Service: %v", bc.Service)
 	token, err := auth.NewAppAuthenticator(bc.Service).GetAccessToken(context.Background())

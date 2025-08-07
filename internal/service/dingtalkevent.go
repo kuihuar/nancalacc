@@ -82,6 +82,7 @@ func (es *DingTalkEventService) HandleEvent(event *clientV2.GenericOpenDingTalkE
 		es.UserAddOrg(ctx, event)
 	case "user_modify_org":
 		es.log.Infof("user_modify_org: %v", event.Data)
+		es.UserModifyOrg(ctx, event)
 	case "user_leave_org":
 		es.UserLeaveOrg(ctx, event)
 		es.log.Infof("user_leave_org: %v", event.Data)

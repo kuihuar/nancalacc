@@ -278,25 +278,26 @@ func (r *dingTalkRepo) FetchDeptDetails(ctx context.Context, token string, deptI
 			}
 			jsonData, err := json.Marshal(input)
 			if err != nil {
-				r.log.Errorf("fetchDeptDetails.jsonData: %v, err: %v", string(jsonData), err)
+				r.log.Errorf("FetchDeptDetails.jsonData: %v, err: %v", string(jsonData), err)
 				//errChan <- err
 				return
 			}
 
 			bs, err := httputil.PostJSON(uriDetail, jsonData, time.Second*10)
+			r.log.Infof(">>>>FetchDeptDetails.bs: %s, err: %v\n", string(bs), err)
 			if err != nil {
-				r.log.Errorf("fetchDeptDetails.PostJSON: %v, err: %v", string(jsonData), err)
+				r.log.Errorf("FetchDeptDetails.PostJSON: %v, err: %v", string(jsonData), err)
 				//errChan <- err
 				return
 			}
 			var deptResponse *DingtalkDeptResponse
 			if err = json.Unmarshal(bs, &deptResponse); err != nil {
-				r.log.Errorf("fetchDeptDetails.Unmarshal: %v, err: %v", string(bs), err)
+				r.log.Errorf("FetchDeptDetails.Unmarshal: %v, err: %v", string(bs), err)
 				//errChan <- err
 				return
 			}
 			if deptResponse.Errcode != 0 {
-				r.log.Errorf("fetchDeptDetails.Errcode: %v, err: %v", deptResponse.Errcode, deptResponse.Errmsg)
+				r.log.Errorf("FetchDeptDetails.Errcode: %v, err: %v", deptResponse.Errcode, deptResponse.Errmsg)
 				//errChan <- err
 				return
 			}
@@ -607,8 +608,9 @@ func (r *dingTalkRepo) FetchUserDetail(ctx context.Context, token string, userId
 			}
 
 			bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
+			r.log.Infof(">>>>>>>>>GetUserDetail.PostJSON: %v, err: %v\n", string(bs), err)
 			if err != nil {
-				r.log.Errorf("GetUserDetail.PostJSON: %v, err: %v", string(jsonData), err)
+				r.log.Errorf("GetUserDetail.PostJSON: %v, err: %v", string(bs), err)
 				return
 			}
 			var userDetail *DingTalkUserDetailResponse
@@ -621,6 +623,7 @@ func (r *dingTalkRepo) FetchUserDetail(ctx context.Context, token string, userId
 				return
 			}
 			user := userDetail.Result
+			r.log.Info("GetUserDetail user: %v", user)
 			mu.Lock()
 			userList = append(userList, &user)
 			mu.Unlock()
