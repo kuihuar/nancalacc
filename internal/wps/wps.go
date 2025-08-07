@@ -55,7 +55,7 @@ func (ws *wps) BatchPostUsers(ctx context.Context, accessToken string, input Bat
 }
 func (ws *wps) BatchPostDepartments(ctx context.Context, accessToken string, input BatchPostDepartmentsRequest) (BatchPostDepartmentsResponse, error) {
 	log := ws.log.WithContext(ctx)
-	log.Infof("PostBatchUsersByExDepIds req %v", input)
+	log.Infof("BatchPostDepartments req %v", input)
 
 	var resp BatchPostDepartmentsResponse
 
