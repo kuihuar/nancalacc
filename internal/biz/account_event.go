@@ -477,14 +477,47 @@ func (uc *AccounterIncreUsecase) UserModifyOrg(ctx context.Context, event *clien
 	log := uc.log.WithContext(ctx)
 	log.Infof("UserModifyOrg data: %v", event.Data)
 
+	//普通用户修改，如果单纯部门变更，users为空
 	users, err := uc.getUseInfoFromDingTalkEvent(event)
 	if err != nil {
 		return err
 	}
-	log.Infof("UserModifyOrg event user to deptuser: %v", users)
-	err = uc.repo.SaveIncrementUsers(ctx, nil, nil, users)
-	if err != nil {
-		return err
+	// 单纯修改用户，没有关系
+	if len(users) > 0 {
+		log.Infof("UserModifyOrg event user to deptuser: %v", users)
+		err = uc.repo.SaveIncrementUsers(ctx, nil, nil, users)
+		if err != nil {
+			return err
+		}
+	} else {
+		userIds, err := uc.getUseridsFromDingTalkEvent(event)
+		if err != nil {
+			return err
+		}
+
+		accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
+		log.Infof("UserAddOrg.GetAccessToken accessToken: %v,userIds:%v err: %v", accessToken, userIds, err)
+		if err != nil {
+			return err
+		}
+		uc.log.WithContext(ctx).Infof("UserAddOrg.GetUserDetail userIds: %v", userIds)
+		users, err := uc.dingTalkRepo.FetchUserDetail(ctx, accessToken, userIds)
+		if err != nil {
+			return err
+		}
+
+		err = uc.repo.SaveIncrementUsers(ctx, nil, nil, users)
+		if err != nil {
+			return err
+		}
+
+		relations := generateUserDeptRelations(users)
+
+		err = uc.repo.SaveIncrementDepartmentUserRelations(ctx, nil, nil, relations)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
