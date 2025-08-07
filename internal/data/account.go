@@ -289,107 +289,23 @@ func (r *accounterRepo) ClearAll(ctx context.Context) error {
 
 func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersDel, usersUpd []*dingtalk.DingtalkDeptUser) error {
 
-	r.log.WithContext(ctx).Infof("SaveIncrementUsers usersAdd: %v", usersAdd)
-	r.log.WithContext(ctx).Infof("SaveIncrementUsers usersDel: %v", usersDel)
+	r.log.WithContext(ctx).Info("SaveIncrementUsers")
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	entities := make([]*models.TbLasUserIncrement, 0, len(usersAdd)+len(usersDel))
-
-	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
-	platformID := r.serviceConf.Business.PlatformIds
+	entities := make([]*models.TbLasUserIncrement, 0, len(usersAdd)+len(usersDel) + +len(usersUpd))
 
 	for _, user := range usersAdd {
-		if user.Name == "" {
-			user.Name = user.Userid
-		}
-		var account string
-		if user.Mobile != "" {
-			account = user.Mobile
-		} else {
-			account = user.Userid
-		}
-
-		secretKey := r.serviceConf.Auth.Self.SecretKey
-
-		email, errEmail := cipherutil.AesEncryptGcmByKey(user.Email, secretKey)
-
-		phone, errPhone := cipherutil.AesEncryptGcmByKey(user.Mobile, secretKey)
-
-		r.log.Infof("AesEncryptGcmByKey email: %v, ncrypt email: %v, err: %v", user.Email, email, errEmail)
-		r.log.Infof("AesEncryptGcmByKey phone: %v, ncrypt phone: %v, err: %v", user.Mobile, phone, errPhone)
-
-		entities = append(entities, &models.TbLasUserIncrement{
-			ThirdCompanyID: thirdCompanyID,
-			PlatformID:     platformID,
-			Uid:            user.Userid,
-			DefDid:         "-1",
-			DefDidOrder:    0,
-			Account:        account,
-			NickName:       user.Name,
-			Email:          email,
-			Phone:          phone,
-			Title:          user.Title,
-			//Leader:         sql.NullString{String: strconv.FormatBool(account.Leader)},
-			Source:           Source,
-			Ctime:            time.Now(),
-			Mtime:            time.Now(),
-			EmploymentStatus: "active",
-			EmploymentType:   "permanent",
-			UpdateType:       "user_add",
-			SyncType:         "auto",
-			SyncTime:         time.Now(),
-			Status:           0,
-			//Type:           sql.NullString{String: "dept", Valid: true},
-		})
+		entity := r.makeLasUserIncrement(user, "user_add")
+		entities = append(entities, entity)
 	}
 	for _, user := range usersDel {
-		entities = append(entities, &models.TbLasUserIncrement{
-			ThirdCompanyID: thirdCompanyID,
-			PlatformID:     platformID,
-			Uid:            user.Userid,
-			DefDid:         "-1",
-			DefDidOrder:    0,
-			Account:        user.Userid,
-			NickName:       user.Name,
-			//Email:          "email",
-			//Phone:          "phone",
-			Title: user.Title,
-			//Leader:         sql.NullString{String: strconv.FormatBool(account.Leader)},
-			Source:           Source,
-			Ctime:            time.Now(),
-			Mtime:            time.Now(),
-			EmploymentStatus: "active",
-			UpdateType:       "user_del",
-			SyncType:         "auto",
-			SyncTime:         time.Now(),
-			Status:           0,
-			//Type:           sql.NullString{String: "dept", Valid: true},
-		})
+		entity := r.makeLasUserIncrement(user, "user_del")
+		entities = append(entities, entity)
 	}
 	for _, user := range usersUpd {
-		entities = append(entities, &models.TbLasUserIncrement{
-			ThirdCompanyID: thirdCompanyID,
-			PlatformID:     platformID,
-			Uid:            user.Userid,
-			DefDid:         "-1",
-			//DefDidOrder:    0,
-			Account:  user.Userid,
-			NickName: user.Name,
-			//Email:          "email",
-			//Phone:          "phone",
-			Title: user.Title,
-			//Leader:         sql.NullString{String: strconv.FormatBool(account.Leader)},
-			Source:           Source,
-			Ctime:            time.Now(),
-			Mtime:            time.Now(),
-			EmploymentStatus: "active",
-			UpdateType:       "user_upd",
-			SyncType:         "auto",
-			SyncTime:         time.Now(),
-			Status:           0,
-			//Type:           sql.NullString{String: "dept", Valid: true},
-		})
+		entity := r.makeLasUserIncrement(user, "user_upd")
+		entities = append(entities, entity)
 	}
 	result := r.data.db.WithContext(ctx).Create(&entities)
 
@@ -399,75 +315,67 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 		} else {
 			return result.Error
 		}
-
 	}
-
 	return nil
 }
+func (r *accounterRepo) makeLasUserIncrement(user *dingtalk.DingtalkDeptUser, updateType string) *models.TbLasUserIncrement {
+	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
+	platformID := r.serviceConf.Business.PlatformIds
+	var account string
+	if user.Name == "" {
+		user.Name = user.Userid
+	}
+	if user.Mobile != "" {
+		account = user.Mobile
+	} else {
+		account = user.Userid
+	}
+	entity := &models.TbLasUserIncrement{
+		ThirdCompanyID:   thirdCompanyID,
+		PlatformID:       platformID,
+		Uid:              user.Userid,
+		DefDid:           "-1",
+		DefDidOrder:      0,
+		Account:          account,
+		NickName:         user.Name,
+		Email:            user.Email,
+		Phone:            user.Mobile,
+		Title:            user.Title,
+		Source:           Source,
+		Ctime:            time.Now(),
+		Mtime:            time.Now(),
+		EmploymentStatus: "active",
+		EmploymentType:   "permanent",
+		UpdateType:       updateType, //"user_add",
+		SyncType:         "auto",
+		SyncTime:         time.Now(),
+		Status:           0,
+	}
+	if len(user.LeaderInDept) > 0 {
+		//entity.Leader = user.LeaderInDept[0].Leader
+	}
+	return entity
+}
+
 func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel, deptsUpd []*dingtalk.DingtalkDept) error {
 
-	r.log.WithContext(ctx).Infof("SaveIncrementDepartments deptsAdd: %v", deptsAdd)
-	r.log.WithContext(ctx).Infof("SaveIncrementDepartments deptsDel: %v", deptsDel)
+	r.log.WithContext(ctx).Info("SaveIncrementDepartments")
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	entities := make([]*models.TbLasDepartmentIncrement, 0, len(deptsAdd)+len(deptsDel))
-
-	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
-	platformID := r.serviceConf.Business.PlatformIds
-
-	for _, dep := range deptsDel {
-		entities = append(entities, &models.TbLasDepartmentIncrement{
-			Did:            strconv.FormatInt(dep.DeptID, 10),
-			Name:           dep.Name,
-			ThirdCompanyID: thirdCompanyID,
-			PlatformID:     platformID,
-			// 删除的时候这个父id, 怎么传
-			Pid:        "",
-			Order:      int32(dep.Order),
-			Source:     "sync",
-			Ctime:      time.Now(),
-			Mtime:      time.Now(),
-			UpdateType: "dept_del", //dept_move
-			SyncTime:   time.Now(),
-			SyncType:   "auto",
-			Status:     0,
-		})
-	}
-
 	for _, dep := range deptsAdd {
-		entities = append(entities, &models.TbLasDepartmentIncrement{
-			Did:            strconv.FormatInt(dep.DeptID, 10),
-			Name:           dep.Name,
-			ThirdCompanyID: thirdCompanyID,
-			PlatformID:     platformID,
-			Pid:            strconv.FormatInt(dep.ParentID, 10),
-			Order:          int32(dep.Order),
-			Source:         "sync",
-			Ctime:          time.Now(),
-			Mtime:          time.Now(),
-			UpdateType:     "dept_add",
-			SyncTime:       time.Now(),
-			SyncType:       "auto",
-			Status:         0,
-		})
+		entity := r.makeDepartmentIncrement(dep, "dept_add")
+		entities = append(entities, entity)
 	}
 	for _, dep := range deptsUpd {
-		entities = append(entities, &models.TbLasDepartmentIncrement{
-			Did:            strconv.FormatInt(dep.DeptID, 10),
-			Name:           dep.Name,
-			ThirdCompanyID: thirdCompanyID,
-			PlatformID:     platformID,
-			Pid:            strconv.FormatInt(dep.ParentID, 10),
-			Order:          int32(dep.Order),
-			Source:         "sync",
-			Ctime:          time.Now(),
-			Mtime:          time.Now(),
-			UpdateType:     "dept_upd",
-			SyncTime:       time.Now(),
-			SyncType:       "auto",
-			Status:         0,
-		})
+		entity := r.makeDepartmentIncrement(dep, "dept_upd")
+		entities = append(entities, entity)
+	}
+
+	for _, dep := range deptsDel {
+		entity := r.makeDepartmentIncrement(dep, "dept_del")
+		entities = append(entities, entity)
 	}
 	result := r.data.db.WithContext(ctx).Create(&entities)
 
@@ -482,7 +390,32 @@ func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, 
 
 	return nil
 }
+func (r *accounterRepo) makeDepartmentIncrement(dept *dingtalk.DingtalkDept, updateType string) *models.TbLasDepartmentIncrement {
+	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
+	platformID := r.serviceConf.Business.PlatformIds
+	entity := &models.TbLasDepartmentIncrement{
+		Did:            strconv.FormatInt(dept.DeptID, 10),
+		Name:           dept.Name,
+		ThirdCompanyID: thirdCompanyID,
+		PlatformID:     platformID,
+		//Pid:            strconv.FormatInt(dept.ParentID, 10),
+		Order:      int32(dept.Order),
+		Source:     "sync",
+		Ctime:      time.Now(),
+		Mtime:      time.Now(),
+		UpdateType: updateType,
+		SyncTime:   time.Now(),
+		SyncType:   "auto",
+		Status:     0,
+	}
+	if dept.ParentID != 0 {
+		entity.Pid = strconv.FormatInt(dept.ParentID, 10)
+	} else {
+		entity.Pid = "-1"
+	}
+	return entity
 
+}
 func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel []*dingtalk.DingtalkDeptUserRelation) error {
 
 	r.log.WithContext(ctx).Infof("SaveIncrementDepartmentUserRelations relationsAdd: %v", relationsAdd)

@@ -60,12 +60,12 @@ func main() {
 
 	// fmt.Printf("token: %+v\n", token)
 
-	//token := GetToken()
-	//fmt.Println(token)
+	token := GetToken()
+	fmt.Println(token)
 	// token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTM2MTU2MTgsImNvbXBfaWQiOiIxIiwiY2xpZW50X2lkIjoiY29tLmFjYy5hc3luYyIsInRrX3R5cGUiOiJhcHAiLCJzY29wZSI6Imtzby5hY2NvdW50c3luYy5zeW5jLGtzby5jb250YWN0LnJlYWQsa3NvLmNvbnRhY3QucmVhZHdyaXRlIiwiY29tcGFueV9pZCI6MSwiY2xpZW50X3ByaW5jaXBhbF9pZCI6IjczIiwiaXNfd3BzMzY1Ijp0cnVlfQ.ZOkiwnZ6f1uW45_sq5uT_ZW3dmA6yCXuKetMaUI7mCw"
 
 	//CheckPostBatchUsersByExDepIds(token)
-	// CheckPostBatchDepartmentsByExDepIds(token)
+	CheckPostBatchDepartmentsByExDepIds(token)
 	//CheckGetUserByUserId(token)
 	//CheckBatchPostUsers(token)
 
@@ -76,7 +76,7 @@ func main() {
 	//CheckBatchGetDepartment(token)
 	// 033014104332101118010 test
 	// CheckCallEcisaccountsync(token)
-	CheckGetDingtalkUserDetail()
+	// CheckGetDingtalkUserDetail()
 
 }
 func CheckGetDingtalkUserDetail() {
@@ -233,7 +233,7 @@ func CheckPostBatchDepartmentsByExDepIds(token string) {
 
 	// 调用 Wps 接口
 	res, err := wpsClient.PostBatchDepartmentsByExDepIds(ctx, token, wps.PostBatchDepartmentsByExDepIdsRequest{
-		ExDeptIDs: []string{"1005824623", "1006047132"},
+		ExDeptIDs: []string{"1002216804"},
 	})
 
 	fmt.Printf("CheckPostBatchDepartmentsByExDepIds res: %+v, err:%+v\n", res, err)

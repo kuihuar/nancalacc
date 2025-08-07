@@ -83,7 +83,7 @@ func (ws *wps) BatchPostDepartments(ctx context.Context, accessToken string, inp
 
 func (ws *wps) PostBatchDepartmentsByExDepIds(ctx context.Context, accessToken string, input PostBatchDepartmentsByExDepIdsRequest) (*PostBatchDepartmentsByExDepIdsResponse, error) {
 	log := ws.log.WithContext(ctx)
-	log.Infof("PostBatchUsersByExDepIds req %v", input)
+	log.Infof("PostBatchDepartmentsByExDepIds req %v", input)
 	var resp *PostBatchDepartmentsByExDepIdsResponse
 
 	ak := ws.serviceConf.Auth.App.ClientId

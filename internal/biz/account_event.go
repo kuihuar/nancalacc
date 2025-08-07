@@ -2,6 +2,7 @@ package biz
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"nancalacc/internal/auth"
@@ -132,59 +133,54 @@ func (uc *AccounterIncreUsecase) OrgDeptRemove(ctx context.Context, event *clien
 		log.Errorf("OrgDeptRemove.PostBatchDepartmentsByExDepIds err: %v", err)
 		return err
 	}
+	var depts []*dingtalk.DingtalkDept
 
-	// 直接删除
-
-	var deleteDeptIds []string
-	if depInfos.Data.Items != nil {
-		for _, depInfo := range depInfos.Data.Items {
-			deleteDeptIds = append(deleteDeptIds, depInfo.ID)
+	for _, depInfo := range depInfos.Data.Items {
+		parentID, err := strconv.ParseInt(depInfo.ParentID, 10, 64)
+		if err != nil {
+			return err
 		}
+		id, err := strconv.ParseInt(depInfo.ID, 10, 64)
+		if err != nil {
+			return err
+		}
+		dingtalkID, err := strconv.ParseInt(depInfo.ExDeptID, 10, 64)
+		if err != nil {
+			return err
+		}
+		detp := &dingtalk.DingtalkDept{
+			DeptID:   id,
+			ParentID: parentID,
+			Order:    int64(depInfo.Order),
+			Name:     depInfo.Name,
+		}
+		detp1 := &dingtalk.DingtalkDept{
+			DeptID:   dingtalkID,
+			ParentID: parentID,
+			Order:    int64(depInfo.Order),
+			Name:     depInfo.Name,
+		}
+		depts = append(depts, detp, detp1)
+
 	}
-	// {"code":40100001,"msg":"APP_CERTIFICATE_SCOPE_NOT_FOUND","debug":{"detail":"companyId:,appId:com.kingsoft.wpsyun, scope: [app:kso.contact.readwrite user:kso.contact.readwrite] not found in certificate"}
-	res, err := uc.wps.PostBatchDeleteDept(ctx, token, wps.PostBatchDeleteDeptRequest{
-		DeptIDs: deleteDeptIds,
+
+	err = uc.repo.SaveIncrementDepartments(ctx, nil, nil, depts)
+	if err != nil {
+		log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
+		return err
+	}
+
+	res, err := uc.wpsSync.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
+		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
 	})
-	uc.log.Infof("OrgDeptRemove.PostBatchDeleteDept res: %v, err: %v", res, err)
 	if err != nil {
 		return err
 	}
+	if res.Code != "200" {
+		log.Errorf("code %v, not '200'", res.Code)
+		return fmt.Errorf("code %s not 200", res.Code)
+	}
 	return nil
-
-	// 3. 查询部门ID
-	// depInfoMap := make(map[string]*wps.WpsDepartmentItem)
-	// for _, depInfo := range depInfos.Data.Items {
-	// 	depInfoMap[depInfo.ID] = &depInfo
-	// }
-
-	// depts := make([]*dingtalk.DingtalkDept, len(depIds))
-	// for i, depId := range depIds {
-	// 	depts[i] = &dingtalk.DingtalkDept{
-	// 		DeptID: depId,
-	// 	}
-	// }
-	// for i, dep := range depts {
-	// 	if _, ok := depInfoMap[strconv.FormatInt(dep.DeptID, 10)]; ok {
-	// 		depts[i].ParentID = dep.ParentID
-	// 	}
-	// }
-	// // 3. 存入DB
-	// err = uc.repo.SaveIncrementDepartments(ctx, nil, depts)
-	// if err != nil {
-	// 	return err
-	// }
-	// // 4. 执行同步
-	// res, err := uc.wpsSync.PostEcisaccountsyncIncrement(ctx, token, &wps.EcisaccountsyncIncrementRequest{
-	// 	ThirdCompanyId: uc.bizConf.ThirdCompanyId,
-	// })
-	// if err != nil {
-	// 	return err
-	// }
-	// if res.Code != "200" {
-	// 	log.Errorf("code %v, not '200'", res.Code)
-	// 	return fmt.Errorf("code %s not 200", res.Code)
-	// }
-	// return nil
 }
 
 // OrgDeptModify 部门修改
@@ -464,11 +460,11 @@ func (uc *AccounterIncreUsecase) UserModifyOrg(ctx context.Context, event *clien
 	if err != nil {
 		return err
 	}
+	log.Infof("UserModifyOrg event user to deptuser: %v", user)
 	err = uc.repo.SaveIncrementUsers(ctx, nil, nil, []*dingtalk.DingtalkDeptUser{user})
 	if err != nil {
 		return err
 	}
-	log.Infof("UserModifyOrg user: %v", user)
 
 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
 	if err != nil {
@@ -590,71 +586,25 @@ func (uc *AccounterIncreUsecase) getUseInfoFromDingTalkEvent(event *clientV2.Gen
 	if event.Data == nil {
 		return nil, errors.New("getUseInfoFromDingTalkEvent event.Data is nil")
 	}
-	datamap := event.Data
+	data := event.Data
 
-	diffInfo, exists := datamap["diffInfo"]
-
-	if !exists {
-		uc.log.Errorf("getUseInfoFromDingTalkEvent not diffInfo: %v, exists: %v", diffInfo, exists)
-		return nil, errors.New("getUseInfoFromDingTalkEvent not userId")
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return nil, fmt.Errorf("marshal error: %v", err)
 	}
 
-	diffInfoMap, ok := diffInfo.(map[string]interface{})
-
-	if !ok {
-		uc.log.Errorf("diffInfo not map[string]interface{}: %v, ok: %v", diffInfo, ok)
-		return nil, errors.New("diffInfo not map[string]interface{}")
+	var modifyInfo dingtalk.UserModifyOrgEventData
+	if err := json.Unmarshal(jsonData, &modifyInfo); err != nil {
+		return nil, fmt.Errorf("unmarshal error: %v", err)
 	}
 
-	userId, exists := diffInfoMap["userid"]
-
-	if !exists {
-		uc.log.Errorf("getUseInfoFromDingTalkEvent not userId: %v, exists: %v", userId, exists)
-		return nil, errors.New("getUseInfoFromDingTalkEvent not userId")
-	}
-
-	userCurr, exists := diffInfoMap["curr"]
-
-	if !exists {
-		uc.log.Errorf("getUseInfoFromDingTalkEvent not userCurr: %v, exists: %v", userCurr, exists)
-		return nil, errors.New("getUseInfoFromDingTalkEvent not userCurr")
-	}
-
-	// ManagerUserid string `json:"managerUserid"`
-	// HiredDate     string `json:"hiredDate"`
-	// Name          string `json:"name"`
-	// Email         string `json:"email"`
-	userCurrMap, ok := userCurr.(map[string]interface{})
-
-	if !ok {
-		uc.log.Errorf("userCurr not map[string]interface{}: %v, ok: %v", userCurr, ok)
-		return nil, errors.New("userCurr not map[string]interface{}")
-	}
-
-	managerUserid, ok := userCurrMap["managerUserid"]
-
-	if !ok {
-		uc.log.Errorf("userCurr not managerUserid: %v, ok: %v", managerUserid, ok)
-		return nil, errors.New("userCurr not managerUserid")
-	}
-	name, ok := userCurrMap["name"]
-
-	if !ok {
-		uc.log.Errorf("userCurr not name: %v, ok: %v", name, ok)
-		return nil, errors.New("userCurr not name")
-	}
-	email, ok := userCurrMap["email"]
-
-	if !ok {
-		uc.log.Errorf("userCurr not email: %v, ok: %v", email, ok)
-		return nil, errors.New("userCurr not email")
-	}
-
+	uc.log.Infof("modifyInfo: %v", modifyInfo)
 	userInfo := &dingtalk.DingtalkDeptUser{
-		Userid: userId.(string),
-		// ManagerUserid: managerUserid.(string),
-		Name:  name.(string),
-		Email: email.(string),
+		Userid:    modifyInfo.DiffInfo.Userid,
+		Name:      modifyInfo.DiffInfo.Curr.Name,
+		Email:     modifyInfo.DiffInfo.Curr.Email,
+		WorkPlace: modifyInfo.DiffInfo.Curr.WorkPlace,
+		JobNumber: modifyInfo.DiffInfo.Curr.JobNumber,
 	}
 	return userInfo, nil
 }
