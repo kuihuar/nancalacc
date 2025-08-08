@@ -314,7 +314,7 @@ func (uc *AccounterIncreUsecase) UserAddOrg(ctx context.Context, event *clientV2
 
 // UserLeaveOrg 用户退出部门
 // 1. 减用户
-// 2. 减关系
+// 2. 减关系 //未自测
 func (uc *AccounterIncreUsecase) UserLeaveOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
 	log := uc.log.WithContext(ctx)
@@ -328,53 +328,26 @@ func (uc *AccounterIncreUsecase) UserLeaveOrg(ctx context.Context, event *client
 		return err
 	}
 
-	dingTalkAccessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-	log.Infof("UserLeaveOrg.GetAccessToken accessToken: %v,userIds:%v err: %v", dingTalkAccessToken, userIds, err)
-	if err != nil {
-		return err
-	}
-	uc.log.WithContext(ctx).Infof("UserAddOrg.GetUserDetail userIds: %v", userIds)
-
 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
 	if err != nil {
 		return err
 	}
 
-	// 这里找不到
-	var users []*dingtalk.DingtalkDeptUser
-	// for _, userid := range userIds {
-	// 唯一的接口查不到用户的组织ID
-	wpsUserInfo, err := uc.wps.PostBatchUsersByExDepIds(ctx, appAccessToken.AccessToken, wps.PostBatchUsersByExDepIdsRequest{
-		ExUserIDs: userIds,
-		Status:    []string{wps.UserStatusActive, wps.UserStatusNoActive, wps.UserStatusDisabled},
-	})
+	wpsUsers, err := uc.FindWpsUser(ctx, userIds)
+
 	if err != nil {
 		return err
 	}
-	if len(wpsUserInfo.Data.Items) == 0 {
-		log.Warnf("wpsUserInfo.Data.Items is empty, userIds: %v", userIds)
-		return fmt.Errorf("wpsUserInfo.Data.Items is empty")
-	}
 
-	for _, item := range wpsUserInfo.Data.Items {
-		user := &dingtalk.DingtalkDeptUser{
-			Userid: item.ExUserId,
-			// 退出部门时，部门ID为空,估计出错
-			DeptIDList: []int64{},
-			Name:       item.UserName,
-			Avatar:     item.Avatar,
-			Email:      item.Email,
-			Mobile:     item.Phone,
-		}
-		users = append(users, user)
+	if len(wpsUsers) == 0 {
+		log.Warnf("wpsUsers is empty, userIds: %v", userIds)
+		return fmt.Errorf("wpsUsers is empty")
 	}
-
-	// 下午开始干这个
-	err = uc.repo.SaveIncrementUsers(ctx, nil, users, nil)
+	err = uc.repo.SaveIncrementUsers(ctx, nil, wpsUsers, nil)
 	if err != nil {
 		return err
 	}
-	relations := generateUserDeptRelations(users)
+	relations := generateUserDeptRelations(wpsUsers)
 
 	err = uc.repo.SaveIncrementDepartmentUserRelations(ctx, nil, relations, nil)
 
