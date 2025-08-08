@@ -59,8 +59,11 @@ func (k *KsoSign) getKso1Signature(secretKey, method, uri, ksoDate, contentType 
 }
 
 func (k *KsoSign) KSO1Sign(method, signPath, contentType, ksoDate string, body []byte) (*Out, error) {
+
+	fmt.Printf("[KSO1Sign] method: %s, signPath: %s, contentType: %s, ksoDate: %s, body: %s\n", method, signPath, contentType, ksoDate, string(body))
 	ksoSignature := k.getKso1Signature(k.secretKey, method, signPath, ksoDate, contentType, body)
 	authorization := fmt.Sprintf("%s %s:%s", "KSO-1", k.accessKey, ksoSignature)
+	fmt.Printf("[KSO1Sign authorization]: %s\n", authorization)
 	return &Out{
 		Date:          ksoDate,
 		Authorization: authorization,

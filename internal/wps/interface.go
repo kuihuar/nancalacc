@@ -14,7 +14,8 @@ type Wps interface {
 
 	// 获取根部门(4)
 	GetDepartmentRoot(ctx context.Context, accessToken string, req GetDepartmentRootRequest) (GetDepartmentRootResponse, error)
-	//GetDepartmentChildrenList(ctx context.Context, accessToken string, req GetDepartmentChildrenListRequest) (GetDepartmentChildrenListResponse, error)
+	GetDeptChildren(ctx context.Context, accessToken string, req GetDeptChildrenRequest) (*GetDeptChildrenResponse, error)
+	GetCompAllUsers(ctx context.Context, accessToken string, req GetCompAllUsersRequest) (*GetCompAllUsersResponse, error)
 	// user..
 	BatchPostUsers(ctx context.Context, accessToken string, input BatchPostUsersRequest) (BatchPostUsersResponse, error)
 	PostBatchUsersByExDepIds(ctx context.Context, accessToken string, input PostBatchUsersByExDepIdsRequest) (*PostBatchUsersByExDepIdsResponse, error)

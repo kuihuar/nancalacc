@@ -81,14 +81,35 @@ func main() {
 	// CheckGetDingtalkUserDetail()
 	// "29290326581145992"
 	// 03301410433273270
-	users, err := FindWpsUser(context.Background(), []string{"29290326581145992"})
+	//users, err := FindWpsUser(context.Background(), []string{"29290326581145992"})
 
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// for _, u := range users {
+	// 	fmt.Printf("FindWpsUser user: %v\n", *u)
+	// }
+	CheckGetCompAllUsers()
+}
+
+func CheckGetCompAllUsers() {
+	appAccessToken, err := auth.NewAppAuthenticator(bc.Service).GetAccessToken(context.Background())
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("FindWpsUser users: %v\n", users)
-}
+	wpsClient := wps.NewWps(bc.Service, log.GetLogger())
 
+	users, err := wpsClient.GetCompAllUsers(context.Background(), appAccessToken.AccessToken, wps.GetCompAllUsersRequest{
+		Recursive: true,
+		PageSize:  50,
+		WithTotal: true,
+		Status:    []string{"active", "notactive", "disabled"},
+	})
+	for _, u := range users.Data.Items {
+		fmt.Printf("FindWpsUser user: %v\n", u)
+	}
+
+}
 func FindWpsUser(ctx context.Context, userids []string) ([]*dingtalk.DingtalkDeptUser, error) {
 	fmt.Printf("FindWpsUser userids: %v\n", userids)
 	var users []*dingtalk.DingtalkDeptUser

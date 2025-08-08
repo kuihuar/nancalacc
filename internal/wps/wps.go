@@ -11,6 +11,8 @@ import (
 	//httpwps "nancalacc/pkg/httputil/wps"
 
 	"github.com/go-kratos/kratos/v2/log"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type wps struct {
@@ -278,9 +280,9 @@ func (ws *wps) GetDepartmentRoot(ctx context.Context, accessToken string, input 
 //		var resp GetDepartmentChildrenListResponse
 //		return resp, nil
 //	}
-func (ws *wps) GetUserByUserId(ctx context.Context, accessToken string, req GetUserByUserIdRequest) (GetUserByUserIdResponse, error) {
+func (ws *wps) GetUserByUserId(ctx context.Context, accessToken string, input GetUserByUserIdRequest) (GetUserByUserIdResponse, error) {
 	log := ws.log.WithContext(ctx)
-	log.Infof("GetUserByUserId req %v", req)
+	log.Infof("GetUserByUserId req %v", input)
 
 	var resp GetUserByUserIdResponse
 
@@ -288,9 +290,9 @@ func (ws *wps) GetUserByUserId(ctx context.Context, accessToken string, req GetU
 	sk := ws.serviceConf.Auth.App.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
-	path := fmt.Sprintf("%s/%s", GET_USER_BY_USERID, req.UserID)
-	log.Infof("GetUserByUserId path: %s\n", path)
-	bs, err := wpsReq.GET(context.Background(), path, accessToken, "")
+	uri := strings.Replace(GET_USER_DEPT_BY_USERID, "{user_id}", input.UserID, 1)
+
+	bs, err := wpsReq.GET(context.Background(), uri, accessToken, "")
 
 	log.Infof("GetUserByUserId: %s, err: %+v\n", string(bs), err)
 	if err != nil {
@@ -391,35 +393,154 @@ func (ws *wps) CacheDel(ctx context.Context, accessToken, key string) error {
 }
 
 func (ws *wps) PostCreateUser(ctx context.Context, accessToken string, input PostCreateUserRequest) (*PostCreateUserResponse, error) {
-	var resp PostCreateUserResponse
-	return &resp, nil
+	ws.log.WithContext(ctx).Infof("PostCreateUser req %v", input)
+	return nil, status.Error(codes.Unimplemented, "PostCreateUser")
 }
 
 func (ws *wps) PostCreateDept(ctx context.Context, accessToken string, input PostCreateDeptRequest) (*PostCreateDeptResponse, error) {
-	var resp PostCreateDeptResponse
-	return &resp, nil
+	ws.log.WithContext(ctx).Infof("PostCreateUser req %v", input)
+	return nil, status.Error(codes.Unimplemented, "PostCreateDept")
 }
-
 func (ws *wps) PostUpdateDept(ctx context.Context, accessToken string, input PostUpdateDeptRequest) (*PostUpdateDeptResponse, error) {
-	var resp PostUpdateDeptResponse
-	return &resp, nil
+	ws.log.WithContext(ctx).Infof("PostUpdateDept req %v", input)
+	return nil, status.Error(codes.Unimplemented, "PostUpdateDept")
 }
 func (ws *wps) PostUpdateUser(ctx context.Context, accessToken string, input PostUpdateUserRequest) (*PostUpdateUserResponse, error) {
-	var resp PostUpdateUserResponse
-	return &resp, nil
+	ws.log.WithContext(ctx).Infof("PostUpdateUser req %v", input)
+	return nil, status.Error(codes.Unimplemented, "PostUpdateUser")
 }
 
 func (ws *wps) PostBatchUserByPage(ctx context.Context, accessToken string, input PostBatchUserByPageRequest) (*PostBatchUserByPageResponse, error) {
-	var resp PostBatchUserByPageResponse
-	return &resp, nil
+	ws.log.WithContext(ctx).Infof("PostCreateUser req %v", input)
+	return nil, status.Error(codes.Unimplemented, "PostBatchUserByPage")
 }
 
 func (ws *wps) GetDeptByPage(ctx context.Context, accessToken string, input GetDeptByPageRequest) (*GetDeptByPageResponse, error) {
-	var resp GetDeptByPageResponse
-	return &resp, nil
+	ws.log.WithContext(ctx).Infof("GetDeptByPage req %v", input)
+	return nil, status.Error(codes.Unimplemented, "GetDeptByPage")
 }
 
 func (ws *wps) GetUserDeptsByUserId(ctx context.Context, accessToken string, input GetUserDeptsByUserIdRequest) (*GetUserDeptsByUserIdResponse, error) {
+	log := ws.log.WithContext(ctx)
+	log.Infof("GetUserDeptsByUserId req %v", input)
+
 	var resp GetUserDeptsByUserIdResponse
+
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
+
+	uri := strings.Replace(GET_USER_DEPT_BY_USERID, "{user_id}", input.UserID, 1)
+	bs, err := wpsReq.GET(context.Background(), uri, accessToken, "")
+
+	log.Infof("GetUserByUserId: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return nil, err
+	}
+	//fmt.Printf("resp: %+v\n", resp)
+	//fmt.Println()
+	if resp.Code != 0 {
+		return nil, ErrCodeNot0
+	}
+
+	return &resp, nil
+}
+
+func (ws *wps) GetDeptChildren(ctx context.Context, accessToken string, input GetDeptChildrenRequest) (*GetDeptChildrenResponse, error) {
+	ws.log.WithContext(ctx).Infof("GetDeptChildren req %v", input)
+
+	log := ws.log.WithContext(ctx)
+	log.Infof("GetUserDeptsByUserId req %v", input)
+
+	var resp GetDeptChildrenResponse
+
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
+
+	uri := strings.Replace(GET_DEPT_CHILDREN, "{dept_id}", input.DeptID, 1)
+
+	uri += fmt.Sprintf(
+		"recursive=%t&page_size=%d&with_total=%t",
+		input.Recursive,
+		input.PageSize,
+		// input.PageToken,
+		input.WithTotal,
+	)
+	if len(input.PageToken) > 0 {
+		uri += fmt.Sprintf("&page_token=%s", input.PageToken)
+	}
+
+	bs, err := wpsReq.GET(context.Background(), uri, accessToken, "")
+
+	log.Infof("GetUserByUserId: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return nil, err
+	}
+	//fmt.Printf("resp: %+v\n", resp)
+	//fmt.Println()
+	if resp.Code != 0 {
+		return nil, ErrCodeNot0
+	}
+
+	return &resp, nil
+
+}
+
+func (ws *wps) GetCompAllUsers(ctx context.Context, accessToken string, input GetCompAllUsersRequest) (*GetCompAllUsersResponse, error) {
+	ws.log.WithContext(ctx).Infof("GetCompAllUsers req %v", input)
+
+	log := ws.log.WithContext(ctx)
+	log.Infof("GetCompAllUsers req %v", input)
+
+	var resp GetCompAllUsersResponse
+
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
+
+	uri := fmt.Sprintf(
+		"%s?recursive=%t&page_size=%d&with_total=%t",
+		GET_ALL_USER_PARH,
+		input.Recursive,
+		input.PageSize,
+		input.WithTotal,
+	)
+	if len(input.Status) > 0 {
+		for _, status := range input.Status {
+			uri += fmt.Sprintf("&status=%s", status)
+		}
+	}
+	if len(input.PageToken) > 0 {
+		uri += fmt.Sprintf("&page_token=%s", input.PageToken)
+	}
+	log.Infof("GetCompAllUsers req: %s\n", uri)
+	bs, err := wpsReq.GET(context.Background(), uri, accessToken, "")
+
+	log.Infof("GetCompAllUsers res: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return nil, err
+	}
+	//fmt.Printf("resp: %+v\n", resp)
+	//fmt.Println()
+	if resp.Code != 0 {
+		return nil, ErrCodeNot0
+	}
+
 	return &resp, nil
 }

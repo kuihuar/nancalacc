@@ -7,7 +7,9 @@ const (
 	ECISACCOUNTSYNC_PATH_FULL      = "/v7/ecisaccountsync/full/sync"
 	ECISACCOUNTSYNC_PATH_INCREMENT = "/v7/ecisaccountsync/increment/sync"
 
-	GET_DEPARTMENT_ROOT          = "/v7/depts/root"
+	GET_DEPARTMENT_ROOT = "/v7/depts/root"
+	GET_DEPT_CHILDREN   = "/v7/depts/{dept_id}/children"
+
 	BATCH_POST_USERS_PATH        = "/v7/users/batch_read"
 	BATCH_POST_DEPTS_PATH        = "/v7/depts/batch_read"
 	POST_DEPTS_BY_EXDEPTIDS_PATH = "/v7/depts/by_ex_dept_ids"
@@ -17,7 +19,10 @@ const (
 	POST_DELETE_USERID_FROM_DEPTID_PATH = "/v7/depts/{dept_id}/members/{user_id}/delete"
 	POST_ADD_USERID_TO_DEPTID_PATH      = "/v7/depts/{dept_id}/members/{user_id}/create"
 
-	GET_USER_BY_USERID = "/v7/users"
+	GET_USER_BY_USERID = "/v7/users/{user_id}"
+	GET_ALL_USER_PARH  = "/v7/users"
+
+	GET_USER_DEPT_BY_USERID = "/v7/users/{user_id}/depts"
 
 	// POST_CACHE_SET = "http://encs-pri-cams-engine/i/cams/sdk/api/v1/cache/set"
 	// POST_CACHE_GET = "http://encs-pri-cams-engine/i/cams/sdk/api/v1/cache/get"

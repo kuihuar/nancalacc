@@ -191,6 +191,10 @@ func (r *WPSRequest) Do(ctx context.Context) ([]byte, error) {
 	}
 
 	signPath := strings.TrimPrefix(req.URL.Path, openApiPathPrefix)
+	if len(req.URL.RawQuery) > 0 {
+		signPath += "?" + req.URL.RawQuery
+	}
+
 	sign, err := signer.KSO1Sign(r.method, signPath, r.contentType, r.ksoDate, r.body)
 
 	if err != nil {
