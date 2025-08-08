@@ -31,6 +31,16 @@ func (uc *AccounterUsecase) StartSync(ctx context.Context, taskId, filename stri
 	log.Infof("children: %v", children)
 
 	// 查询企业下所有用户
+	alluser, err := uc.wps.GetCompAllUsers(ctx, appAccessToken.AccessToken, wps.GetCompAllUsersRequest{
+		Recursive: true,
+		PageSize:  50,
+		WithTotal: true,
+		Status:    []string{"active", "notactive", "disabled"},
+	})
+	if err != nil {
+		return err
+	}
+	log.Infof("alluser: %v", alluser)
 
 	// 1. 查询全量部门
 	// uc.wps.PostBatchDeptByPage(ctx, taskId, wps.PostBatchDeptByPageRequest{

@@ -463,15 +463,17 @@ func (ws *wps) GetDeptChildren(ctx context.Context, accessToken string, input Ge
 	sk := ws.serviceConf.Auth.App.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
-	uri := strings.Replace(GET_DEPT_CHILDREN, "{dept_id}", input.DeptID, 1)
+	path := strings.Replace(GET_DEPT_CHILDREN, "{dept_id}", input.DeptID, 1)
 
-	uri += fmt.Sprintf(
-		"recursive=%t&page_size=%d&with_total=%t",
+	uri := fmt.Sprintf(
+		"%s?recursive=%t&page_size=%d&with_total=%t",
+		path,
 		input.Recursive,
 		input.PageSize,
 		// input.PageToken,
 		input.WithTotal,
 	)
+
 	if len(input.PageToken) > 0 {
 		uri += fmt.Sprintf("&page_token=%s", input.PageToken)
 	}

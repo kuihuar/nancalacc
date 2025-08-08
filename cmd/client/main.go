@@ -89,9 +89,36 @@ func main() {
 	// for _, u := range users {
 	// 	fmt.Printf("FindWpsUser user: %v\n", *u)
 	// }
-	CheckGetCompAllUsers()
+	//CheckGetCompAllUsers()
+	CheckGetCompAllDepts()
 }
 
+func CheckGetCompAllDepts() {
+	appAccessToken, err := auth.NewAppAuthenticator(bc.Service).GetAccessToken(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	wpsClient := wps.NewWps(bc.Service, log.GetLogger())
+	rootDept, err := wpsClient.GetDepartmentRoot(context.Background(), appAccessToken.AccessToken, wps.GetDepartmentRootRequest{})
+	if err != nil {
+		panic(err)
+	}
+	log.Infof("rootDept: %v", rootDept)
+
+	allDepts, err := wpsClient.GetDeptChildren(context.Background(), appAccessToken.AccessToken, wps.GetDeptChildrenRequest{
+		DeptID:    rootDept.Data.ID,
+		Recursive: true,
+		PageSize:  50,
+		WithTotal: true,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	for _, d := range allDepts.Data.Items {
+		fmt.Printf("CheckGetCompAllDepts dept: %v\n", d)
+	}
+}
 func CheckGetCompAllUsers() {
 	appAccessToken, err := auth.NewAppAuthenticator(bc.Service).GetAccessToken(context.Background())
 	if err != nil {
