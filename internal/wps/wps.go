@@ -418,3 +418,8 @@ func (ws *wps) GetDeptByPage(ctx context.Context, accessToken string, input GetD
 	var resp GetDeptByPageResponse
 	return &resp, nil
 }
+
+func (ws *wps) GetUserDeptsByUserId(ctx context.Context, accessToken string, input GetUserDeptsByUserIdRequest) (*GetUserDeptsByUserIdResponse, error) {
+	var resp GetUserDeptsByUserIdResponse
+	return &resp, nil
+}

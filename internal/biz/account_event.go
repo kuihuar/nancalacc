@@ -396,135 +396,152 @@ func (uc *AccounterIncreUsecase) UserLeaveOrg(ctx context.Context, event *client
 	}
 	return nil
 }
+func (uc *AccounterIncreUsecase) FindWpsUser(ctx context.Context, userids []string) ([]*dingtalk.DingtalkDeptUser, error) {
+	uc.log.WithContext(ctx).Infof("FindWpsUser userids: %v", userids)
+	var users []*dingtalk.DingtalkDeptUser
+	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, userId := range userids {
+		//查询原来的部门，看看能不能删
+		wpsUserInfo, err := uc.wps.PostBatchUsersByExDepIds(ctx, appAccessToken.AccessToken, wps.PostBatchUsersByExDepIdsRequest{
+			ExUserIDs: []string{userId},
+			Status:    []string{wps.UserStatusActive, wps.UserStatusNoActive, wps.UserStatusDisabled},
+		})
+		if err != nil {
+			return nil, err
+		}
+		if len(wpsUserInfo.Data.Items) >= 0 {
+			wpsUserid := wpsUserInfo.Data.Items[0].ID
 
-// func (uc *AccounterIncreUsecase) UserLeaveOrgBak(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
+			wpsDeptInfo, err := uc.wps.GetUserDeptsByUserId(ctx, appAccessToken.AccessToken, wps.GetUserDeptsByUserIdRequest{
+				UserID: wpsUserid,
+			})
+			if err != nil {
+				return nil, err
+			}
+			if len(wpsDeptInfo.Data.Items) > 0 {
+				for _, item := range wpsDeptInfo.Data.Items {
 
-// 	log := uc.log.WithContext(ctx)
-// 	log.Infof("UserLeaveOrg data: %v", event.Data)
-// 	if event.Data == nil {
-// 		return nil
-// 	}
+					//if _, ok := relationsMap[wpsUserid+item.ID]; !ok {
+					user := &dingtalk.DingtalkDeptUser{
+						Userid: userId,
+					}
+					deptId, err := strconv.ParseInt(item.ExDeptID, 10, 64)
+					if err != nil {
+						return nil, err
+					}
+					user.DeptIDList = append(user.DeptIDList, deptId)
+					users = append(users, user)
+					//}
+				}
+			}
 
-// 	userIds, err := uc.getUseridsFromDingTalkEvent(event)
-// 	if err != nil {
-// 		return err
-// 	}
+		}
+	}
+	return users, nil
+}
+func (uc *AccounterIncreUsecase) FindDingTalkUser(ctx context.Context, userids []string) ([]*dingtalk.DingtalkDeptUser, error) {
+	uc.log.WithContext(ctx).Infof("FindDingTalkUser userids: %v", userids)
+	accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
+	if err != nil {
+		return nil, err
+	}
+	users, err := uc.dingTalkRepo.FetchUserDetail(ctx, accessToken, userids)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
 
-// 	dingTalkAccessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-// 	log.Infof("UserLeaveOrg.GetAccessToken accessToken: %v,userIds:%v err: %v", dingTalkAccessToken, userIds, err)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	uc.log.WithContext(ctx).Infof("UserAddOrg.GetUserDetail userIds: %v", userIds)
-// 	users, err := uc.dingTalkRepo.FetchUserDetail(ctx, dingTalkAccessToken, userIds)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	for _, user := range users {
-// 		userid := user.Userid
-// 		var deptIdstrs []string
-// 		for _, deptid := range user.DeptIDList {
-// 			deptIdstrs = append(deptIdstrs, strconv.FormatInt(deptid, 10))
-// 		}
-// 		wpsUserInfo, err := uc.wps.PostBatchUsersByExDepIds(ctx, appAccessToken.AccessToken, wps.PostBatchUsersByExDepIdsRequest{
-// 			ExUserIDs: []string{userid},
-// 			Status:    []string{wps.UserStatusActive, wps.UserStatusNoActive, wps.UserStatusDisabled},
-// 		})
-// 		if err != nil {
-// 			return err
-// 		}
-// 		if len(wpsUserInfo.Data.Items) == 0 {
-// 			log.Warnf("wpsUserInfo.Data.Items is empty, userid: %v", userid)
-// 			continue
-// 		}
-// 		wpsUserid := wpsUserInfo.Data.Items[0].ID
-// 		wpsDeptInfo, err := uc.wps.PostBatchDepartmentsByExDepIds(ctx, appAccessToken.AccessToken, wps.PostBatchDepartmentsByExDepIdsRequest{
-// 			ExDeptIDs: deptIdstrs,
-// 		})
-// 		if err != nil {
-// 			return err
-// 		}
-// 		if len(wpsDeptInfo.Data.Items) == 0 {
-// 			log.Warnf("wpsDeptInfo.Data.Items is empty, deptIdstrs: %v", deptIdstrs)
-// 			continue
-// 		}
-// 		for _, dept := range wpsDeptInfo.Data.Items {
-// 			wpsDetpId := dept.ID
-// 			res, err := uc.wps.PostRomoveUserIdFromDeptId(ctx, appAccessToken.AccessToken, wps.PostRomoveUserIdFromDeptIdRequest{
-// 				UserID: wpsUserid,
-// 				DeptID: wpsDetpId,
-// 			})
-// 			if err != nil {
-// 				return err
-// 			}
-// 			if res.Code != 0 {
-// 				log.Errorf("code %v, not 0", res.Code)
-// 				return fmt.Errorf("code %d not 0", res.Code)
-// 			}
-// 		}
-// 	}
-
-// 	return nil
-// }
-
-// UserModifyOrg 用户信息变更（部门变更， 版本没法模拟，暂时未实现）
+// UserModifyOrg 用户信息变更（有部门变正在实现）
 func (uc *AccounterIncreUsecase) UserModifyOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
 	log := uc.log.WithContext(ctx)
 	log.Infof("UserModifyOrg data: %v", event.Data)
-
-	//普通用户修改，如果单纯部门变更，users为空
-	users, err := uc.getUseInfoFromDingTalkEvent(event)
+	userIds, err := uc.getUseridsFromDingTalkEvent(event)
 	if err != nil {
 		return err
 	}
-	// 单纯修改用户，没有关系
-	if len(users) > 0 {
-		log.Infof("UserModifyOrg event user to deptuser: %v", users)
-		err = uc.repo.SaveIncrementUsers(ctx, nil, nil, users)
-		if err != nil {
-			return err
+	wspusersMap := make(map[string]*dingtalk.DingtalkDeptUser)
+	wspusers, err := uc.FindWpsUser(ctx, userIds)
+	if err != nil {
+		return err
+	}
+	for _, user := range wspusers {
+		wspusersMap[user.Userid] = user
+	}
+	dingtalkUsers, err := uc.FindDingTalkUser(ctx, userIds)
+	if err != nil {
+		return err
+	}
+
+	var baseModfiyuUser []*dingtalk.DingtalkDeptUser
+	var delRelation []*dingtalk.DingtalkDeptUserRelation
+	var addRelation []*dingtalk.DingtalkDeptUserRelation
+
+	for _, user := range dingtalkUsers {
+		var delDepts []int64
+		var addDepts []int64
+
+		deptidsMap := make(map[int64]bool)
+		for _, deptId := range user.DeptIDList {
+			deptidsMap[deptId] = true
 		}
-	} else {
-		userIds, err := uc.getUseridsFromDingTalkEvent(event)
-		if err != nil {
-			return err
+		if _, ok := wspusersMap[user.Userid]; ok {
+			wspUser := wspusersMap[user.Userid]
+			for _, deptId := range wspUser.DeptIDList {
+				if _, ok := deptidsMap[deptId]; ok {
+					uc.log.Infof("UserModifyOrg[只是基础信息变更] deptId: %v, user: %v", deptId, user)
+					baseModfiyuUser = append(baseModfiyuUser, user)
+					//只是基础信息变更
+					delete(deptidsMap, deptId)
+				} else {
+					//部门删除
+					uc.log.Infof("UserModifyOrg[部门关系删除] deptId: %v, user: %v", deptId, user)
+					//delDeptUser = append(delDeptUser, user)
+					delDepts = append(delDepts, deptId)
+				}
+			}
+
+		}
+		if len(deptidsMap) > 0 {
+			uc.log.Infof("UserModifyOrg[部门关系新增] deptidsMap: %v, user: %v", deptidsMap, user)
+			for deptId := range deptidsMap {
+				addDepts = append(addDepts, deptId)
+			}
+
 		}
 
-		accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-		log.Infof("UserAddOrg.GetAccessToken accessToken: %v,userIds:%v err: %v", accessToken, userIds, err)
-		if err != nil {
-			return err
-		}
-		uc.log.WithContext(ctx).Infof("UserAddOrg.GetUserDetail userIds: %v", userIds)
-		users, err := uc.dingTalkRepo.FetchUserDetail(ctx, accessToken, userIds)
-		if err != nil {
-			return err
-		}
+		if len(addDepts) > 0 {
+			user.DeptIDList = addDepts
+			addRelation = append(addRelation, generateUserDeptRelations([]*dingtalk.DingtalkDeptUser{user})...)
 
-		err = uc.repo.SaveIncrementUsers(ctx, nil, nil, users)
-		if err != nil {
-			return err
+		}
+		if len(delDepts) > 0 {
+			user.DeptIDList = delDepts
+			delRelation = append(delRelation, generateUserDeptRelations([]*dingtalk.DingtalkDeptUser{user})...)
 		}
 
-		relations := generateUserDeptRelations(users)
+	}
+	uc.log.Infof("UserModifyOrg[部门关系新增] addRelation: %v", addRelation)
+	uc.log.Infof("UserModifyOrg[部门关系删除] delRelation: %v", delRelation)
+	uc.log.Infof("UserModifyOrg[基础信息变更] baseModfiyuUser: %v", baseModfiyuUser)
 
-		err = uc.repo.SaveIncrementDepartmentUserRelations(ctx, nil, nil, relations)
-
-		if err != nil {
-			return err
-		}
+	err = uc.repo.SaveIncrementUsers(ctx, nil, nil, baseModfiyuUser)
+	if err != nil {
+		return err
+	}
+	err = uc.repo.SaveIncrementDepartmentUserRelations(ctx, addRelation, delRelation, nil)
+	if err != nil {
+		return err
 	}
 
 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
 	if err != nil {
 		return err
 	}
-
 	res, err := uc.wpsSync.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
 		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
 	})

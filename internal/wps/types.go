@@ -192,7 +192,7 @@ type WpsUserWithDept struct {
 	Status    string `json:"status"`
 	Depts     []struct {
 		AbsPath string `json:"abs_path"`
-		ID      string `json:"id"`
+		DeptID  string `json:"dept_id"`
 		Name    string `json:"name"`
 	} `json:"depts"`
 
@@ -440,4 +440,24 @@ type Department struct {
 	Order    int      `json:"order"`
 	ParentID string   `json:"parent_id"`
 	Source   string   `json:"source"` // Default: "inner"
+}
+
+type GetUserDeptsByUserIdRequest struct {
+	UserID string `json:"user_id"`
+}
+type GetUserDeptsByUserIdResponse struct {
+	Code   int    `json:"code"`
+	Detail string `json:"detail"`
+	Msg    string `json:"msg"`
+	Data   struct {
+		Items []struct {
+			AbsPath  string `json:"abs_path"`
+			Ctime    int64  `json:"ctime"`
+			ExDeptID string `json:"ex_dept_id"`
+			ID       string `json:"id"`
+			Name     string `json:"name"`
+			Order    int64  `json:"order"`
+			ParentID string `json:"parent_id"`
+		} `json:"items"`
+	} `json:"data"`
 }

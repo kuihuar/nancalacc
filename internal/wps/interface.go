@@ -19,6 +19,9 @@ type Wps interface {
 	BatchPostUsers(ctx context.Context, accessToken string, input BatchPostUsersRequest) (BatchPostUsersResponse, error)
 	PostBatchUsersByExDepIds(ctx context.Context, accessToken string, input PostBatchUsersByExDepIdsRequest) (*PostBatchUsersByExDepIdsResponse, error)
 
+	// 获取用户所在部门列表
+	GetUserDeptsByUserId(ctx context.Context, accessToken string, input GetUserDeptsByUserIdRequest) (*GetUserDeptsByUserIdResponse, error)
+
 	// dept...
 	BatchPostDepartments(ctx context.Context, accessToken string, req BatchPostDepartmentsRequest) (BatchPostDepartmentsResponse, error)
 	PostBatchDepartmentsByExDepIds(ctx context.Context, accessToken string, input PostBatchDepartmentsByExDepIdsRequest) (*PostBatchDepartmentsByExDepIdsResponse, error)
