@@ -369,6 +369,7 @@ func (uc *AccounterIncreUsecase) UserLeaveOrg(ctx context.Context, event *client
 		users = append(users, user)
 	}
 
+	// 下午开始干这个
 	err = uc.repo.SaveIncrementUsers(ctx, nil, users, nil)
 	if err != nil {
 		return err
@@ -412,7 +413,7 @@ func (uc *AccounterIncreUsecase) FindWpsUser(ctx context.Context, userids []stri
 		if err != nil {
 			return nil, err
 		}
-		if len(wpsUserInfo.Data.Items) >= 0 {
+		if len(wpsUserInfo.Data.Items) == 1 {
 			wpsUserid := wpsUserInfo.Data.Items[0].ID
 
 			wpsDeptInfo, err := uc.wps.GetUserDeptsByUserId(ctx, appAccessToken.AccessToken, wps.GetUserDeptsByUserIdRequest{
@@ -469,15 +470,26 @@ func (uc *AccounterIncreUsecase) UserModifyOrg(ctx context.Context, event *clien
 	if err != nil {
 		return err
 	}
-	for _, user := range wspusers {
-		wspusersMap[user.Userid] = user
+	if len(wspusers) > 0 {
+		for _, user := range wspusers {
+			wspusersMap[user.Userid] = user
+		}
 	}
+
 	dingtalkUsers, err := uc.FindDingTalkUser(ctx, userIds)
 	if err != nil {
 		return err
 	}
-
-	var baseModfiyuUser []*dingtalk.DingtalkDeptUser
+	log.Infof("UserModifyOrg ((userIds: %v", userIds)
+	log.Infof("UserModifyOrg ((wspusers.size: %v", len(wspusers))
+	log.Infof("UserModifyOrg ((dingtalkUsers.size: %v", len(dingtalkUsers))
+	for _, u := range wspusers {
+		log.Infof("UserModifyOrg ((wspusers: %v", *u)
+	}
+	for _, u := range dingtalkUsers {
+		log.Infof("UserModifyOrg ((dingtalkUser: %v", *u)
+	}
+	var modfiyUserBaseInfo []*dingtalk.DingtalkDeptUser
 	var delRelation []*dingtalk.DingtalkDeptUserRelation
 	var addRelation []*dingtalk.DingtalkDeptUserRelation
 
@@ -494,7 +506,7 @@ func (uc *AccounterIncreUsecase) UserModifyOrg(ctx context.Context, event *clien
 			for _, deptId := range wspUser.DeptIDList {
 				if _, ok := deptidsMap[deptId]; ok {
 					uc.log.Infof("UserModifyOrg[只是基础信息变更] deptId: %v, user: %v", deptId, user)
-					baseModfiyuUser = append(baseModfiyuUser, user)
+					modfiyUserBaseInfo = append(modfiyUserBaseInfo, user)
 					//只是基础信息变更
 					delete(deptidsMap, deptId)
 				} else {
@@ -527,9 +539,12 @@ func (uc *AccounterIncreUsecase) UserModifyOrg(ctx context.Context, event *clien
 	}
 	uc.log.Infof("UserModifyOrg[部门关系新增] addRelation: %v", addRelation)
 	uc.log.Infof("UserModifyOrg[部门关系删除] delRelation: %v", delRelation)
-	uc.log.Infof("UserModifyOrg[基础信息变更] baseModfiyuUser: %v", baseModfiyuUser)
-
-	err = uc.repo.SaveIncrementUsers(ctx, nil, nil, baseModfiyuUser)
+	uc.log.Infof("UserModifyOrg[基础信息变更] modfiyUserBaseInfo: %v", modfiyUserBaseInfo)
+	diffUserInfo, _ := uc.getUseInfoFromDingTalkEvent(event)
+	if len(diffUserInfo) > 0 {
+		modfiyUserBaseInfo = append(modfiyUserBaseInfo, diffUserInfo...)
+	}
+	err = uc.repo.SaveIncrementUsers(ctx, nil, nil, modfiyUserBaseInfo)
 	if err != nil {
 		return err
 	}

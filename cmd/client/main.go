@@ -10,6 +10,7 @@ import (
 	"nancalacc/internal/data"
 	"nancalacc/internal/dingtalk"
 	"nancalacc/internal/wps"
+	"strconv"
 	"time"
 
 	"github.com/go-kratos/kratos/v2/config"
@@ -60,11 +61,11 @@ func main() {
 
 	// fmt.Printf("token: %+v\n", token)
 
-	token := GetToken()
-	fmt.Println(token)
+	//token := GetToken()
+	//fmt.Println(token)
 	// token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTM2MTU2MTgsImNvbXBfaWQiOiIxIiwiY2xpZW50X2lkIjoiY29tLmFjYy5hc3luYyIsInRrX3R5cGUiOiJhcHAiLCJzY29wZSI6Imtzby5hY2NvdW50c3luYy5zeW5jLGtzby5jb250YWN0LnJlYWQsa3NvLmNvbnRhY3QucmVhZHdyaXRlIiwiY29tcGFueV9pZCI6MSwiY2xpZW50X3ByaW5jaXBhbF9pZCI6IjczIiwiaXNfd3BzMzY1Ijp0cnVlfQ.ZOkiwnZ6f1uW45_sq5uT_ZW3dmA6yCXuKetMaUI7mCw"
-
-	CheckBatchGetDepartment(token)
+	// 29290326581145992
+	//CheckBatchGetDepartment(token)
 	//CheckPostBatchUsersByExDepIds(token)
 	// CheckPostBatchDepartmentsByExDepIds(token)
 	//CheckGetUserByUserId(token)
@@ -78,8 +79,68 @@ func main() {
 	// 033014104332101118010 test
 	// CheckCallEcisaccountsync(token)
 	// CheckGetDingtalkUserDetail()
+	// "29290326581145992"
+	// 03301410433273270
+	users, err := FindWpsUser(context.Background(), []string{"29290326581145992"})
 
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("FindWpsUser users: %v\n", users)
 }
+
+func FindWpsUser(ctx context.Context, userids []string) ([]*dingtalk.DingtalkDeptUser, error) {
+	fmt.Printf("FindWpsUser userids: %v\n", userids)
+	var users []*dingtalk.DingtalkDeptUser
+
+	appAccessToken, err := auth.NewAppAuthenticator(bc.Service).GetAccessToken(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	wpsClient := wps.NewWps(bc.Service, log.GetLogger())
+
+	for _, userId := range userids {
+		wpsUserInfo, err := wpsClient.PostBatchUsersByExDepIds(ctx, appAccessToken.AccessToken, wps.PostBatchUsersByExDepIdsRequest{
+			ExUserIDs: []string{userId},
+			Status:    []string{wps.UserStatusActive, wps.UserStatusNoActive, wps.UserStatusDisabled},
+		})
+		fmt.Printf("FindWpsUser wpsUserInfo: %v, err: %v\n", wpsUserInfo, err)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(wpsUserInfo.Data.Items) == 1 {
+			fmt.Printf(">>>>>>>>>>>>>wpsUserInfo: %v\n", wpsUserInfo)
+			wpsUserid := wpsUserInfo.Data.Items[0].ID
+
+			wpsDeptInfo, err := wpsClient.GetUserDeptsByUserId(ctx, appAccessToken.AccessToken, wps.GetUserDeptsByUserIdRequest{
+				UserID: wpsUserid,
+			})
+			if err != nil {
+				return nil, err
+			}
+			if len(wpsDeptInfo.Data.Items) > 0 {
+				for _, item := range wpsDeptInfo.Data.Items {
+
+					//if _, ok := relationsMap[wpsUserid+item.ID]; !ok {
+					user := &dingtalk.DingtalkDeptUser{
+						Userid: userId,
+					}
+					deptId, err := strconv.ParseInt(item.ExDeptID, 10, 64)
+					if err != nil {
+						return nil, err
+					}
+					user.DeptIDList = append(user.DeptIDList, deptId)
+					users = append(users, user)
+					//}
+				}
+			}
+
+		}
+	}
+	return users, nil
+}
+
 func CheckGetDingtalkUserDetail() {
 	confService := bc.GetService()
 	dingtalkRepo := dingtalk.NewDingTalkRepo(confService.Auth.Dingtalk, log.GetLogger())

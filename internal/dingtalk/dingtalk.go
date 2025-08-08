@@ -210,18 +210,18 @@ func (r *dingTalkRepo) getDeptIdsConcurrent(ctx context.Context, token string, d
 			}
 			jsonData, err := json.Marshal(input)
 			if err != nil {
-				r.log.Errorf("getDeptIdsConcurrent.jsonData: %v, err: %v", string(jsonData), err)
+				r.log.Errorf("getDeptIdsConcurrent.jsonData: %s, err: %v", string(jsonData), err)
 				return
 			}
 
 			bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
 			if err != nil {
-				r.log.Errorf("getDeptIdsConcurrent.PostJSON: %v, err: %v", string(jsonData), err)
+				r.log.Errorf("getDeptIdsConcurrent.PostJSON: %s, err: %v", string(jsonData), err)
 				return
 			}
 			var deptIDResponse *ListDeptIDResponse
 			if err = json.Unmarshal(bs, &deptIDResponse); err != nil {
-				r.log.Errorf("getDeptIdsConcurrent.Unmarshal: %v, err: %v", string(bs), err)
+				r.log.Errorf("getDeptIdsConcurrent.Unmarshal: %s, err: %v", string(bs), err)
 				return
 			}
 			if deptIDResponse.Errcode != 0 {
@@ -571,10 +571,10 @@ func (r *dingTalkRepo) GetUseridByUnionid(ctx context.Context, token, unionid st
 func (r *dingTalkRepo) FetchUserDetail(ctx context.Context, token string, userIds []string) ([]*DingtalkDeptUser, error) {
 	log := r.log.WithContext(ctx)
 
-	log.Info("FetchUserDetail token: %v,userIds: %v", token, userIds)
+	log.Info("FetchUserDetail token: %s,userIds: %v", token, userIds)
 	uri := fmt.Sprintf("%s/topapi/v2/user/get?access_token=%s", r.data.Endpoint, token)
 
-	r.log.Info("getDeptIdsConcurrent deptIds: %v, uri: %v", userIds, uri)
+	r.log.Info("FetchUserDetail deptIds: %v, uri: %v", userIds, uri)
 	sem := make(chan struct{}, r.data.MaxConcurrent)
 	userList := make([]*DingtalkDeptUser, 0)
 	var mu sync.Mutex
