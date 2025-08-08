@@ -90,9 +90,135 @@ func main() {
 	// 	fmt.Printf("FindWpsUser user: %v\n", *u)
 	// }
 	//CheckGetCompAllUsers()
-	CheckGetCompAllDepts()
+	// CheckGetCompAllDepts()
+	//FindAndDeleteUser("存在应用授权")
+	//FindAndDeleteDept("存在应用授权")
+	ctx := context.Background()
+	appAccessToken, err := auth.NewAppAuthenticator(bc.Service).GetAccessToken(ctx)
+	if err != nil {
+		panic(err)
+	}
+	CheckPostCreateUser(appAccessToken.AccessToken)
+	//CheckDeleteDept(appAccessToken.AccessToken)
+
 }
 
+func CheckPostCreateUser(appToken string) {
+	wpsClient := wps.NewWps(bc.Service, log.GetLogger())
+	createUserRes, err := wpsClient.PostCreateUser(context.Background(), appToken, wps.PostCreateUserRequest{
+		ExUserID:  "test01_user",
+		Email:     "test01@163.com",
+		UserName:  "test01",
+		LoginName: "13888888888",
+		Phone:     "13888888888",
+		DeptIDs:   []string{"1"},
+		Source:    "sync",
+		WorkPlace: "bj",
+	})
+
+	fmt.Printf("createUserRes:%v, err:%v", createUserRes, err)
+}
+
+// 创建的也存在授权
+func CheckPostCreateDept(appToken string) {
+	wpsClient := wps.NewWps(bc.Service, log.GetLogger())
+	parentID := "1"
+	createDeptRes, err := wpsClient.PostCreateDept(context.Background(), appToken, wps.PostCreateDeptRequest{
+		ExDeptID: "test01",
+		Name:     "test01_dep",
+		ParentID: parentID,
+		Source:   "sync",
+		Order:    99,
+	})
+	fmt.Printf("createDeptRes:%v, err:%v", createDeptRes, err)
+}
+func CheckDeleteDept(appToken string) {
+
+	wpsClient := wps.NewWps(bc.Service, log.GetLogger())
+	// 批量删除部门
+	needDeldept := []string{"6", "4"}
+	deleDeptRes, err := wpsClient.PostBatchDeleteDept(context.Background(), appToken, wps.PostBatchDeleteDeptRequest{
+		DeptIDs: needDeldept,
+	})
+	fmt.Printf("deleDeptRes:%v, err:%v", deleDeptRes, err)
+}
+func FindAndDeleteDept() {
+	ctx := context.Background()
+	appAccessToken, err := auth.NewAppAuthenticator(bc.Service).GetAccessToken(ctx)
+	if err != nil {
+		panic(err)
+	}
+	wpsClient := wps.NewWps(bc.Service, log.GetLogger())
+	//查询根部门
+	rootDept, err := wpsClient.GetDepartmentRoot(ctx, appAccessToken.AccessToken, wps.GetDepartmentRootRequest{})
+	if err != nil {
+		panic(err)
+	}
+	log.Infof("rootDept: %v", rootDept)
+
+	// 2. 查询部门下的子部门(要递归)
+	allDepts, err := wpsClient.GetDeptChildren(ctx, appAccessToken.AccessToken, wps.GetDeptChildrenRequest{
+		DeptID:    rootDept.Data.ID,
+		Recursive: true,
+		PageSize:  50,
+		WithTotal: true,
+	})
+	if err != nil {
+		panic(err)
+	}
+	log.Infof("children: %v", allDepts)
+
+	//删除部门除了根部门
+	var alldeptes []string
+	for _, dept := range allDepts.Data.Items {
+		if dept.ID == rootDept.Data.ID {
+			continue
+		}
+		alldeptes = append(alldeptes, dept.ID)
+	}
+
+	needDeldept := alldeptes[:2]
+	fmt.Printf("deletedept: %v", needDeldept)
+	// 批量删除部门
+	deleDeptRes, err := wpsClient.PostBatchDeleteDept(ctx, appAccessToken.AccessToken, wps.PostBatchDeleteDeptRequest{
+		DeptIDs: needDeldept,
+	})
+	fmt.Printf("deleDeptRes:%v, err:%v", deleDeptRes, err)
+}
+func FindAndDeleteUser() {
+	ctx := context.Background()
+	appAccessToken, err := auth.NewAppAuthenticator(bc.Service).GetAccessToken(ctx)
+	if err != nil {
+		panic(err)
+	}
+	wpsClient := wps.NewWps(bc.Service, log.GetLogger())
+
+	users, err := wpsClient.GetCompAllUsers(ctx, appAccessToken.AccessToken, wps.GetCompAllUsersRequest{
+		Recursive: true,
+		PageSize:  50,
+		WithTotal: true,
+		Status:    []string{"active", "notactive", "disabled"},
+	})
+	if err != nil {
+		panic(err)
+	}
+	var alluserids []string
+	for _, u := range users.Data.Items {
+		fmt.Printf("FindWpsUser user: %v\n", u)
+		if u.ID == "1" {
+			continue
+		}
+		alluserids = append(alluserids, u.ID)
+	}
+	deleteuser := alluserids[:2]
+	fmt.Printf("deleteuser: %v", deleteuser)
+	// 存在授权问题
+	delRes, err := wpsClient.PostBatchDeleteUser(ctx, appAccessToken.AccessToken, wps.PostBatchDeleteUserRequest{
+		UserIDs: deleteuser,
+	})
+	fmt.Printf("delRes:%v, err:%v", delRes, err)
+
+}
 func CheckGetCompAllDepts() {
 	appAccessToken, err := auth.NewAppAuthenticator(bc.Service).GetAccessToken(context.Background())
 	if err != nil {
@@ -132,6 +258,9 @@ func CheckGetCompAllUsers() {
 		WithTotal: true,
 		Status:    []string{"active", "notactive", "disabled"},
 	})
+	if err != nil {
+		panic(err)
+	}
 	for _, u := range users.Data.Items {
 		fmt.Printf("FindWpsUser user: %v\n", u)
 	}

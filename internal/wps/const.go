@@ -15,7 +15,9 @@ const (
 	POST_DEPTS_BY_EXDEPTIDS_PATH = "/v7/depts/by_ex_dept_ids"
 	POST_USERS_BY_EXDEPTIDS_PATH = "/v7/users/by_ex_user_ids"
 
-	POST_DELETE_DEPTS_BY_EXDEPTIDS_PATH = "/v7/depts/batch_delete"
+	POST_DELETE_DEPTS_PATH = "/v7/depts/batch_delete"
+	POST_DELETE_USERS_PATH = "/v7/users/batch_delete"
+
 	POST_DELETE_USERID_FROM_DEPTID_PATH = "/v7/depts/{dept_id}/members/{user_id}/delete"
 	POST_ADD_USERID_TO_DEPTID_PATH      = "/v7/depts/{dept_id}/members/{user_id}/create"
 
@@ -23,6 +25,9 @@ const (
 	GET_ALL_USER_PARH  = "/v7/users"
 
 	GET_USER_DEPT_BY_USERID = "/v7/users/{user_id}/depts"
+
+	POST_CREATE_DEPT_PATH = "/v7/depts/create"
+	POST_CREATE_USER_PATH = "/v7/depts/create"
 
 	// POST_CACHE_SET = "http://encs-pri-cams-engine/i/cams/sdk/api/v1/cache/set"
 	// POST_CACHE_GET = "http://encs-pri-cams-engine/i/cams/sdk/api/v1/cache/get"

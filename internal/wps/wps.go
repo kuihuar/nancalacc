@@ -115,17 +115,17 @@ func (ws *wps) PostBatchDepartmentsByExDepIds(ctx context.Context, accessToken s
 func (ws *wps) PostBatchDeleteDept(ctx context.Context, accessToken string, input PostBatchDeleteDeptRequest) (*PostBatchDeleteDeptResponse, error) {
 
 	log := ws.log.WithContext(ctx)
-	log.Infof("PostBatchDeleteDepartmentsByDepIds req %v", input)
+	log.Infof("PostBatchDeleteDept req %v", input)
 	var resp *PostBatchDeleteDeptResponse
 
 	ak := ws.serviceConf.Auth.App.ClientId
 	sk := ws.serviceConf.Auth.App.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
 
-	log.Infof("PostBatchDeleteDepartmentsByDepIds uri: %s, input: %+v\n", POST_DELETE_DEPTS_BY_EXDEPTIDS_PATH, input)
-	bs, err := wpsReq.PostJSON(context.Background(), POST_DELETE_DEPTS_BY_EXDEPTIDS_PATH, accessToken, input)
+	log.Infof("PostBatchDeleteDept uri: %s, input: %+v\n", POST_DELETE_DEPTS_PATH, input)
+	bs, err := wpsReq.PostJSON(context.Background(), POST_DELETE_DEPTS_PATH, accessToken, input)
 
-	log.Infof("PostBatchDeleteDepartmentsByDepIds: %s, err: %+v\n", string(bs), err)
+	log.Infof("PostBatchDeleteDept: %s, err: %+v\n", string(bs), err)
 	if err != nil {
 		return resp, err
 	}
@@ -144,6 +144,26 @@ func (ws *wps) PostBatchDeleteUser(ctx context.Context, accessToken string, inpu
 	log := ws.log.WithContext(ctx)
 	log.Infof("PostBatchDeleteUser req %v", input)
 	var resp *PostBatchDeleteUserResponse
+
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
+
+	log.Infof("PostBatchDeleteUser uri: %s, input: %+v\n", POST_DELETE_USERS_PATH, input)
+	bs, err := wpsReq.PostJSON(context.Background(), POST_DELETE_USERS_PATH, accessToken, input)
+
+	log.Infof("PostBatchDeleteUser: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, err
+	}
+	if resp.Code != 0 {
+		return resp, ErrCodeNot0
+	}
 
 	return resp, nil
 }
@@ -316,6 +336,8 @@ func (ws *wps) GetUserByUserId(ctx context.Context, accessToken string, input Ge
 // TODO 内部网关的签名是不是不对
 func (ws *wps) CacheSet(ctx context.Context, accessToken string, key string, value interface{}, expiration time.Duration) error {
 
+	ws.log.WithContext(ctx).Infof("CacheSet req %v", key)
+	return status.Error(codes.Unimplemented, "GetDeptByPage")
 	// log := ws.log.WithContext(ctx)
 	// log.Infof("CacheSet key: %s, value: %v", key, value)
 
@@ -335,11 +357,11 @@ func (ws *wps) CacheSet(ctx context.Context, accessToken string, key string, val
 	// 	return err
 	// }
 
-	return nil
-
 }
 func (ws *wps) CacheGet(ctx context.Context, accessToken string, key string) (interface{}, error) {
 
+	ws.log.WithContext(ctx).Infof("CacheGet req %v", key)
+	return nil, status.Error(codes.Unimplemented, "GetDeptByPage")
 	// log := ws.log.WithContext(ctx)
 	// log.Infof("CacheGet key %v", key)
 
@@ -362,10 +384,11 @@ func (ws *wps) CacheGet(ctx context.Context, accessToken string, key string) (in
 	// if err != nil {
 	// 	return nil, err
 	// }
-	return nil, nil
 }
 
-func (ws *wps) CacheDel(ctx context.Context, accessToken, key string) error {
+func (ws *wps) CacheDel(ctx context.Context, accessToken, input string) error {
+	ws.log.WithContext(ctx).Infof("CacheDel req %v", input)
+	return status.Error(codes.Unimplemented, "GetDeptByPage")
 
 	// log := ws.log.WithContext(ctx)
 	// log.Infof("CacheDel key %v", key)
@@ -389,18 +412,8 @@ func (ws *wps) CacheDel(ctx context.Context, accessToken, key string) error {
 	// if err != nil {
 	// 	return err
 	// }
-	return nil
 }
 
-func (ws *wps) PostCreateUser(ctx context.Context, accessToken string, input PostCreateUserRequest) (*PostCreateUserResponse, error) {
-	ws.log.WithContext(ctx).Infof("PostCreateUser req %v", input)
-	return nil, status.Error(codes.Unimplemented, "PostCreateUser")
-}
-
-func (ws *wps) PostCreateDept(ctx context.Context, accessToken string, input PostCreateDeptRequest) (*PostCreateDeptResponse, error) {
-	ws.log.WithContext(ctx).Infof("PostCreateUser req %v", input)
-	return nil, status.Error(codes.Unimplemented, "PostCreateDept")
-}
 func (ws *wps) PostUpdateDept(ctx context.Context, accessToken string, input PostUpdateDeptRequest) (*PostUpdateDeptResponse, error) {
 	ws.log.WithContext(ctx).Infof("PostUpdateDept req %v", input)
 	return nil, status.Error(codes.Unimplemented, "PostUpdateDept")
@@ -545,4 +558,70 @@ func (ws *wps) GetCompAllUsers(ctx context.Context, accessToken string, input Ge
 	}
 
 	return &resp, nil
+}
+
+func (ws *wps) PostCreateDept(ctx context.Context, accessToken string, input PostCreateDeptRequest) (*PostCreateDeptResponse, error) {
+
+	log := ws.log.WithContext(ctx)
+	log.Infof("PostCreateDept req %v", input)
+
+	var resp *PostCreateDeptResponse
+
+	// input := &EcisaccountsyncIncrementRequest{
+	// 	ThirdCompanyId: thirdCompanyId,
+	// }
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
+
+	log.Infof("PostCreateDept uri: %s, input: %+v\n", POST_CREATE_DEPT_PATH, input)
+	bs, err := wpsReq.PostJSON(context.Background(), POST_CREATE_DEPT_PATH, accessToken, input)
+
+	log.Infof("PostCreateDept res: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, err
+	}
+	if resp.Code != 0 {
+		return resp, ErrCodeNot0
+	}
+
+	return resp, nil
+
+}
+
+func (ws *wps) PostCreateUser(ctx context.Context, accessToken string, input PostCreateUserRequest) (*PostCreateUserResponse, error) {
+	log := ws.log.WithContext(ctx)
+	log.Infof("PostCreateUser req %v", input)
+
+	var resp *PostCreateUserResponse
+
+	// input := &EcisaccountsyncIncrementRequest{
+	// 	ThirdCompanyId: thirdCompanyId,
+	// }
+	ak := ws.serviceConf.Auth.App.ClientId
+	sk := ws.serviceConf.Auth.App.ClientSecret
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
+
+	log.Infof("PostCreateUser uri: %s, input: %+v\n", POST_CREATE_USER_PATH, input)
+	bs, err := wpsReq.PostJSON(context.Background(), POST_CREATE_USER_PATH, accessToken, input)
+
+	log.Infof("PostCreateUser res: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, err
+	}
+	if resp.Code != 0 {
+		return resp, ErrCodeNot0
+	}
+
+	return resp, nil
 }

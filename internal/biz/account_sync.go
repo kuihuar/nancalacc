@@ -14,22 +14,6 @@ func (uc *AccounterUsecase) StartSync(ctx context.Context, taskId, filename stri
 	if err != nil {
 		return err
 	}
-	//查询根部门
-	rootDept, err := uc.wps.GetDepartmentRoot(ctx, appAccessToken.AccessToken, wps.GetDepartmentRootRequest{})
-	if err != nil {
-		return err
-	}
-	log.Infof("rootDept: %v", rootDept)
-
-	// 2. 查询部门下的子部门(要递归)
-	children, err := uc.wps.GetDeptChildren(ctx, appAccessToken.AccessToken, wps.GetDeptChildrenRequest{
-		DeptID: rootDept.Data.ID,
-	})
-	if err != nil {
-		return err
-	}
-	log.Infof("children: %v", children)
-
 	// 查询企业下所有用户
 	alluser, err := uc.wps.GetCompAllUsers(ctx, appAccessToken.AccessToken, wps.GetCompAllUsersRequest{
 		Recursive: true,
@@ -41,21 +25,73 @@ func (uc *AccounterUsecase) StartSync(ctx context.Context, taskId, filename stri
 		return err
 	}
 	log.Infof("alluser: %v", alluser)
+	// 批量删除用户(除了admin)
+	var allUsers []string
+	for _, user := range alluser.Data.Items {
+		if user.ID == "1" {
+			continue
+		}
+		allUsers = append(allUsers, user.ID)
+	}
+	////////////////////// 存在授权问题
+	deluserRes, err := uc.wps.PostBatchDeleteUser(ctx, appAccessToken.AccessToken, wps.PostBatchDeleteUserRequest{
+		UserIDs: allUsers,
+	})
+	if err != nil {
+		return err
+	}
+	log.Infof("deluserRes: %v", deluserRes)
 
-	// 1. 查询全量部门
-	// uc.wps.PostBatchDeptByPage(ctx, taskId, wps.PostBatchDeptByPageRequest{
-	// 	PageSize: 100,
-	// 	PageNum:  1,
-	// })
+	//查询根部门
+	rootDept, err := uc.wps.GetDepartmentRoot(ctx, appAccessToken.AccessToken, wps.GetDepartmentRootRequest{})
+	if err != nil {
+		return err
+	}
+	log.Infof("rootDept: %v", rootDept)
 
-	// 1.批量删除用户
-	// 2. 批量删除部门
+	// 2. 查询部门下的子部门(要递归)
+	allDepts, err := uc.wps.GetDeptChildren(ctx, appAccessToken.AccessToken, wps.GetDeptChildrenRequest{
+		DeptID: rootDept.Data.ID,
+	})
+	if err != nil {
+		return err
+	}
+	log.Infof("children: %v", allDepts)
 
-	// 1. 创建部门
-	uc.wps.PostCreateDept(ctx, taskId, wps.PostCreateDeptRequest{
-		Name: "测试部门",
+	//删除部门除了根部门
+	var alldeptes []string
+	for _, dept := range allDepts.Data.Items {
+		if dept.ID == rootDept.Data.ID {
+			continue
+		}
+		alldeptes = append(alldeptes, dept.ID)
+	}
+
+	// 批量删除部门(接口有授权问题)
+	uc.wps.PostBatchDeleteDept(ctx, appAccessToken.AccessToken, wps.PostBatchDeleteDeptRequest{
+		DeptIDs: alldeptes,
 	})
 
+	// 1. 创建部门(接口有授权问题)
+	uc.wps.PostCreateDept(ctx, appAccessToken.AccessToken, wps.PostCreateDeptRequest{
+		ExDeptID: "test01",
+		Name:     "test01_dep",
+		ParentID: "1",
+		Source:   "sync",
+		Order:    99,
+	})
+
+	uc.wps.PostCreateUser(ctx, appAccessToken.AccessToken, wps.PostCreateUserRequest{
+		ExUserID:  "test01_user",
+		Email:     "test01@163.com",
+		UserName:  "test01",
+		LoginName: "13888888888",
+		Phone:     "13888888888",
+		DeptIDs:   []string{"1"},
+		Source:    "sync",
+		WorkPlace: "bj",
+	})
+	////////////////////////////////////////////////////////////////
 	// 2. 创建部门存在的 > 更新部门
 	uc.wps.PostUpdateDept(ctx, taskId, wps.PostUpdateDeptRequest{
 		ExDeptID: "10000000000000000000000000000000",
