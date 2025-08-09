@@ -58,7 +58,7 @@ func (c *DingtalkCacheAuthenticator) GetAccessToken(ctx context.Context) (*Acces
 	if cached, found := c.cache.Get(c.cacheKey); found {
 		if token, ok := cached.(*AccessTokenResp); ok {
 			fmt.Println("GetAccessToken from cache")
-			fmt.Printf("cacheKey: %s, token: %v\n", c.cacheKey, token)
+			//fmt.Printf("cacheKey: %s, token: %v\n", c.cacheKey, token)
 			return token, nil
 		}
 	}
@@ -75,7 +75,7 @@ func (c *DingtalkCacheAuthenticator) GetAccessToken(ctx context.Context) (*Acces
 
 	c.cache.Set(c.cacheKey, token, cacheTTL)
 	fmt.Println("GetAccessToken from api")
-	fmt.Printf("cacheKey: %s, token: %v, cacheTTL: %d\n", c.cacheKey, token, cacheTTL)
+	//fmt.Printf("cacheKey: %s, token: %v, cacheTTL: %d\n", c.cacheKey, token, cacheTTL)
 	return token, nil
 }
 
