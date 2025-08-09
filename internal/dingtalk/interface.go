@@ -1,9 +1,13 @@
 package dingtalk
 
-import "context"
+import (
+	"context"
+
+	dingtalkoauth2_1_0 "github.com/alibabacloud-go/dingtalk/oauth2_1_0"
+)
 
 type Dingtalk interface {
-	GetAccessToken(ctx context.Context, code string) (string, error)
+	GetAccessToken(ctx context.Context) (dingtalkoauth2_1_0.GetAccessTokenResponseBody, error)
 	FetchDepartments(ctx context.Context, token string) ([]*DingtalkDept, error)
 	FetchDepartmentUsers(ctx context.Context, token string, deptIds []int64) ([]*DingtalkDeptUser, error)
 

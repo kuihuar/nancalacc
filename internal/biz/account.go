@@ -112,12 +112,12 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	log.Infof("CreateSyncAccount.GetAccessToken")
 
 	// 1. 获取access_token
-	accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.GetAccessToken: accessToken: %v, err: %v", accessToken, err)
+	dingTalkAccessToken, err := uc.dingTalkRepo.GetAccessToken(ctx)
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount.GetAccessToken: dingTalkAccessToken: %v, err: %v", dingTalkAccessToken, err)
 	if err != nil {
 		return nil, err
 	}
-
+	accessToken := *dingTalkAccessToken.AccessToken
 	//taskId := time.Now().Add(time.Duration(1) * time.Second).Format("20060102150405")
 
 	// 1. 从第三方获取部门和用户数据

@@ -3,14 +3,12 @@ package data
 import (
 	"context"
 	"errors"
-	"strconv"
 	"time"
 
 	"nancalacc/internal/biz"
 	"nancalacc/internal/conf"
 	"nancalacc/internal/data/models"
 	"nancalacc/internal/dingtalk"
-	"nancalacc/pkg/cipherutil"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
@@ -48,50 +46,12 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.Dingtal
 		r.log.Warn("users is empty")
 		return 0, nil
 	}
-	entities := make([]*models.TbLasUser, 0, len(users))
-
 	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
 	platformID := r.serviceConf.Business.PlatformIds
+	entities := make([]*models.TbLasUser, 0, len(users))
 	for _, user := range users {
-		if user.Name == "" {
-			user.Name = user.Userid
-		}
-
-		var account string
-		if user.Mobile != "" {
-			account = user.Mobile
-		} else {
-			account = user.Userid
-		}
-		secretKey := r.serviceConf.Auth.Self.SecretKey
-
-		email, errEmail := cipherutil.AesEncryptGcmByKey(user.Email, secretKey)
-
-		phone, errPhone := cipherutil.AesEncryptGcmByKey(user.Mobile, secretKey)
-
-		r.log.Infof("AesEncryptGcmByKey email: %v, ncrypt email: %v, err: %v", user.Email, email, errEmail)
-		r.log.Infof("AesEncryptGcmByKey phone: %v, ncrypt phone: %v, err: %v", user.Mobile, phone, errPhone)
-		entities = append(entities, &models.TbLasUser{
-			TaskID:         taskId,
-			ThirdCompanyID: thirdCompanyID,
-			PlatformID:     platformID,
-			Uid:            user.Userid,
-			DefDid:         "-1",
-			DefDidOrder:    0,
-			Account:        account,
-			NickName:       user.Name,
-			Email:          email,
-			Phone:          phone,
-			Title:          user.Title,
-			//Leader:         sql.NullString{String: strconv.FormatBool(account.Leader)},
-			Source:           Source,
-			Ctime:            time.Now(),
-			Mtime:            time.Now(),
-			CheckType:        1,
-			EmploymentStatus: "active",
-			EmploymentType:   "permanent",
-			//Type:           sql.NullString{String: "dept", Valid: true},
-		})
+		entity := models.MakeLasUser(user, thirdCompanyID, platformID, Source, taskId)
+		entities = append(entities, entity)
 	}
 
 	result := r.data.db.WithContext(ctx).Create(&entities)
@@ -119,35 +79,10 @@ func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*dingtalk.D
 	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
 	platformID := r.serviceConf.Business.PlatformIds
 	companyID := r.serviceConf.Business.CompanyId
-	rootDep := &models.TbLasDepartment{
-		Did:            "0",
-		TaskID:         taskId,
-		Name:           companyID,
-		ThirdCompanyID: thirdCompanyID,
-		PlatformID:     platformID,
-		Pid:            "-1",
-		Order:          0,
-		Source:         "sync",
-		Ctime:          time.Now(),
-		Mtime:          time.Now(),
-		CheckType:      1,
-		//Type:           sql.NullString{String: "dept", Valid: true},
-	}
+	rootDep := models.MakeTbLasRootDepartment(thirdCompanyID, platformID, companyID, Source, taskId)
 	for _, dep := range depts {
-		entities = append(entities, &models.TbLasDepartment{
-			Did:            strconv.FormatInt(dep.DeptID, 10),
-			TaskID:         taskId,
-			Name:           dep.Name,
-			ThirdCompanyID: thirdCompanyID,
-			PlatformID:     platformID,
-			Pid:            strconv.FormatInt(dep.ParentID, 10),
-			Order:          int(dep.Order),
-			Source:         "sync",
-			Ctime:          time.Now(),
-			Mtime:          time.Now(),
-			CheckType:      1,
-			//Type:           sql.NullString{String: "dept", Valid: true},
-		})
+		entity := models.MakeTbLasDepartment(dep, thirdCompanyID, platformID, companyID, Source, taskId)
+		entities = append(entities, entity)
 	}
 	entities = append(entities, rootDep)
 	result := r.data.db.WithContext(ctx).Clauses(clause.OnConflict{
@@ -178,17 +113,8 @@ func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relatio
 	platformID := r.serviceConf.Business.PlatformIds
 
 	for _, relation := range relations {
-
-		entities = append(entities, &models.TbLasDepartmentUser{
-			Did:            relation.Did,
-			TaskID:         taskId,
-			ThirdCompanyID: thirdCompanyID,
-			PlatformID:     platformID,
-			Uid:            relation.Uid,
-			Ctime:          time.Now(),
-			Order:          int(relation.Order),
-			CheckType:      1,
-		})
+		entity := models.MakeTbLasDepartmentUser(relation, thirdCompanyID, platformID, "", Source, taskId)
+		entities = append(entities, entity)
 	}
 
 	result := r.data.db.WithContext(ctx).Clauses(clause.OnConflict{
@@ -296,17 +222,23 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 
 	entities := make([]*models.TbLasUserIncrement, 0, len(usersAdd)+len(usersDel) + +len(usersUpd))
 
+	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
+	platformID := r.serviceConf.Business.PlatformIds
+	companyID := r.serviceConf.Business.CompanyId
+
 	// user_del/user_update/user_add
 	for _, user := range usersAdd {
-		entity := r.makeLasUserIncrement(user, "user_add")
+		entity := models.MakeLasUserIncrement(user, thirdCompanyID, platformID, companyID, Source, "user_add")
 		entities = append(entities, entity)
 	}
 	for _, user := range usersDel {
-		entity := r.makeLasUserIncrement(user, "user_del")
+		entity := models.MakeLasUserIncrement(user, thirdCompanyID, platformID, companyID, Source, "user_del")
+		// entity := r.makeLasUserIncrement(user, "user_del")
 		entities = append(entities, entity)
 	}
 	for _, user := range usersUpd {
-		entity := r.makeLasUserIncrement(user, "user_update")
+		// entity := r.makeLasUserIncrement(user, "user_update")
+		entity := models.MakeLasUserIncrement(user, thirdCompanyID, platformID, companyID, Source, "user_update")
 		entities = append(entities, entity)
 	}
 	result := r.data.db.WithContext(ctx).Create(&entities)
@@ -319,45 +251,6 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 		}
 	}
 	return nil
-}
-func (r *accounterRepo) makeLasUserIncrement(user *dingtalk.DingtalkDeptUser, updateType string) *models.TbLasUserIncrement {
-	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
-	platformID := r.serviceConf.Business.PlatformIds
-	var account string
-	if user.Name == "" {
-		user.Name = user.Userid
-	}
-	if user.Mobile != "" {
-		account = user.Mobile
-	} else {
-		account = user.Userid
-	}
-	now := time.Now()
-	entity := &models.TbLasUserIncrement{
-		ThirdCompanyID:   thirdCompanyID,
-		PlatformID:       platformID,
-		Uid:              user.Userid,
-		DefDid:           "-1",
-		DefDidOrder:      0,
-		Account:          account,
-		NickName:         user.Name,
-		Email:            user.Email,
-		Phone:            user.Mobile,
-		Title:            user.Title,
-		Source:           Source,
-		Ctime:            now,
-		Mtime:            now,
-		EmploymentStatus: "active",
-		EmploymentType:   "permanent",
-		UpdateType:       updateType, //"user_add",
-		SyncType:         "auto",
-		SyncTime:         now,
-		Status:           0,
-	}
-	if len(user.LeaderInDept) > 0 {
-		//entity.Leader = user.LeaderInDept[0].Leader
-	}
-	return entity
 }
 
 // dept_del/dept_update/dept_add/dept_move(update_type)
@@ -368,17 +261,22 @@ func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, 
 	defer cancel()
 	// dept_del/dept_update/dept_add
 	entities := make([]*models.TbLasDepartmentIncrement, 0, len(deptsAdd)+len(deptsDel))
+	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
+	platformID := r.serviceConf.Business.PlatformIds
+
 	for _, dep := range deptsAdd {
-		entity := r.makeDepartmentIncrement(dep, "dept_add")
+		entity := models.MakeDepartmentIncrement(dep, thirdCompanyID, platformID, "", Source, "dept_add")
 		entities = append(entities, entity)
 	}
 	for _, dep := range deptsUpd {
-		entity := r.makeDepartmentIncrement(dep, "dept_update")
+		// entity := r.makeDepartmentIncrement(dep, "dept_update")
+		entity := models.MakeDepartmentIncrement(dep, thirdCompanyID, platformID, "", Source, "dept_update")
 		entities = append(entities, entity)
 	}
 
 	for _, dep := range deptsDel {
-		entity := r.makeDepartmentIncrement(dep, "dept_del")
+		// entity := r.makeDepartmentIncrement(dep, "dept_del")
+		entity := models.MakeDepartmentIncrement(dep, thirdCompanyID, platformID, "", Source, "dept_del")
 		entities = append(entities, entity)
 	}
 	result := r.data.db.WithContext(ctx).Create(&entities)
@@ -394,55 +292,6 @@ func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, 
 
 	return nil
 }
-func (r *accounterRepo) makeDepartmentIncrement(dept *dingtalk.DingtalkDept, updateType string) *models.TbLasDepartmentIncrement {
-	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
-	platformID := r.serviceConf.Business.PlatformIds
-	now := time.Now()
-	entity := &models.TbLasDepartmentIncrement{
-		Did:            strconv.FormatInt(dept.DeptID, 10),
-		Name:           dept.Name,
-		ThirdCompanyID: thirdCompanyID,
-		PlatformID:     platformID,
-		//Pid:            strconv.FormatInt(dept.ParentID, 10),
-		Order:      int32(dept.Order),
-		Source:     "sync",
-		Ctime:      now,
-		Mtime:      now,
-		UpdateType: updateType,
-		SyncTime:   now,
-		SyncType:   "auto",
-		Status:     0,
-	}
-	if dept.ParentID != 0 {
-		entity.Pid = strconv.FormatInt(dept.ParentID, 10)
-	} else {
-		entity.Pid = "-1"
-	}
-	return entity
-
-}
-
-func (r *accounterRepo) makeDeptUserRelatins(relation *dingtalk.DingtalkDeptUserRelation, updateType string) *models.TbLasDepartmentUserIncrement {
-	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
-	platformID := r.serviceConf.Business.PlatformIds
-
-	now := time.Now()
-	entity := &models.TbLasDepartmentUserIncrement{
-		Did:            relation.Did,
-		ThirdCompanyID: thirdCompanyID,
-		PlatformID:     platformID,
-		Uid:            relation.Uid,
-		Ctime:          now,
-		Order:          1,
-		UpdateType:     updateType,
-		SyncType:       "auto",
-		SyncTime:       now,
-		Status:         0,
-	}
-
-	return entity
-
-}
 
 func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel, relationsUpd []*dingtalk.DingtalkDeptUserRelation) error {
 
@@ -452,18 +301,22 @@ func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context
 
 	entities := make([]*models.TbLasDepartmentUserIncrement, 0, len(relationsAdd)+len(relationsDel)+len(relationsUpd))
 
+	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
+	platformID := r.serviceConf.Business.PlatformIds
 	// user_dept_add/user_dept_del/user_dept_update/user_dept_move
 	for _, relation := range relationsAdd {
-		entity := r.makeDeptUserRelatins(relation, "user_dept_add")
+		entity := models.MmakeTbLasDepartmentUserIncrement(relation, thirdCompanyID, platformID, "", Source, "user_dept_add")
 		entities = append(entities, entity)
 	}
 
 	for _, relation := range relationsDel {
-		entity := r.makeDeptUserRelatins(relation, "user_dept_del")
+		// entity := r.makeDeptUserRelatins(relation, "user_dept_del")
+		entity := models.MmakeTbLasDepartmentUserIncrement(relation, thirdCompanyID, platformID, "", Source, "user_dept_del")
 		entities = append(entities, entity)
 	}
 	for _, relation := range relationsUpd {
-		entity := r.makeDeptUserRelatins(relation, "user_dept_update")
+		// entity := r.makeDeptUserRelatins(relation, "user_dept_update")
+		entity := models.MmakeTbLasDepartmentUserIncrement(relation, thirdCompanyID, platformID, "", Source, "user_dept_update")
 		entities = append(entities, entity)
 	}
 

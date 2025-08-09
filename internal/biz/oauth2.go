@@ -38,13 +38,13 @@ func (uc *Oauth2Usecase) GetUserInfo(ctx context.Context, req *v1.GetUserInfoReq
 		log.Errorf("GetUserInfo.dingTalkRepo.GetUserInfo: %v, err:%v", userInfo, err)
 		return nil, err
 	}
-	token, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
+	token, err := uc.dingTalkRepo.GetAccessToken(ctx)
 	log.Infof("GetUserInfo.dingTalkRepo.GetAccessToken: token: %v, err: %v", token, err)
 	if err != nil {
 		uc.log.WithContext(ctx).Error("GetUserInfo.dingTalkRepo.GetAccessToken: token: %v, err: %v", token, err)
 		return nil, err
 	}
-	userId, err = uc.dingTalkRepo.GetUseridByUnionid(ctx, token, userInfo.UnionId)
+	userId, err = uc.dingTalkRepo.GetUseridByUnionid(ctx, *token.AccessToken, userInfo.UnionId)
 	log.Infof("GetUserInfo.GetUseridByUnionid: userId: %v, err: %v", userId, err)
 
 	if err != nil {

@@ -54,17 +54,17 @@ func NewDingTalkRepo(data *conf.Service_Auth_Dingtalk, logger log.Logger) Dingta
 	}
 }
 
-func (r *dingTalkRepo) GetAccessToken(ctx context.Context, code string) (string, error) {
+func (r *dingTalkRepo) GetAccessToken(ctx context.Context) (dingtalkoauth2_1_0.GetAccessTokenResponseBody, error) {
 
 	log := r.log.WithContext(ctx)
-	log.Infof("GetAccessToken code:%s", code)
+	log.Info("GetAccessToken")
 
 	request := &dingtalkoauth2_1_0.GetAccessTokenRequest{
 		AppKey:    tea.String(r.data.AppKey),
 		AppSecret: tea.String(r.data.AppSecret),
 	}
 
-	var accessToken string
+	var accessToken dingtalkoauth2_1_0.GetAccessTokenResponseBody
 
 	tryErr := func() error {
 		defer func() {
@@ -79,7 +79,7 @@ func (r *dingTalkRepo) GetAccessToken(ctx context.Context, code string) (string,
 			return err
 		}
 
-		accessToken = *response.Body.AccessToken
+		accessToken = *response.Body
 		return nil
 	}()
 
@@ -93,9 +93,9 @@ func (r *dingTalkRepo) GetAccessToken(ctx context.Context, code string) (string,
 		}
 
 		if !tea.BoolValue(util.Empty(sdkErr.Code)) && !tea.BoolValue(util.Empty(sdkErr.Message)) {
-			return "", fmt.Errorf("获取access_token失败: [%s] %s", *sdkErr.Code, *sdkErr.Message)
+			return accessToken, fmt.Errorf("获取access_token失败: [%s] %s", *sdkErr.Code, *sdkErr.Message)
 		}
-		return "", fmt.Errorf("获取access_token失败: %s", *sdkErr.Message)
+		return accessToken, fmt.Errorf("获取access_token失败: %s", *sdkErr.Message)
 	}
 
 	return accessToken, nil

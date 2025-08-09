@@ -56,11 +56,12 @@ func (uc *AccounterIncreUsecase) OrgDeptCreate(ctx context.Context, event *clien
 		return nil
 	}
 
-	accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-	log.Infof("OrgDeptCreate.GetAccessToken accessToken: %v, err: %v", accessToken, err)
+	dingTalkAccessToken, err := uc.dingTalkRepo.GetAccessToken(ctx)
 	if err != nil {
 		return err
 	}
+	accessToken := *dingTalkAccessToken.AccessToken
+
 	uc.log.WithContext(ctx).Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v", accessToken, depIds)
 	depts, err := uc.dingTalkRepo.FetchDeptDetails(ctx, accessToken, depIds)
 	log.Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v, err:%v", accessToken, depIds, err)
@@ -213,11 +214,12 @@ func (uc *AccounterIncreUsecase) OrgDeptModify(ctx context.Context, event *clien
 		return err
 	}
 
-	accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-	log.Infof("OrgDeptCreate.GetAccessToken accessToken: %v, err: %v", accessToken, err)
+	dingTalkAccessToken, err := uc.dingTalkRepo.GetAccessToken(ctx)
 	if err != nil {
 		return err
 	}
+	accessToken := *dingTalkAccessToken.AccessToken
+
 	uc.log.WithContext(ctx).Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v", accessToken, depIds)
 	depts, err := uc.dingTalkRepo.FetchDeptDetails(ctx, accessToken, depIds)
 	log.Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v, err:%v", accessToken, depIds, err)
@@ -267,11 +269,13 @@ func (uc *AccounterIncreUsecase) UserAddOrg(ctx context.Context, event *clientV2
 		return err
 	}
 
-	accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
-	log.Infof("UserAddOrg.GetAccessToken accessToken: %v,userIds:%v err: %v", accessToken, userIds, err)
+	dingTalkAccessToken, err := uc.dingTalkRepo.GetAccessToken(ctx)
+	log.Infof("UserAddOrg.GetAccessToken dingTalkAccessToken: %v,userIds:%v err: %v", dingTalkAccessToken, userIds, err)
 	if err != nil {
 		return err
 	}
+	accessToken := *dingTalkAccessToken.AccessToken
+
 	uc.log.WithContext(ctx).Infof("UserAddOrg.GetUserDetail userIds: %v", userIds)
 	users, err := uc.dingTalkRepo.FetchUserDetail(ctx, accessToken, userIds)
 	if err != nil {
@@ -418,10 +422,13 @@ func (uc *AccounterIncreUsecase) FindWpsUser(ctx context.Context, userids []stri
 }
 func (uc *AccounterIncreUsecase) FindDingTalkUser(ctx context.Context, userids []string) ([]*dingtalk.DingtalkDeptUser, error) {
 	uc.log.WithContext(ctx).Infof("FindDingTalkUser userids: %v", userids)
-	accessToken, err := uc.dingTalkRepo.GetAccessToken(ctx, "code")
+
+	dingTalkAccessToken, err := uc.dingTalkRepo.GetAccessToken(ctx)
 	if err != nil {
 		return nil, err
 	}
+	accessToken := *dingTalkAccessToken.AccessToken
+
 	users, err := uc.dingTalkRepo.FetchUserDetail(ctx, accessToken, userids)
 	if err != nil {
 		return nil, err

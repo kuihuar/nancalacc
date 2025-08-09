@@ -4,4 +4,4 @@ import (
 	"github.com/google/wire"
 )
 
-var AuthProviderSet = wire.NewSet(NewAppAuthenticator, NewUserAuthenticator)
+var AuthProviderSet = wire.NewSet(NewAppAuthenticator, NewUserAuthenticator, NewLocalCachedAuthenticator)

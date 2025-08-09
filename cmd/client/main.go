@@ -94,12 +94,19 @@ func main() {
 	//FindAndDeleteUser("存在应用授权")
 	//FindAndDeleteDept("存在应用授权")
 	ctx := context.Background()
-	appAccessToken, err := auth.NewAppAuthenticator(bc.Service).GetAccessToken(ctx)
-	if err != nil {
-		panic(err)
-	}
-	CheckPostCreateUser(appAccessToken.AccessToken)
+	// appAccessToken, err := auth.NewAppAuthenticator(bc.Service).GetAccessToken(ctx)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// CheckPostCreateUser(appAccessToken.AccessToken)
 	//CheckDeleteDept(appAccessToken.AccessToken)
+
+	auth := auth.NewLocalCachedAuthenticator(auth.NewAppAuthenticator(bc.Service))
+
+	for i := 1; i <= 3; i++ {
+		token, err := auth.GetAccessToken(ctx)
+		fmt.Printf("GetAccessToken i:%d, token:%s, err:%v", i, token.AccessToken, err)
+	}
 
 }
 
