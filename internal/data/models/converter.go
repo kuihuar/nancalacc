@@ -1,7 +1,9 @@
 package models
 
 import (
+	"fmt"
 	"nancalacc/internal/dingtalk"
+	"nancalacc/pkg/cipherutil"
 	"strconv"
 	"time"
 )
@@ -17,7 +19,10 @@ func MakeLasUser(user *dingtalk.DingtalkDeptUser, thirdCompanyID, platformID, so
 		account = user.Userid
 	}
 	now := time.Now()
-
+	mobile, err := cipherutil.EncryptValueWithEnvSalt(user.Mobile)
+	if err != nil {
+		fmt.Printf("EncryptValueWithEnvSalt user.Mobile: %s, err: %v", user.Mobile, err)
+	}
 	entity := &TbLasUser{
 		TaskID:           taskId,
 		ThirdCompanyID:   thirdCompanyID,
@@ -28,7 +33,7 @@ func MakeLasUser(user *dingtalk.DingtalkDeptUser, thirdCompanyID, platformID, so
 		Account:          account,
 		NickName:         user.Name,
 		Email:            user.Email,
-		Phone:            user.Mobile,
+		Phone:            mobile,
 		Title:            user.Title,
 		Source:           source,
 		Ctime:            now,

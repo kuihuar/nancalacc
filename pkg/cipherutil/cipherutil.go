@@ -1,15 +1,17 @@
 package cipherutil
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/md5"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
+	"nancalacc/internal/conf"
 )
 
 var (
@@ -22,6 +24,13 @@ var (
 	ErrMD5WriteFailed          = errors.New("md5 write failed")
 	ErrInvalidInput            = errors.New("invalid input")
 	ErrAesCipher               = errors.New("aes cipher creation failed")
+
+	ErrNonceGeneration   = errors.New("failed to generate nonce")
+	ErrCipherCreation    = errors.New("failed to create AES cipher")
+	ErrGCMCreation       = errors.New("failed to create GCM instance")
+	ErrInvalidCiphertext = errors.New("ciphertext too short or invalid")
+	ErrDecryptionFailed  = errors.New("decryption failed")
+	uid                  = "nancalacc-426614174000"
 )
 
 func DecryptByAes(content string, key string) (string, error) {
@@ -34,76 +43,182 @@ func DecryptByAes(content string, key string) (string, error) {
 	if len(key) == 0 {
 		return "", ErrInvalidKey
 	}
-	// 使用MD5将应用SK转换为32位十六进制字符串作为AES密钥
 	h := md5.New()
 	if _, err := h.Write([]byte(key)); err != nil {
 		return "", ErrMD5WriteFailed
 	}
 	akey := hex.EncodeToString(h.Sum(nil))
-	// Base64解码
 	enDataFromBase64, err := base64.StdEncoding.DecodeString(content)
 	if err != nil {
 		return "", err
 	}
-	// 3. 验证密文长度
 	if len(enDataFromBase64) == 0 || len(enDataFromBase64)%aes.BlockSize != 0 {
 		return "", ErrInvalidInput
 	}
 
-	// 创建AES加密块
 	block, err := aes.NewCipher([]byte(akey))
 	if err != nil {
 		return "", ErrAesCipher
 	}
-	// 使用密钥前16字节作为初始化向量(IV)
 	iv := []byte(akey)[:aes.BlockSize]
 	decrypter := cipher.NewCBCDecrypter(block, iv)
-	// 执行解密
 	dst := make([]byte, len(enDataFromBase64))
 	decrypter.CryptBlocks(dst, enDataFromBase64)
-	// PKCS7解填充处理
 	length := len(dst)
 	unpadding := int(dst[length-1])
 	if length < unpadding {
 		return "", ErrInvalidPadding
 	}
 	res := string(dst[:(length - unpadding)])
-	// fmt.Printf("=====DecryptByAes.res: %s\n", res)
-	// 输出解密结果
 	return res, nil
 }
 
-func AesEncryptGcmByKey(content string, key string) (string, error) {
-	// Validate key length
+func EncryptByAes(content string, key string) (string, error) {
+	fmt.Printf("EncryptByAes.content: %s\n", content)
+	fmt.Printf("EncryptByAes.key: %s\n", key)
+
+	if len(content) == 0 {
+		return "", ErrEmptyPlaintext
+	}
+	if len(key) == 0 {
+		return "", ErrInvalidKey
+	}
+
+	h := md5.New()
+	if _, err := h.Write([]byte(key)); err != nil {
+		return "", ErrMD5WriteFailed
+	}
+	akey := hex.EncodeToString(h.Sum(nil))
+
+	block, err := aes.NewCipher([]byte(akey))
+	if err != nil {
+		return "", ErrAesCipher
+	}
+
+	iv := []byte(akey)[:aes.BlockSize]
+
+	plaintext := []byte(content)
+	padding := aes.BlockSize - len(plaintext)%aes.BlockSize
+	padtext := append(plaintext, bytes.Repeat([]byte{byte(padding)}, padding)...)
+
+	ciphertext := make([]byte, len(padtext))
+	encrypter := cipher.NewCBCEncrypter(block, iv)
+	encrypter.CryptBlocks(ciphertext, padtext)
+
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
+}
+
+func Encrypt(plaintext string, key []byte) (string, error) {
+	if len(key) != 32 {
+		return "", ErrInvalidKey
+	}
+	if plaintext == "" {
+		return "", ErrEmptyPlaintext
+	}
+
+	nonce := make([]byte, 12)
+	if _, err := rand.Read(nonce); err != nil {
+		return "", ErrNonceGeneration
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", ErrCipherCreation
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", ErrGCMCreation
+	}
+
+	ciphertext := gcm.Seal(nil, nonce, []byte(plaintext), nil)
+	encrypted := append(nonce, ciphertext...)
+	return base64.StdEncoding.EncodeToString(encrypted), nil
+}
+
+func Decrypt(ciphertext string, key []byte) (string, error) {
 	if len(key) != 32 {
 		return "", ErrInvalidKey
 	}
 
-	// Generate a random IV (nonce) - 12 bytes recommended for GCM
-	iv := make([]byte, 12)
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return "", ErrIVGeneration
-	}
-
-	// Create cipher block
-	block, err := aes.NewCipher([]byte(key))
+	encryptedData, err := base64.StdEncoding.DecodeString(ciphertext)
 	if err != nil {
-		return "", fmt.Errorf("aes cipher creation failed: %w", err)
+		return "", ErrInvalidCiphertext
 	}
 
-	// Create GCM mode
+	if len(encryptedData) < 12 {
+		return "", ErrInvalidCiphertext
+	}
+
+	nonce := encryptedData[:12]
+	data := encryptedData[12:]
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", ErrCipherCreation
+	}
+
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return "", fmt.Errorf("gcm mode creation failed: %w", err)
+		return "", ErrGCMCreation
 	}
 
-	// Encrypt and authenticate the data
-	encrypted := gcm.Seal(nil, iv, []byte(content), nil)
+	plaintext, err := gcm.Open(nil, nonce, data, nil)
+	if err != nil {
+		return "", ErrDecryptionFailed
+	}
 
-	// Pre-allocate buffer with exact size needed
-	bufferResult := make([]byte, len(iv)+len(encrypted))
-	copy(bufferResult[:len(iv)], iv)
-	copy(bufferResult[len(iv):], encrypted)
+	return string(plaintext), nil
+}
 
-	return base64.StdEncoding.EncodeToString(bufferResult), nil
+func GenerateKey(uid, salt string) string {
+	h := sha256.New()
+	h.Write([]byte(uid + salt))
+	hash := hex.EncodeToString(h.Sum(nil))
+	return hash[:32]
+}
+
+func EncryptValueWithEnvSalt(plaintext string) (string, error) {
+	if plaintext == "" {
+		return "", nil
+	}
+
+	//envKey := os.Getenv("ENCRYPTION_SALT")
+	salt, err := conf.GetEnv("salt")
+	if err != nil {
+		return "", err
+	}
+	envKey := GenerateKey(uid, salt)
+	if len(envKey) != 32 {
+		return "", fmt.Errorf("ENCRYPTION_SALT salt must be 32 bytes")
+	}
+
+	encrypted, err := Encrypt(plaintext, []byte(envKey))
+	if err != nil {
+		return "", fmt.Errorf("encryption failed: %w", err)
+	}
+	return encrypted, nil
+}
+
+func DecryptValueWithEnvSalt(ciphertext string) (string, error) {
+	if ciphertext == "" {
+		return "", nil
+	}
+
+	//envKey := os.Getenv("ENCRYPTION_SALT")
+	salt, err := conf.GetEnv("salt")
+	if err != nil {
+		return "", err
+	}
+	fmt.Printf("uid: %s, salt:%s\n", uid, salt)
+	envKey := GenerateKey(uid, salt)
+	if len(envKey) != 32 {
+		return "", fmt.Errorf("ENCRYPTION_SALT salt must be 32 bytes")
+	}
+
+	encrypted, err := Decrypt(ciphertext, []byte(envKey))
+	if err != nil {
+		return "", fmt.Errorf("encryption failed: %w", err)
+	}
+	return encrypted, nil
 }

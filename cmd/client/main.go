@@ -10,6 +10,7 @@ import (
 	"nancalacc/internal/data"
 	"nancalacc/internal/dingtalk"
 	"nancalacc/internal/wps"
+	"nancalacc/pkg/cipherutil"
 	"strconv"
 	"time"
 
@@ -104,6 +105,12 @@ func main() {
 
 	// authCache := auth.NewAppCacheAuthenticator(authApp)
 
+	// AesEncryptGcmByKey
+
+	mobile, err := cipherutil.DecryptValueWithEnvSalt("HyyjnqUeVqHoid9cprHMoPgkOAVu8farJigGpvOi+xm0aLO2ZytG")
+	fmt.Printf("mobile: %s, err:%v\n", mobile, err)
+
+	return
 	authDingtalk := auth.NewDingTalkAuthenticator(bc.Service)
 	authCache := auth.NewDingtalkCacheAuthenticator(authDingtalk, auth.WithKey[*auth.DingtalkCacheConfig]("custom_key"))
 
