@@ -100,12 +100,17 @@ func main() {
 	// }
 	// CheckPostCreateUser(appAccessToken.AccessToken)
 	//CheckDeleteDept(appAccessToken.AccessToken)
+	// authApp := auth.NewAppAuthenticator(bc.Service)
 
-	auth := auth.NewLocalCachedAuthenticator(auth.NewAppAuthenticator(bc.Service))
+	// authCache := auth.NewAppCacheAuthenticator(authApp)
+
+	authDingtalk := auth.NewDingTalkAuthenticator(bc.Service)
+	authCache := auth.NewDingtalkCacheAuthenticator(authDingtalk, auth.WithKey[*auth.DingtalkCacheConfig]("custom_key"))
 
 	for i := 1; i <= 3; i++ {
-		token, err := auth.GetAccessToken(ctx)
+		token, err := authCache.GetAccessToken(ctx)
 		fmt.Printf("GetAccessToken i:%d, token:%s, err:%v", i, token.AccessToken, err)
+		// return
 	}
 
 }
@@ -327,7 +332,8 @@ func FindWpsUser(ctx context.Context, userids []string) ([]*dingtalk.DingtalkDep
 
 func CheckGetDingtalkUserDetail() {
 	confService := bc.GetService()
-	dingtalkRepo := dingtalk.NewDingTalkRepo(confService.Auth.Dingtalk, log.GetLogger())
+	auth := auth.NewDingtalkCacheAuthenticator(auth.NewDingTalkAuthenticator(confService))
+	dingtalkRepo := dingtalk.NewDingTalkRepo(confService.Auth.Dingtalk, auth, log.GetLogger())
 	ctx := context.Background()
 	// accessToken, err := dingtalkRepo.GetAccessToken(ctx, "code")
 	// log.Infof("UserAddOrg.GetAccessToken accessToken: %v, err: %v", accessToken, err)
@@ -402,7 +408,8 @@ func CheckUserLeaveOrg() {
 	confService := bc.GetService()
 	accounterRepo := data.NewAccounterRepo(confService, dataData, log.GetLogger())
 	service_Auth_Dingtalk := conf.ProvideDingtalkConfig(confService)
-	dingtalkDingtalk := dingtalk.NewDingTalkRepo(service_Auth_Dingtalk, log.GetLogger())
+	authDingtalk := auth.NewDingtalkCacheAuthenticator(auth.NewDingTalkAuthenticator(confService))
+	dingtalkDingtalk := dingtalk.NewDingTalkRepo(service_Auth_Dingtalk, authDingtalk, log.GetLogger())
 	authenticator := auth.NewAppAuthenticator(confService)
 	wpsSync := wps.NewWpsSync(confService, log.GetLogger())
 	wpsWps := wps.NewWps(confService, log.GetLogger())

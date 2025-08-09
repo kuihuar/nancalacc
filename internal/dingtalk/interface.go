@@ -2,12 +2,11 @@ package dingtalk
 
 import (
 	"context"
-
-	dingtalkoauth2_1_0 "github.com/alibabacloud-go/dingtalk/oauth2_1_0"
+	"nancalacc/internal/auth"
 )
 
 type Dingtalk interface {
-	GetAccessToken(ctx context.Context) (dingtalkoauth2_1_0.GetAccessTokenResponseBody, error)
+	GetAccessToken(ctx context.Context) (*auth.AccessTokenResp, error)
 	FetchDepartments(ctx context.Context, token string) ([]*DingtalkDept, error)
 	FetchDepartmentUsers(ctx context.Context, token string, deptIds []int64) ([]*DingtalkDeptUser, error)
 

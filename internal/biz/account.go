@@ -117,7 +117,7 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	if err != nil {
 		return nil, err
 	}
-	accessToken := *dingTalkAccessToken.AccessToken
+	accessToken := dingTalkAccessToken.AccessToken
 	//taskId := time.Now().Add(time.Duration(1) * time.Second).Format("20060102150405")
 
 	// 1. 从第三方获取部门和用户数据

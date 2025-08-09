@@ -9,8 +9,6 @@ import (
 	stdurl "net/url"
 	"strings"
 	"time"
-
-	"github.com/patrickmn/go-cache"
 )
 
 const (
@@ -28,9 +26,9 @@ const (
 	grantType   = "client_credentials"
 )
 
-var (
-	tokenCache = cache.New(3600*time.Minute, 7200*time.Minute)
-)
+// var (
+// 	tokenCache = cache.New(3600*time.Minute, 7200*time.Minute)
+// )
 
 // [POST] {配置域名}/openapi/oauth2/token
 
@@ -67,10 +65,10 @@ func (a *AppAuthenticator) GetAccessToken(ctx context.Context) (*AccessTokenResp
 	uri := fmt.Sprintf("%s%s", url, AppAuthPath)
 
 	dataStr := fmt.Sprintf(`grant_type=%s&client_id=%s&client_secret=%s`, grantType, clientId, clientSecret)
-	fmt.Printf("Postpre uri: %s, dataStr: %s\n", uri, dataStr)
+	//fmt.Printf("Postpre uri: %s, dataStr: %s\n", uri, dataStr)
 	data := []byte(dataStr)
 	bs, err := httputil.Post(uri, data, 5*time.Second)
-	fmt.Printf("PostAfter err: %v,bs: %s\n", err, string(bs))
+	//fmt.Printf("PostAfter err: %v,bs: %s\n", err, string(bs))
 	if err != nil {
 		return nil, err
 	}
@@ -79,6 +77,6 @@ func (a *AppAuthenticator) GetAccessToken(ctx context.Context) (*AccessTokenResp
 	if err != nil {
 		return nil, err
 	}
-	tokenCache.Set(clientId, resp, time.Duration(resp.ExpiresIn)*time.Second)
+	// tokenCache.Set(clientId, resp, time.Duration(resp.ExpiresIn)*time.Second)
 	return resp, nil
 }

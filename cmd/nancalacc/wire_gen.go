@@ -7,8 +7,6 @@
 package main
 
 import (
-	"github.com/go-kratos/kratos/v2"
-	"github.com/go-kratos/kratos/v2/log"
 	"nancalacc/internal/auth"
 	"nancalacc/internal/biz"
 	"nancalacc/internal/conf"
@@ -18,9 +16,10 @@ import (
 	"nancalacc/internal/service"
 	"nancalacc/internal/task"
 	"nancalacc/internal/wps"
-)
 
-import (
+	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/log"
+
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -46,19 +45,21 @@ func wireApp(confServer *conf.Server, confService *conf.Service, confData *conf.
 	}
 	accounterRepo := data.NewAccounterRepo(confService, dataData, logger)
 	service_Auth_Dingtalk := conf.ProvideDingtalkConfig(confService)
-	dingtalkDingtalk := dingtalk.NewDingTalkRepo(service_Auth_Dingtalk, logger)
 	authenticator := auth.NewAppAuthenticator(confService)
+	appAuthenticator := auth.NewAppCacheAuthenticator(authenticator)
+	dingtalkAuthor := auth.NewDingtalkCacheAuthenticator(auth.NewDingTalkAuthenticator(confService))
+	dingtalkDingtalk := dingtalk.NewDingTalkRepo(service_Auth_Dingtalk, dingtalkAuthor, logger)
 	wpsSync := wps.NewWpsSync(confService, logger)
 	wpsWps := wps.NewWps(confService, logger)
 	service_Business := conf.ProvideBusinessConfig(confService)
 	cacheService := data.NewLocalCacheService(logger)
-	accounterUsecase := biz.NewAccounterUsecase(accounterRepo, dingtalkDingtalk, authenticator, wpsSync, wpsWps, service_Business, cacheService, logger)
+	accounterUsecase := biz.NewAccounterUsecase(accounterRepo, dingtalkDingtalk, appAuthenticator, wpsSync, wpsWps, service_Business, cacheService, logger)
 	oauth2Usecase := biz.NewOauth2Usecase(dingtalkDingtalk, service_Business, logger)
 	accountService := service.NewAccountService(accounterUsecase, oauth2Usecase, logger)
 	grpcServer := server.NewGRPCServer(confServer, accountService, logger)
 	httpServer := server.NewHTTPServer(confServer, accountService, logger)
 	cronService := task.NewCronServiceWithJobs(accounterUsecase, logger)
-	accounterIncreUsecase := biz.NewAccounterIncreUsecase(accounterRepo, dingtalkDingtalk, authenticator, wpsSync, wpsWps, service_Business, logger)
+	accounterIncreUsecase := biz.NewAccounterIncreUsecase(accounterRepo, dingtalkDingtalk, appAuthenticator, wpsSync, wpsWps, service_Business, logger)
 	dingTalkEventService := service.NewDingTalkEventService(confService, logger, accounterIncreUsecase)
 	app := newApp(logger, grpcServer, httpServer, cronService, dingTalkEventService)
 	return app, func() {
