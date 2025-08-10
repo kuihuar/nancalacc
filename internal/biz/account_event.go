@@ -577,7 +577,7 @@ func (uc *AccounterIncreUsecase) UserModifyOrg(ctx context.Context, event *clien
 		}
 	}
 	log.Infof("UserModifyOrg.CallEcisaccountsyncIncrement test %s", event.Data)
-	return nil
+	//return nil
 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
 	if err != nil {
 		return err
