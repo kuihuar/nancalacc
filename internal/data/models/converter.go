@@ -97,6 +97,7 @@ func MakeTbLasDepartmentUser(relation *dingtalk.DingtalkDeptUserRelation, thirdC
 }
 
 func MakeLasUserIncrement(user *dingtalk.DingtalkDeptUser, thirdCompanyID, platformID, companyID, source, updateType string) *TbLasUserIncrement {
+
 	var account string
 	if user.Name == "" {
 		user.Name = user.Userid
@@ -107,6 +108,8 @@ func MakeLasUserIncrement(user *dingtalk.DingtalkDeptUser, thirdCompanyID, platf
 		account = user.Userid
 	}
 	now := time.Now()
+	mobile, err := cipherutil.EncryptValueWithEnvSalt(user.Mobile)
+	fmt.Printf("EncryptValueWithEnvSalt user.Mobile: %s,mobile:%s err: %v", user.Mobile, mobile, err)
 	entity := &TbLasUserIncrement{
 		ThirdCompanyID:   thirdCompanyID,
 		PlatformID:       platformID,
@@ -123,7 +126,7 @@ func MakeLasUserIncrement(user *dingtalk.DingtalkDeptUser, thirdCompanyID, platf
 		Mtime:            now,
 		EmploymentStatus: "active",
 		EmploymentType:   "permanent",
-		UpdateType:       updateType, //"user_add",
+		UpdateType:       updateType,
 		SyncType:         "auto",
 		SyncTime:         now,
 		Status:           0,

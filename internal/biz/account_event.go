@@ -120,6 +120,12 @@ func (uc *AccounterIncreUsecase) OrgDeptRemove(ctx context.Context, event *clien
 		depIdstr = append(depIdstr, strconv.FormatInt(depId, 10))
 
 	}
+
+	if len(depIdstr) == 0 {
+		log.Info("OrgDeptRemove len(depIdstr) eq 0")
+		return errors.New("OrgDeptRemove len(depIdstr) eq 0")
+	}
+
 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
 	if err != nil {
 		return err
@@ -141,6 +147,12 @@ func (uc *AccounterIncreUsecase) OrgDeptRemove(ctx context.Context, event *clien
 		deptIDs = append(deptIDs, depInfo.ParentID)
 	}
 
+	log.Infof("OrgDeptRemove deptIDs: %v", deptIDs)
+
+	if len(deptIDs) == 0 {
+		log.Info("OrgDeptRemove len(deptIDs) eq 0")
+		return errors.New("OrgDeptRemove len(deptIDs) eq 0")
+	}
 	parentDeptInfos, err := uc.wps.BatchPostDepartments(ctx, token, wps.BatchPostDepartmentsRequest{
 		DeptIDs: deptIDs,
 	})

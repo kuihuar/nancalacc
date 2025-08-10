@@ -42,6 +42,8 @@ func NewMysqlDB(c *conf.Data, logger log.Logger) (*MainDB, error) {
 	return &MainDB{DB: db}, nil
 }
 
+// deleteUser
+// ECIS_ECISACCOUNTSYNC_DB
 func NewMysqlSyncDB(c *conf.Data, logger log.Logger) (*SyncDB, error) {
 	var dsn string
 	if c.GetDatabaseSync().Env == "dev" {
