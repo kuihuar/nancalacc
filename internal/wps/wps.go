@@ -446,7 +446,7 @@ func (ws *wps) GetUserDeptsByUserId(ctx context.Context, accessToken string, inp
 	uri := strings.Replace(GET_USER_DEPT_BY_USERID, "{user_id}", input.UserID, 1)
 	bs, err := wpsReq.GET(context.Background(), uri, accessToken, "")
 
-	log.Infof("GetUserByUserId: %s, err: %+v\n", string(bs), err)
+	log.Infof("GetUserDeptsByUserId: %s, err: %+v\n", string(bs), err)
 	if err != nil {
 		return nil, err
 	}
@@ -465,10 +465,9 @@ func (ws *wps) GetUserDeptsByUserId(ctx context.Context, accessToken string, inp
 }
 
 func (ws *wps) GetDeptChildren(ctx context.Context, accessToken string, input GetDeptChildrenRequest) (*GetDeptChildrenResponse, error) {
-	ws.log.WithContext(ctx).Infof("GetDeptChildren req %v", input)
 
 	log := ws.log.WithContext(ctx)
-	log.Infof("GetUserDeptsByUserId req %v", input)
+	log.Infof("GetDeptChildren req %v", input)
 
 	var resp GetDeptChildrenResponse
 
@@ -493,7 +492,7 @@ func (ws *wps) GetDeptChildren(ctx context.Context, accessToken string, input Ge
 
 	bs, err := wpsReq.GET(context.Background(), uri, accessToken, "")
 
-	log.Infof("GetUserByUserId: %s, err: %+v\n", string(bs), err)
+	log.Infof("GetDeptChildren: %s, err: %+v\n", string(bs), err)
 	if err != nil {
 		return nil, err
 	}
