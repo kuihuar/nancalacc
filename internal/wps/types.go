@@ -470,32 +470,32 @@ type GetDeptChildrenRequest struct {
 	WithTotal bool   `json:"with_total"`
 }
 
-// type GetDeptChildrenResponse struct {
-// 	Code int    `json:"code"`
-// 	Msg  string `json:"msg"`
-// 	Data struct {
-// 		Items []Department `json:"items"`
-// 	} `json:"data"`
-// }
-
+//	type GetDeptChildrenResponse struct {
+//		Code int    `json:"code"`
+//		Msg  string `json:"msg"`
+//		Data struct {
+//			Items []Department `json:"items"`
+//		} `json:"data"`
+//	}
+type DeptItem struct {
+	AbsPath  string `json:"abs_path"`
+	Ctime    int64  `json:"ctime"`
+	ExDeptID string `json:"ex_dept_id"`
+	ID       string `json:"id"`
+	Leaders  []struct {
+		Order  int    `json:"order"`
+		UserID string `json:"user_id"`
+	} `json:"leaders"`
+	Name     string `json:"name"`
+	Order    int    `json:"order"`
+	ParentID string `json:"parent_id"`
+	Source   string `json:"source"` // 枚举值如 "inner" 可以用 string 类型
+}
 type GetDeptChildrenResponse struct {
 	Data struct {
-		Items []struct {
-			AbsPath  string `json:"abs_path"`
-			Ctime    int64  `json:"ctime"`
-			ExDeptID string `json:"ex_dept_id"`
-			ID       string `json:"id"`
-			Leaders  []struct {
-				Order  int    `json:"order"`
-				UserID string `json:"user_id"`
-			} `json:"leaders"`
-			Name     string `json:"name"`
-			Order    int    `json:"order"`
-			ParentID string `json:"parent_id"`
-			Source   string `json:"source"` // 枚举值如 "inner" 可以用 string 类型
-		} `json:"items"`
-		NextPageToken string `json:"next_page_token"`
-		Total         int    `json:"total"`
+		Items         []DeptItem `json:"items"`
+		NextPageToken string     `json:"next_page_token"`
+		Total         int        `json:"total"`
 	} `json:"data"`
 	Code int    `json:"code"`
 	Msg  string `json:"msg"`

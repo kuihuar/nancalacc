@@ -53,6 +53,10 @@ type AccounterRepo interface {
 	UpdateTask(ctx context.Context, taskName, status string) error
 
 	GetTask(ctx context.Context, taskName string) (*models.Task, error)
+
+	BatchGetDeptUsers(ctx context.Context, taskName string) ([]*models.TbLasDepartmentUser, error)
+	BatchGetUsers(ctx context.Context, taskName string) ([]*models.TbLasUser, error)
+	BatchGetDepts(ctx context.Context, taskName string) ([]*models.TbLasDepartment, error)
 }
 
 // GreeterUsecase is a Greeter usecase.

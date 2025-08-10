@@ -612,7 +612,7 @@ func (r *dingTalkRepo) FetchUserDetail(ctx context.Context, token string, userId
 			}
 
 			bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
-			//r.log.Infof(">>>>>>>>>GetUserDetail.PostJSON: %v, err: %v\n", string(bs), err)
+			r.log.Infof(">>>>>>>>>GetUserDetail.PostJSON: %v, err: %v\n", string(bs), err)
 			if err != nil {
 				r.log.Errorf("GetUserDetail.PostJSON: %v, err: %v", string(bs), err)
 				return

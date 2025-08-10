@@ -215,32 +215,43 @@ func (r *accounterRepo) ClearAll(ctx context.Context) error {
 
 // user_del/user_update/user_add(update_type). . auto/manual(sync_type)
 func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersDel, usersUpd []*dingtalk.DingtalkDeptUser) error {
-
-	r.log.WithContext(ctx).Info("SaveIncrementUsers")
+	log := r.log.WithContext(ctx)
+	log.Info("SaveIncrementUsers")
+	inputlen := len(usersAdd) + len(usersDel) + len(usersUpd)
+	if inputlen == 0 {
+		return errors.New("empty input")
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	entities := make([]*models.TbLasUserIncrement, 0, len(usersAdd)+len(usersDel) + +len(usersUpd))
+	entities := make([]*models.TbLasUserIncrement, 0, inputlen)
 
 	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
 	platformID := r.serviceConf.Business.PlatformIds
 	companyID := r.serviceConf.Business.CompanyId
 
 	// user_del/user_update/user_add
-	for _, user := range usersAdd {
-		entity := models.MakeLasUserIncrement(user, thirdCompanyID, platformID, companyID, Source, "user_add")
+	for _, add := range usersAdd {
+		entity := models.MakeLasUserIncrement(add, thirdCompanyID, platformID, companyID, Source, "user_add")
 		entities = append(entities, entity)
 	}
-	for _, user := range usersDel {
-		entity := models.MakeLasUserIncrement(user, thirdCompanyID, platformID, companyID, Source, "user_del")
+	for _, del := range usersDel {
+		entity := models.MakeLasUserIncrement(del, thirdCompanyID, platformID, companyID, Source, "user_del")
 		// entity := r.makeLasUserIncrement(user, "user_del")
 		entities = append(entities, entity)
 	}
-	for _, user := range usersUpd {
+	for _, upd := range usersUpd {
 		// entity := r.makeLasUserIncrement(user, "user_update")
-		entity := models.MakeLasUserIncrement(user, thirdCompanyID, platformID, companyID, Source, "user_update")
+		entity := models.MakeLasUserIncrement(upd, thirdCompanyID, platformID, companyID, Source, "user_update")
 		entities = append(entities, entity)
 	}
+
+	log.Info("SaveIncrementUsers entities:")
+
+	for i, item := range entities {
+		log.Info("entities i: %d, item: %v", i, item)
+	}
+
 	result := r.data.db.WithContext(ctx).Create(&entities)
 
 	if result.Error != nil {
@@ -255,30 +266,42 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 
 // dept_del/dept_update/dept_add/dept_move(update_type)
 func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel, deptsUpd []*dingtalk.DingtalkDept) error {
-
-	r.log.WithContext(ctx).Info("SaveIncrementDepartments")
+	log := r.log.WithContext(ctx)
+	log.Info("SaveIncrementDepartments")
+	inputlen := len(deptsAdd) + len(deptsDel) + len(deptsUpd)
+	if inputlen == 0 {
+		return errors.New("empty input")
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
+
 	// dept_del/dept_update/dept_add
-	entities := make([]*models.TbLasDepartmentIncrement, 0, len(deptsAdd)+len(deptsDel))
+	entities := make([]*models.TbLasDepartmentIncrement, 0, inputlen)
 	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
 	platformID := r.serviceConf.Business.PlatformIds
 
-	for _, dep := range deptsAdd {
-		entity := models.MakeDepartmentIncrement(dep, thirdCompanyID, platformID, "", Source, "dept_add")
+	for _, add := range deptsAdd {
+		entity := models.MakeDepartmentIncrement(add, thirdCompanyID, platformID, "", Source, "dept_add")
 		entities = append(entities, entity)
 	}
-	for _, dep := range deptsUpd {
-		// entity := r.makeDepartmentIncrement(dep, "dept_update")
-		entity := models.MakeDepartmentIncrement(dep, thirdCompanyID, platformID, "", Source, "dept_update")
+	for _, del := range deptsDel {
+		// entity := r.makeDepartmentIncrement(dep, "dept_del")
+		entity := models.MakeDepartmentIncrement(del, thirdCompanyID, platformID, "", Source, "dept_del")
 		entities = append(entities, entity)
 	}
 
-	for _, dep := range deptsDel {
-		// entity := r.makeDepartmentIncrement(dep, "dept_del")
-		entity := models.MakeDepartmentIncrement(dep, thirdCompanyID, platformID, "", Source, "dept_del")
+	for _, upd := range deptsUpd {
+		// entity := r.makeDepartmentIncrement(dep, "dept_update")
+		entity := models.MakeDepartmentIncrement(upd, thirdCompanyID, platformID, "", Source, "dept_update")
 		entities = append(entities, entity)
 	}
+
+	log.Info("SaveIncrementDepartments entities:")
+
+	for i, item := range entities {
+		log.Info("entities i: %d, item: %v", i, item)
+	}
+
 	result := r.data.db.WithContext(ctx).Create(&entities)
 
 	if result.Error != nil {
@@ -294,30 +317,54 @@ func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, 
 }
 
 func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel, relationsUpd []*dingtalk.DingtalkDeptUserRelation) error {
+	log := r.log.WithContext(ctx)
+	log.Info("SaveIncrementDepartmentUserRelations")
 
-	r.log.WithContext(ctx).Info("SaveIncrementDepartmentUserRelations")
+	inputlen := len(relationsAdd) + len(relationsDel) + len(relationsUpd)
+	if inputlen == 0 {
+		return errors.New("empty input")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	entities := make([]*models.TbLasDepartmentUserIncrement, 0, len(relationsAdd)+len(relationsDel)+len(relationsUpd))
+	log.Info("SaveIncrementDepartmentUserRelations input:")
+
+	for i, item := range relationsAdd {
+		log.Info("relationsAdd input i: %d, item: %v", i, item)
+	}
+	for i, item := range relationsDel {
+		log.Info("relationsDel input i: %d, item: %v", i, item)
+	}
+	for i, item := range relationsUpd {
+		log.Info("relationsUpd input i: %d, item: %v", i, item)
+	}
+
+	entities := make([]*models.TbLasDepartmentUserIncrement, 0, inputlen)
 
 	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
 	platformID := r.serviceConf.Business.PlatformIds
 	// user_dept_add/user_dept_del/user_dept_update/user_dept_move
-	for _, relation := range relationsAdd {
-		entity := models.MmakeTbLasDepartmentUserIncrement(relation, thirdCompanyID, platformID, "", Source, "user_dept_add")
+	for _, add := range relationsAdd {
+		entity := models.MmakeTbLasDepartmentUserIncrement(add, thirdCompanyID, platformID, "", Source, "user_dept_add")
 		entities = append(entities, entity)
 	}
 
-	for _, relation := range relationsDel {
+	for _, del := range relationsDel {
 		// entity := r.makeDeptUserRelatins(relation, "user_dept_del")
-		entity := models.MmakeTbLasDepartmentUserIncrement(relation, thirdCompanyID, platformID, "", Source, "user_dept_del")
+		entity := models.MmakeTbLasDepartmentUserIncrement(del, thirdCompanyID, platformID, "", Source, "user_dept_del")
 		entities = append(entities, entity)
 	}
-	for _, relation := range relationsUpd {
+	for _, upd := range relationsUpd {
 		// entity := r.makeDeptUserRelatins(relation, "user_dept_update")
-		entity := models.MmakeTbLasDepartmentUserIncrement(relation, thirdCompanyID, platformID, "", Source, "user_dept_update")
+		entity := models.MmakeTbLasDepartmentUserIncrement(upd, thirdCompanyID, platformID, "", Source, "user_dept_update")
 		entities = append(entities, entity)
+	}
+
+	log.Info("SaveIncrementDepartmentUserRelations entities:")
+
+	for i, item := range entities {
+		log.Info("entities i: %d, item: %v", i, item)
 	}
 
 	result := r.data.db.WithContext(ctx).Create(&entities)

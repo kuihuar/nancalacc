@@ -20,9 +20,7 @@ func MakeLasUser(user *dingtalk.DingtalkDeptUser, thirdCompanyID, platformID, so
 	}
 	now := time.Now()
 	mobile, err := cipherutil.EncryptValueWithEnvSalt(user.Mobile)
-	if err != nil {
-		fmt.Printf("EncryptValueWithEnvSalt user.Mobile: %s, err: %v", user.Mobile, err)
-	}
+	fmt.Printf("EncryptValueWithEnvSalt user.Mobile: %s,mobile:%s err: %v", user.Mobile, mobile, err)
 	entity := &TbLasUser{
 		TaskID:           taskId,
 		ThirdCompanyID:   thirdCompanyID,
@@ -33,7 +31,7 @@ func MakeLasUser(user *dingtalk.DingtalkDeptUser, thirdCompanyID, platformID, so
 		Account:          account,
 		NickName:         user.Name,
 		Email:            user.Email,
-		Phone:            mobile,
+		Phone:            user.Mobile,
 		Title:            user.Title,
 		Source:           source,
 		Ctime:            now,

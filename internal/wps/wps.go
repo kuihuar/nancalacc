@@ -455,12 +455,12 @@ func (ws *wps) GetUserDeptsByUserId(ctx context.Context, accessToken string, inp
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("GetUserDeptsByUserId res %v", resp)
 	//fmt.Printf("resp: %+v\n", resp)
 	//fmt.Println()
 	if resp.Code != 0 {
 		return nil, ErrCodeNot0
 	}
-
 	return &resp, nil
 }
 
