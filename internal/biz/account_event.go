@@ -456,6 +456,17 @@ func (uc *AccounterIncreUsecase) UserModifyOrg(ctx context.Context, event *clien
 
 	log := uc.log.WithContext(ctx)
 	log.Infof("UserModifyOrg data: %v", event.Data)
+	diffUserInfo, _ := uc.getUseInfoFromDingTalkEvent(event)
+	diffUserMap := make(map[string]*dingtalk.DingtalkDeptUser, len(diffUserInfo))
+	if len(diffUserInfo) > 0 {
+		for _, diffUser := range diffUserInfo {
+			diffUserMap[diffUser.Userid] = diffUser
+			//uc.log.Infof("UserModifyOrg[基础信息变更] user: %v", user)
+		}
+		//uc.log.Info("UserModifyOrg[基础信息变更] modfiyUserBaseInfo:")
+		//modfiyUserBaseInfo = append(modfiyUserBaseInfo, diffUserInfo...)
+	}
+
 	userIds, err := uc.getUseridsFromDingTalkEvent(event)
 	if err != nil {
 		return err
@@ -508,7 +519,7 @@ func (uc *AccounterIncreUsecase) UserModifyOrg(ctx context.Context, event *clien
 				key1 := wpsUser.Userid + "#" + strconv.FormatInt(deptId, 10)
 
 				if _, ok := dingtalkUseridDeptidMap[key1]; ok {
-					//部门删除
+					//部门修改
 					updDepts = append(updDepts, deptId)
 					uc.log.Infof("UserModifyOrg[部门关系修改] user.Userid#deptId: %v", key1)
 					delete(dingtalkUseridDeptidMap, key1)
@@ -546,30 +557,35 @@ func (uc *AccounterIncreUsecase) UserModifyOrg(ctx context.Context, event *clien
 			updRelation = append(updRelation, generateUserDeptRelations([]*dingtalk.DingtalkDeptUser{upduser})...)
 		}
 
+		if _, ok := diffUserMap[finalUser.Userid]; ok {
+			modfiyUserBaseInfo = append(modfiyUserBaseInfo, finalUser)
+		}
 	}
 	uc.log.Info("UserModifyOrg[部门关系新增] addRelation:")
 	for i, item := range addRelation {
-		uc.log.Infof("UserModifyOrg[部门关系新增] i: %d, item%v", i, item)
+		uc.log.Infof("UserModifyOrg[部门关系新增] i: %d, item: %+v", i, item)
 	}
 	uc.log.Info("UserModifyOrg[部门关系删除] delRelation:")
 	for i, item := range delRelation {
-		uc.log.Infof("UserModifyOrg[部门关系删除] i: %d, item%v", i, item)
+		uc.log.Infof("UserModifyOrg[部门关系删除] i: %d, item: %+v", i, item)
 	}
 
 	uc.log.Info("UserModifyOrg[部门关系修改] updRelation:")
 	for i, item := range updRelation {
-		uc.log.Infof("UserModifyOrg[部门关系修改] i: %d, item%v", i, item)
+		uc.log.Infof("UserModifyOrg[部门关系修改] i: %d, iitem: %+v", i, item)
 	}
 
-	diffUserInfo, _ := uc.getUseInfoFromDingTalkEvent(event)
-	if len(diffUserInfo) > 0 {
-		uc.log.Info("UserModifyOrg[基础信息变更] modfiyUserBaseInfo:")
-		modfiyUserBaseInfo = append(modfiyUserBaseInfo, diffUserInfo...)
+	uc.log.Info("UserModifyOrg[基础信息变更] modfiyUserBaseInfo:")
+	for i, item := range modfiyUserBaseInfo {
+		uc.log.Infof("UserModifyOrg[基础信息变更] i: %d, item: %+v", i, item)
 	}
-	err = uc.repo.SaveIncrementUsers(ctx, nil, nil, modfiyUserBaseInfo)
-	if err != nil {
-		return err
+	if len(modfiyUserBaseInfo) > 0 {
+		err = uc.repo.SaveIncrementUsers(ctx, nil, nil, modfiyUserBaseInfo)
+		if err != nil {
+			return err
+		}
 	}
+
 	if len(addRelation)+len(delRelation)+len(updRelation) > 0 {
 		err = uc.repo.SaveIncrementDepartmentUserRelations(ctx, addRelation, delRelation, updRelation)
 		if err != nil {
