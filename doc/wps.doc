@@ -13,3 +13,31 @@ precheck_kubewps_dc_v7.0.2505b.20250610.254.tar.gz
 curl -X POST http://192.168.1.141/c/asyncacc/v1/account -H "Content-Type: application/json" -d '{"trigger_type":"1","sync_type":"1"}'
 
 curl -X POST  -H 'X-Filename: test.xlsx' --data-binary "@/Users/jianfenliu/Downloads/sync_user.xlsx"  'http://192.168.1.141/c/asyncacc/v1/upload'
+
+
+帐号对接
+https://365.kdocs.cn/l/cr165QH1rYos?openfrom=docs
+
+https://365.kdocs.cn/l/chUFEMMdlPM4
+
+
+https://cams.wpseco.cn/welcome
+
+接口中文档
+
+https://v7.wpseco.cn/developer/document/app/wps365/server/address-book/department/get-dept-list-by-user.html
+
+
+dinging
+
+事件与回调
+https://open-dev.dingtalk.com/fe/app?spm=a2q3p.21071111.0.0.5445pjgRpjgR1r&hash=%23%2FappMgr%2Finner%2Fh5%2F3926725292%2F9#/appMgr/inner/h5/3926725292/9
+
+订阅总览
+https://open.dingtalk.com/document/orgapp/org-event-overview
+
+版本发布布
+https://open-dev.dingtalk.com/fe/ai?hash=%23%2Fapp%2F1ce2ed85-d964-440b-8e1c-0074a137fa08%2Fversion#/app/1ce2ed85-d964-440b-8e1c-0074a137fa08/version
+
+成员管理 
+https://oa.dingtalk.com/contacts.htm#/contacts

@@ -575,10 +575,10 @@ func (r *dingTalkRepo) GetUseridByUnionid(ctx context.Context, token, unionid st
 func (r *dingTalkRepo) FetchUserDetail(ctx context.Context, token string, userIds []string) ([]*DingtalkDeptUser, error) {
 	log := r.log.WithContext(ctx)
 
-	log.Info("FetchUserDetail token: %s,userIds: %v", token, userIds)
+	log.Infof("FetchUserDetail token: %s, userIds: %v", token, userIds)
 	uri := fmt.Sprintf("%s/topapi/v2/user/get?access_token=%s", r.data.Endpoint, token)
 
-	r.log.Info("FetchUserDetail deptIds: %v, uri: %v", userIds, uri)
+	log.Info("FetchUserDetail deptIds: %v, uri: %v", userIds, uri)
 	sem := make(chan struct{}, r.data.MaxConcurrent)
 	userList := make([]*DingtalkDeptUser, 0)
 	var mu sync.Mutex
