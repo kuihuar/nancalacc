@@ -61,6 +61,16 @@ func (s *AccountService) GetSyncAccount(ctx context.Context, req *v1.GetSyncAcco
 	return s.accounterUsecase.GetSyncAccount(ctx, req)
 }
 func (s *AccountService) CancelSyncTask(ctx context.Context, req *v1.CancelSyncAccountRequest) (*emptypb.Empty, error) {
+	log := s.log.WithContext(ctx)
+	log.Infof("CancelSyncTask req: %v", req)
+	if req.TaskId == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "task_id is empty")
+	}
+	err := s.accounterUsecase.CleanSyncAccount(ctx, req.TaskId, req.GetTags())
+
+	if err != nil {
+		return nil, err
+	}
 	return &emptypb.Empty{}, nil
 }
 func (s *AccountService) GetUserInfo(ctx context.Context, req *v1.GetUserInfoRequest) (*v1.GetUserInfoResponse, error) {

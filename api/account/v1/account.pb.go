@@ -602,6 +602,7 @@ func (x *GetSyncAccountReply) GetLatestSyncTime() *timestamppb.Timestamp {
 type CancelSyncAccountRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TaskId        string                 `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"` // 要删除的任务ID
+	Tags          []string               `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -641,6 +642,13 @@ func (x *CancelSyncAccountRequest) GetTaskId() string {
 		return x.TaskId
 	}
 	return ""
+}
+
+func (x *CancelSyncAccountRequest) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
 }
 
 type GetAccessTokenRequest struct {
@@ -1105,9 +1113,10 @@ const file_api_account_v1_account_proto_rawDesc = "" +
 	"\aRUNNING\x10\x01\x12\v\n" +
 	"\aSUCCESS\x10\x02\x12\n" +
 	"\n" +
-	"\x06FAILED\x10\x03\"3\n" +
+	"\x06FAILED\x10\x03\"G\n" +
 	"\x18CancelSyncAccountRequest\x12\x17\n" +
-	"\atask_id\x18\x01 \x01(\tR\x06taskId\"+\n" +
+	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x12\n" +
+	"\x04tags\x18\x02 \x03(\tR\x04tags\"+\n" +
 	"\x15GetAccessTokenRequest\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\"\x7f\n" +
 	"\x16GetAccessTokenResponse\x12!\n" +

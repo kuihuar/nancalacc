@@ -3,7 +3,7 @@ package data
 import (
 	"errors"
 	"nancalacc/internal/conf"
-	"nancalacc/pkg/cipherutil"
+	"nancalacc/internal/pkg/cipherutil"
 	"strings"
 	"time"
 
@@ -43,7 +43,7 @@ func NewMysqlDB(c *conf.Data, logger log.Logger) (*MainDB, error) {
 }
 
 // deleteUser
-// ECIS_ECISACCOUNTSYNC_DB
+// ECIS_ECISACCOUNTSYNC_DB=rESQpZX7v1v4YZletn9rCPJXehB9GFT/dzVFk3R99aMEjCKAG6w+vQKYdwFjEil8Lz4JLaZu8ziT1U3oHwv02MwjBfKed1/xNwhlGrt9jQ+zcQod+0W8QS5SNDr3InBlJzFYqPpAu9UkDpHsYsheVgZGouFz6qVKetVn17ZpdFZgnS2Ct8mJgYLFr3Sry9m8
 func NewMysqlSyncDB(c *conf.Data, logger log.Logger) (*SyncDB, error) {
 	var dsn string
 	if c.GetDatabaseSync().Env == "dev" {

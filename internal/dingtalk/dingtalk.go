@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"nancalacc/internal/auth"
 	"nancalacc/internal/conf"
+	"nancalacc/internal/pkg/utils"
 	"nancalacc/pkg/httputil"
 	"sync"
 	"time"
@@ -371,14 +372,21 @@ func (r *dingTalkRepo) FetchDepartmentUsers(ctx context.Context, token string, d
 	close(results)
 	//close(errChan)
 	var userList []*DingtalkDeptUser
+	usersMap := make(map[string]*DingtalkDeptUser)
 	for user := range results {
+		// log.Infof("FetchDepartmentUsers results user: %+v", user)
+		if _, ok := usersMap[user.Userid]; ok {
+			usersMap[user.Userid].DeptIDList = append(usersMap[user.Userid].DeptIDList, user.DeptIDList...)
+			usersMap[user.Userid].DeptIDList = utils.RemoveDuplicates(usersMap[user.Userid].DeptIDList)
 
-		userList = append(userList, user)
+		}
+		usersMap[user.Userid] = user
 
 	}
-	// for _, user := range userList {
-	// 	r.log.Info("FetchDepartmentUsers.userList.user: %v", user)
-	// }
+	for _, u := range usersMap {
+		// log.Infof("FetchDepartmentUsers usersMap user: %+v", u)
+		userList = append(userList, u)
+	}
 	return userList, nil
 }
 func (r *dingTalkRepo) getUserListByDepId(ctx context.Context, token string, deptId int64) ([]*DingtalkDeptUser, int64, error) {
@@ -400,7 +408,7 @@ func (r *dingTalkRepo) getUserListByDepId(ctx context.Context, token string, dep
 	//log.Info("getUserListByDepId.uri: %v, input: %v, jsonData: %v", uri, input, string(jsonData))
 
 	bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
-	//log.Info("getUserListByDepId.body: %v, err: %v", string(bs), err)
+	log.Info("getUserListByDepId.body: %v, err: %v", string(bs), err)
 	if err != nil {
 		return nil, 0, err
 	}

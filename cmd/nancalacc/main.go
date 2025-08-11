@@ -12,7 +12,6 @@ import (
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
 
@@ -86,21 +85,21 @@ func main() {
 	// 创建级别过滤器
 	//_ = log.NewFilter(stdLogger, log.FilterLevel(log.LevelDebug), log.FilterLevel(log.LevelError), log.FilterLevel(log.LevelFatal))
 
-	id := bc.App.GetId()
-	Name := bc.App.GetName()
-	Version := bc.App.GetVersion()
+	//id := bc.App.GetId()
+	//Name := bc.App.GetName()
+	//Version := bc.App.GetVersion()
 	Env := bc.App.GetEnv()
 
 	fmt.Println(Env)
 
 	logger := log.With(stdLogger,
-		"ts", log.DefaultTimestamp,
+		//"ts", log.DefaultTimestamp,
 		"caller", log.DefaultCaller,
-		"service.id", id,
-		"service.name", Name,
-		"service.version", Version,
-		"trace.id", tracing.TraceID(),
-		"span.id", tracing.SpanID(),
+		//"service.id", id,
+		//"service.name", Name,
+		//"service.version", Version,
+		//"trace.id", tracing.TraceID(),
+		//"span.id", tracing.SpanID(),
 	)
 
 	app, cleanup, err := wireApp(bc.Server, bc.Service, bc.Data, logger)

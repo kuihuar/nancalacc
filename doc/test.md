@@ -10,3 +10,10 @@ etcdctl --endpoints=127.0.0.1:2379 put /configs/nancalacc/data.database_sync.jso
   }
 }'
 ```
+
+
+curl -X DELETE http://119.3.173.229/c/asyncacc/v1/account -H "Content-Type: application/json" -d '{"task_id":"phone","tags":["18910953345"]}'
+
+
+
+curl -X DELETE "http://119.3.173.229/c/asyncacc/v1/account?task_id=phone&tags=tag1&tags=tag2"

@@ -49,9 +49,9 @@ app:
   logout : "stdout"
 service:
   business:
-    third_company_id: "1" # 三方租户ID
-    platform_ids: "1" # 客户源数据ID
-    company_id: "1" # 云文档租户公司ID
+    third_company_id: "1" # 三方租户ID nancal
+    platform_ids: "1" # 客户源数据ID dingtalkofnancal
+    company_id: "1" # 云文档租户公司ID nancal
     ecisaccountsync_url: "http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/all"
     ecisaccountsync_url_increment: "http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/increment"  
   auth:

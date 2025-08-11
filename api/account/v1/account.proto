@@ -137,6 +137,7 @@ message GetSyncAccountReply {
 
 message CancelSyncAccountRequest {
 	string task_id = 1;      // 要删除的任务ID
+	repeated string tags = 2;
 }
 
 

@@ -8,6 +8,7 @@ import (
 	"nancalacc/internal/auth"
 	"nancalacc/internal/conf"
 	"nancalacc/internal/dingtalk"
+	"nancalacc/internal/pkg/utils"
 	"nancalacc/internal/wps"
 	"strconv"
 
@@ -480,6 +481,8 @@ func (uc *AccounterIncreUsecase) UserModifyOrg(ctx context.Context, event *clien
 	}
 
 	userIds, err := uc.getUseridsFromDingTalkEvent(event)
+
+	userIds = utils.RemoveDuplicates(userIds)
 	if err != nil {
 		return err
 	}

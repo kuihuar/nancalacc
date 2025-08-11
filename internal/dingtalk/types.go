@@ -58,9 +58,6 @@ type DingtalkDeptResponse struct {
 type FetchUserDetailRequest struct {
 	UserIDs []string `json:"userid"`
 }
-type FetchUserDetailResponse struct {
-	UserIDs []string `json:"userid"`
-}
 
 type DingtalkDeptUser struct {
 	Active        bool    `json:"active"`

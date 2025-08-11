@@ -50,10 +50,29 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.Dingtal
 	platformID := r.serviceConf.Business.PlatformIds
 	entities := make([]*models.TbLasUser, 0, len(users))
 	for _, user := range users {
+		err := dingtalk.ValidateDingTalkUser(ctx, user)
+		if err != nil {
+			r.log.Errorf("ValidateDingTalkUser error: %v", err)
+			continue
+		}
 		entity := models.MakeLasUser(user, thirdCompanyID, platformID, Source, taskId)
 		entities = append(entities, entity)
 	}
-
+	// result := r.data.db.WithContext(ctx).Clauses(clause.OnConflict{
+	// 		Columns: []clause.Column{
+	// 			{Name: "uid"},
+	// 			{Name: "task_id"},
+	// 			{Name: "platform_id"},
+	// 		},
+	// 		DoNothing: true,
+	// 	}).Clauses(clause.OnConflict{
+	// 		Columns: []clause.Column{
+	// 			{Name: "account"},
+	// 			{Name: "task_id"},
+	// 			{Name: "third_company_id"},
+	// 		},
+	// 		DoNothing: true,
+	// 	}).Create(&entities)
 	result := r.data.db.WithContext(ctx).Create(&entities)
 
 	if result.Error != nil {
@@ -232,15 +251,30 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 
 	// user_del/user_update/user_add
 	for _, add := range usersAdd {
+		err := dingtalk.ValidateDingTalkUser(ctx, add)
+		if err != nil {
+			r.log.Errorf("ValidateDingTalkUser error: %v", err)
+			continue
+		}
 		entity := models.MakeLasUserIncrement(add, thirdCompanyID, platformID, companyID, Source, "user_add")
 		entities = append(entities, entity)
 	}
 	for _, del := range usersDel {
+		err := dingtalk.ValidateDingTalkUser(ctx, del)
+		if err != nil {
+			r.log.Errorf("ValidateDingTalkUser error: %v", err)
+			continue
+		}
 		entity := models.MakeLasUserIncrement(del, thirdCompanyID, platformID, companyID, Source, "user_del")
 		// entity := r.makeLasUserIncrement(user, "user_del")
 		entities = append(entities, entity)
 	}
 	for _, upd := range usersUpd {
+		err := dingtalk.ValidateDingTalkUser(ctx, upd)
+		if err != nil {
+			r.log.Errorf("ValidateDingTalkUser error: %v", err)
+			continue
+		}
 		// entity := r.makeLasUserIncrement(user, "user_update")
 		entity := models.MakeLasUserIncrement(upd, thirdCompanyID, platformID, companyID, Source, "user_update")
 		entities = append(entities, entity)

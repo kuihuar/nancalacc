@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"nancalacc/internal/conf"
-	httpwps "nancalacc/pkg/httputil/wps"
 
 	"github.com/go-kratos/kratos/v2/log"
 )
@@ -36,7 +35,7 @@ func (ws *wpsSync) PostEcisaccountsyncAll(ctx context.Context, accessToken strin
 	input.CollectCost = CollectCost
 	ak := ws.serviceConf.Auth.App.ClientId
 	sk := ws.serviceConf.Auth.App.ClientSecret
-	wpsReq := httpwps.NewWPSRequest(DOMAIN, ak, sk)
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
 
 	ws.log.Infof("PostEcisaccountsyncAll.req path:%s,input:%+v\n", ECISACCOUNTSYNC_PATH_INCREMENT, input)
 
@@ -67,7 +66,7 @@ func (ws *wpsSync) PostEcisaccountsyncIncrement(ctx context.Context, accessToken
 	// }
 	ak := ws.serviceConf.Auth.App.ClientId
 	sk := ws.serviceConf.Auth.App.ClientSecret
-	wpsReq := httpwps.NewWPSRequest(DOMAIN, ak, sk)
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
 
 	ws.log.Infof("PostEcisaccountsyncIncrement.req path:%s,input:%+v\n", ECISACCOUNTSYNC_PATH_INCREMENT, input)
 

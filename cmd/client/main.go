@@ -10,7 +10,6 @@ import (
 	"nancalacc/internal/data"
 	"nancalacc/internal/dingtalk"
 	"nancalacc/internal/wps"
-	"nancalacc/pkg/cipherutil"
 	"strconv"
 	"time"
 
@@ -92,7 +91,7 @@ func main() {
 	// }
 	//CheckGetCompAllUsers()
 	// CheckGetCompAllDepts()
-	//FindAndDeleteUser("存在应用授权")
+	// FindAndDeleteUser()
 	//FindAndDeleteDept("存在应用授权")
 	ctx := context.Background()
 	// appAccessToken, err := auth.NewAppAuthenticator(bc.Service).GetAccessToken(ctx)
@@ -107,13 +106,44 @@ func main() {
 
 	// AesEncryptGcmByKey
 
-	mobile, err := cipherutil.DecryptValueWithEnvSalt("HyyjnqUeVqHoid9cprHMoPgkOAVu8farJigGpvOi+xm0aLO2ZytG")
-	fmt.Printf("mobile: %s, err:%v\n", mobile, err)
+	// mobile, err := cipherutil.DecryptValueWithEnvSalt("HyyjnqUeVqHoid9cprHMoPgkOAVu8farJigGpvOi+xm0aLO2ZytG")
+	// fmt.Printf("mobile: %s, err:%v\n", mobile, err)
 
-	return
+	// return
 	authDingtalk := auth.NewDingTalkAuthenticator(bc.Service)
-	authCache := auth.NewDingtalkCacheAuthenticator(authDingtalk, auth.WithKey[*auth.DingtalkCacheConfig]("custom_key"))
+	authCache := auth.NewDingtalkCacheAuthenticator(authDingtalk)
 
+	// authCache := auth.NewDingtalkCacheAuthenticator(authDingtalk, auth.WithKey[*auth.DingtalkCacheConfig]("custom_key"))
+
+	token, err := authCache.GetAccessToken(ctx)
+	if err != nil {
+		panic(err)
+	}
+	dingtalkRepo := dingtalk.NewDingTalkRepo(bc.Service.Auth.Dingtalk, authCache, log.GetLogger())
+
+	depts, err := dingtalkRepo.FetchDepartments(ctx, token.AccessToken)
+	log.Infof("CreateSyncAccount.FetchDepartments: depts: %+v, err: %v", depts, err)
+	if err != nil {
+		panic(err)
+	}
+	for _, dept := range depts {
+		log.Infof("biz.CreateSyncAccount: dept: %+v", dept)
+	}
+	var deptIds []int64
+	for _, dept := range depts {
+		deptIds = append(deptIds, dept.DeptID)
+	}
+
+	deptUsers, err := dingtalkRepo.FetchDepartmentUsers(ctx, token.AccessToken, deptIds)
+
+	log.Infof("CreateSyncAccount.FetchDepartmentUsers deptUsers: %v, err: %v", deptUsers, err)
+	for _, deptUser := range deptUsers {
+		log.Infof("biz.CreateSyncAccount: deptUser: %+v", deptUser)
+	}
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("success")
 	for i := 1; i <= 3; i++ {
 		token, err := authCache.GetAccessToken(ctx)
 		fmt.Printf("GetAccessToken i:%d, token:%s, err:%v", i, token.AccessToken, err)
@@ -221,21 +251,72 @@ func FindAndDeleteUser() {
 	if err != nil {
 		panic(err)
 	}
-	var alluserids []string
-	for _, u := range users.Data.Items {
-		fmt.Printf("FindWpsUser user: %v\n", u)
-		if u.ID == "1" {
-			continue
+
+	var deleteUser *dingtalk.DingtalkDeptUser
+	for _, user := range users.Data.Items {
+		log.Infof("user: %+v", user)
+		if user.Phone == "18910953345" {
+			deleteUser = &dingtalk.DingtalkDeptUser{
+				Userid: user.ExUserID,
+				Mobile: user.Phone,
+				Name:   user.UserName,
+				Email:  user.Email,
+			}
 		}
-		alluserids = append(alluserids, u.ID)
+		for _, dep := range user.Depts {
+			depId, _ := strconv.ParseInt(dep.DeptID, 10, 64)
+			deleteUser.DeptIDList = append(deleteUser.DeptIDList, depId)
+		}
 	}
-	deleteuser := alluserids[:2]
-	fmt.Printf("deleteuser: %v", deleteuser)
-	// 存在授权问题
-	delRes, err := wpsClient.PostBatchDeleteUser(ctx, appAccessToken.AccessToken, wps.PostBatchDeleteUserRequest{
-		UserIDs: deleteuser,
+	syncDB, err := data.NewMysqlSyncDB(bc.Data, log.GetLogger())
+	if err != nil {
+		panic(err)
+		//return nil, nil, err
+	}
+	mainDB, err := data.NewMysqlDB(bc.Data, log.GetLogger())
+	if err != nil {
+		panic(err)
+		//return nil, nil, err
+	}
+	client, err := data.NewRedisClient(bc.Data, log.GetLogger())
+	if err != nil {
+		panic(err)
+		//return nil, nil, err
+	}
+	dataData, _, err := data.NewData(syncDB, mainDB, client, log.GetLogger())
+	if err != nil {
+		panic(err)
+		// return nil, nil, err
+	}
+
+	accounterRepo := data.NewAccounterRepo(bc.Service, dataData, log.GetLogger())
+	err = accounterRepo.SaveIncrementUsers(ctx, nil, []*dingtalk.DingtalkDeptUser{deleteUser}, nil)
+	if err != nil {
+		panic(err)
+		//return err
+	}
+
+	wpsSync := wps.NewWpsSync(bc.Service, log.GetLogger())
+	res, err := wpsSync.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
+		ThirdCompanyId: "1",
 	})
-	fmt.Printf("delRes:%v, err:%v", delRes, err)
+	fmt.Printf("res:%v, err:%v", res, err)
+	return
+	// var alluserids []string
+	// for _, u := range users.Data.Items {
+	// 	fmt.Printf("FindWpsUser user: %v\n", u)
+	// 	if u.ID == "1" {
+	// 		continue
+	// 	}
+	// 	alluserids = append(alluserids, u.ID)
+	// }
+	// deleteuser := alluserids[:2]
+	// fmt.Printf("deleteuser: %v", deleteuser)
+	// // 存在授权问题
+	// delRes, err := wpsClient.PostBatchDeleteUser(ctx, appAccessToken.AccessToken, wps.PostBatchDeleteUserRequest{
+	// 	UserIDs: deleteuser,
+	// })
+	// fmt.Printf("delRes:%v, err:%v", delRes, err)
 
 }
 func CheckGetCompAllDepts() {

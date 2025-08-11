@@ -61,6 +61,12 @@ paths:
                   in: query
                   schema:
                     type: string
+                - name: tags
+                  in: query
+                  schema:
+                    type: array
+                    items:
+                        type: string
             responses:
                 "200":
                     description: OK

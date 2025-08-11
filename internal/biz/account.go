@@ -113,34 +113,34 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("CreateSyncAccount.GetAccessToken")
 
 	// 1. 获取access_token
 	dingTalkAccessToken, err := uc.dingTalkRepo.GetAccessToken(ctx)
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.GetAccessToken: dingTalkAccessToken: %v, err: %v", dingTalkAccessToken, err)
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount dingTalkAccessToken: %+v, err: %v", dingTalkAccessToken, err)
 	if err != nil {
 		return nil, err
 	}
 	accessToken := dingTalkAccessToken.AccessToken
-	//taskId := time.Now().Add(time.Duration(1) * time.Second).Format("20060102150405")
 
 	// 1. 从第三方获取部门和用户数据
 
-	log.Infof("CreateSyncAccount.FetchDepartments")
+	log.Infof("CreateSyncAccount FetchDepartments")
 
 	depts, err := uc.dingTalkRepo.FetchDepartments(ctx, accessToken)
-	log.Infof("CreateSyncAccount.FetchDepartments: depts: %+v, err: %v", depts, err)
+	log.Infof("CreateSyncAccount FetchDepartments depts: %+v, err: %v", depts, err)
 	if err != nil {
 		return nil, err
 	}
+
+	log.Infof("CreateSyncAccount depts size: %d, taskId: %v", len(depts), taskId)
+
 	for _, dept := range depts {
-		uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount: dept: %+v", dept)
+		uc.log.WithContext(ctx).Infof("CreateSyncAccount dept: %+v", dept)
 	}
 
-	log.Infof("CreateSyncAccount.SaveDepartments depts: %v, taskId: %v", depts, taskId)
 	// 2. 数据入库
 	deptCount, err := uc.repo.SaveDepartments(ctx, depts, taskId)
-	log.Infof("CreateSyncAccount.SaveDepartments: deptCount: %v, err: %v", deptCount, err)
+	log.Infof("CreateSyncAccount SaveDepartments deptCount: %d, err: %v", deptCount, err)
 	if err != nil {
 		return nil, err
 	}
@@ -149,19 +149,23 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 		deptIds = append(deptIds, dept.DeptID)
 	}
 
-	log.Infof("CreateSyncAccount.FetchDepartmentUsers accessToken: %v deptIds: %v", accessToken, deptIds)
+	log.Infof("CreateSyncAccount FetchDepartmentUsers accessToken: %s deptIds: %v", accessToken, deptIds)
 	// 1. 从第三方获取用户数据
 	deptUsers, err := uc.dingTalkRepo.FetchDepartmentUsers(ctx, accessToken, deptIds)
-	log.Infof("CreateSyncAccount.FetchDepartmentUsers deptUsers: %v, err: %v", deptUsers, err)
+
+	log.Infof("CreateSyncAccount FetchDepartmentUsers deptUsers size: %v, err: %v", len(deptUsers), err)
+	for _, deptUser := range deptUsers {
+		uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount deptUser: %+v", deptUser)
+	}
 	if err != nil {
 		return nil, err
 	}
+
 	// 2. 数据入库
 	//这里可以 将deptUsers转为model.TbLasUser,
 	// SaveUsers(ctx, TbLasUser)
-	log.Infof("CreateSyncAccount.SaveUsers deptUsers: %v, taskId: %v", deptUsers, taskId)
 	userCount, err := uc.repo.SaveUsers(ctx, deptUsers, taskId)
-	log.Infof("CreateSyncAccount.SaveUsers userCount: %v, err: %v", userCount, err)
+	log.Infof("CreateSyncAccount SaveUsers userCount: %d, err: %v", userCount, err)
 	if err != nil {
 		return nil, err
 	}
@@ -188,14 +192,19 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 		}
 
 	}
-	log.Infof("CreateSyncAccount.SaveDepartmentUserRelations deptUserRelations: %v, taskId: %v", deptUserRelations, taskId)
+	log.Infof("CreateSyncAccount deptUserRelations size: %d, taskId: %s", len(deptUserRelations), taskId)
+
+	for _, deptUserRelation := range deptUserRelations {
+		uc.log.WithContext(ctx).Infof("CreateSyncAccount deptUserRelation: %+v", deptUserRelation)
+	}
+
 	// 3. 数据入库
 	relationCount, err := uc.repo.SaveDepartmentUserRelations(ctx, deptUserRelations, taskId)
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount.SaveDepartmentUserRelations relationCount: %v, err: %v", relationCount, err)
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount relationCount: %d, err: %v", relationCount, err)
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("CreateSyncAccount.CallEcisaccountsyncAll taskId: %v", taskId)
+	log.Infof("CreateSyncAccount CallEcisaccountsyncAll taskId: %v", taskId)
 
 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
 	if err != nil {
@@ -207,7 +216,7 @@ func (uc *AccounterUsecase) CreateSyncAccount(ctx context.Context, req *v1.Creat
 		TaskId:         taskId,
 		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
 	})
-	log.Infof("CreateSyncAccount.CallEcisaccountsyncAll res: %v, err: %v", res, err)
+	log.Infof("CreateSyncAccount CallEcisaccountsyncAll res: %v, err: %v", res, err)
 
 	if err != nil {
 		return nil, err
@@ -616,5 +625,156 @@ func (uc *AccounterUsecase) GetCacheTask(ctx context.Context, taskName string) (
 		return nil, errors.New("type error")
 	}
 	return task, nil
+
+}
+
+func (uc *AccounterUsecase) CleanSyncAccount(ctx context.Context, taskName string, tags []string) error {
+
+	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	if err != nil {
+		return err
+	}
+
+	if taskName == "phone" {
+		users, err := uc.wps.GetCompAllUsers(ctx, appAccessToken.AccessToken, wps.GetCompAllUsersRequest{
+			Recursive: true,
+			PageSize:  50,
+			WithTotal: true,
+			Status:    []string{"active", "notactive", "disabled"},
+		})
+		if err != nil {
+			return err
+		}
+
+		var deleteUsers []*dingtalk.DingtalkDeptUser
+		for _, user := range users.Data.Items {
+			log.Infof("user: %+v", user)
+
+			for _, phone := range tags {
+				if user.Phone == phone || user.LoginName == phone {
+					deleteUser := &dingtalk.DingtalkDeptUser{
+						Userid: user.ExUserID,
+						Mobile: user.Phone,
+						Name:   user.UserName,
+						Email:  user.Email,
+					}
+
+					for _, dep := range user.Depts {
+						depId, _ := strconv.ParseInt(dep.DeptID, 10, 64)
+						deleteUser.DeptIDList = append(deleteUser.DeptIDList, depId)
+					}
+					deleteUsers = append(deleteUsers, deleteUser)
+
+				}
+			}
+
+		}
+		uc.log.Infof("deleteUsers: %v", deleteUsers)
+		for i, user := range deleteUsers {
+			uc.log.Infof("deleteUsers i:%d, user: %+v", i, user)
+		}
+
+		err = uc.repo.SaveIncrementUsers(ctx, nil, deleteUsers, nil)
+		if err != nil {
+			log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
+			return err
+		}
+
+		res, err := uc.wpsSync.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
+			ThirdCompanyId: uc.bizConf.ThirdCompanyId,
+		})
+
+		log.Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+
+		if err != nil {
+			return err
+		}
+		if res.Code != "200" {
+			log.Errorf("code %v, not '200'", res.Code)
+			return fmt.Errorf("code %s not 200", res.Code)
+		}
+	}
+
+	if taskName == "dept" {
+		//查询根部门
+		rootDept, err := uc.wps.GetDepartmentRoot(ctx, appAccessToken.AccessToken, wps.GetDepartmentRootRequest{})
+		if err != nil {
+			return err
+		}
+		log.Infof("rootDept: %v", rootDept)
+
+		// 2. 查询部门下的子部门(要递归)
+		allDepts, err := uc.wps.GetDeptChildren(ctx, appAccessToken.AccessToken, wps.GetDeptChildrenRequest{
+			DeptID:    rootDept.Data.ID,
+			Recursive: true,
+			PageSize:  50,
+			WithTotal: true,
+		})
+		if err != nil {
+			return err
+		}
+		log.Infof("children: %v", allDepts)
+
+		var deleteDepts []*dingtalk.DingtalkDept
+		//删除部门除了根部门
+		for _, dept := range allDepts.Data.Items {
+			if dept.ID == rootDept.Data.ID {
+				continue
+			}
+			deptId, _ := strconv.ParseInt(dept.ExDeptID, 10, 64)
+
+			deptDetail, err := uc.wps.BatchPostDepartments(ctx, appAccessToken.AccessToken, wps.BatchPostDepartmentsRequest{
+				DeptIDs: []string{dept.ParentID},
+			})
+			if err != nil {
+				return err
+			}
+			parentId, _ := strconv.ParseInt(deptDetail.Data.Items[0].ExDeptID, 10, 64)
+
+			for _, tag := range tags {
+
+				if tag == dept.Name {
+					// 这里要找父级节点的extid
+					detp := &dingtalk.DingtalkDept{
+						DeptID:   deptId,
+						ParentID: parentId,
+						Order:    int64(dept.Order),
+						Name:     dept.Name,
+					}
+					deleteDepts = append(deleteDepts, detp)
+
+				}
+			}
+
+		}
+
+		uc.log.Infof("deleteDepts: %v", deleteDepts)
+		for i, dept := range deleteDepts {
+			uc.log.Infof("deleteDepts i:%d, dept: %+v", i, dept)
+		}
+
+		err = uc.repo.SaveIncrementDepartments(ctx, nil, deleteDepts, nil)
+		if err != nil {
+			log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
+			return err
+		}
+
+		res, err := uc.wpsSync.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
+			ThirdCompanyId: uc.bizConf.ThirdCompanyId,
+		})
+
+		log.Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+
+		if err != nil {
+			return err
+		}
+		if res.Code != "200" {
+			log.Errorf("code %v, not '200'", res.Code)
+			return fmt.Errorf("code %s not 200", res.Code)
+		}
+
+	}
+
+	return nil
 
 }

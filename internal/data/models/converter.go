@@ -3,24 +3,22 @@ package models
 import (
 	"fmt"
 	"nancalacc/internal/dingtalk"
-	"nancalacc/pkg/cipherutil"
+	"nancalacc/internal/pkg/cipherutil"
 	"strconv"
 	"time"
 )
 
 func MakeLasUser(user *dingtalk.DingtalkDeptUser, thirdCompanyID, platformID, source, taskId string) *TbLasUser {
-	var account string
-	if user.Name == "" {
-		user.Name = user.Userid
-	}
-	if user.Mobile != "" {
-		account = user.Mobile
-	} else {
-		account = user.Userid
-	}
+	//var account string
+	// if user.Mobile != "" {
+	// 	account = user.Mobile
+	// } else {
+	// 	account = user.Userid
+	// }
+	account := user.Mobile
 	now := time.Now()
 	mobile, err := cipherutil.EncryptValueWithEnvSalt(user.Mobile)
-	fmt.Printf("EncryptValueWithEnvSalt user.Mobile: %s,mobile:%s err: %v", user.Mobile, mobile, err)
+	fmt.Printf("EncryptValueWithEnvSalt user.Mobile: %s,mobile:%s err: %v\n", user.Mobile, mobile, err)
 	entity := &TbLasUser{
 		TaskID:           taskId,
 		ThirdCompanyID:   thirdCompanyID,
@@ -98,18 +96,16 @@ func MakeTbLasDepartmentUser(relation *dingtalk.DingtalkDeptUserRelation, thirdC
 
 func MakeLasUserIncrement(user *dingtalk.DingtalkDeptUser, thirdCompanyID, platformID, companyID, source, updateType string) *TbLasUserIncrement {
 
-	var account string
-	if user.Name == "" {
-		user.Name = user.Userid
-	}
-	if user.Mobile != "" {
-		account = user.Mobile
-	} else {
-		account = user.Userid
-	}
+	// var account string
+	// if user.Mobile != "" {
+	// 	account = user.Mobile
+	// } else {
+	// 	account = user.Userid
+	// }
+	account := user.Mobile
 	now := time.Now()
 	mobile, err := cipherutil.EncryptValueWithEnvSalt(user.Mobile)
-	fmt.Printf("EncryptValueWithEnvSalt user.Mobile: %s,mobile:%s err: %v", user.Mobile, mobile, err)
+	fmt.Printf("EncryptValueWithEnvSalt user.Mobile: %s,mobile:%s err: %v\n", user.Mobile, mobile, err)
 	entity := &TbLasUserIncrement{
 		ThirdCompanyID:   thirdCompanyID,
 		PlatformID:       platformID,
