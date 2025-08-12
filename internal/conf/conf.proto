@@ -9,7 +9,7 @@ message Bootstrap {
   Server server = 1;
   Data data = 2;
   App app = 3;
-  Service service = 4;
+  Auth auth = 4;
 }
 
 message Server {
@@ -66,15 +66,10 @@ message Data {
     bool enable_config_watch = 4;
     bool enable = 5;
   }
-  message Auth {
-    string app_id = 1;
-    string app_secret = 2;
-  } 
   Database database = 1;
   DatabaseSync database_sync = 2;
   Redis redis = 3;
   Etcd etcd = 4;
-  Auth auth = 5;
 }
 message App {
   string id = 1;
@@ -83,62 +78,32 @@ message App {
   string env = 4;
   string log_level =5;
   string log_out = 6;
+  string app_package = 7;
+  string app_id = 8;
+  string app_secret = 9;
+  string third_company_id = 10;
+  string platform_ids = 11;
+  string company_id = 12;
+  string access_key = 13;
+  string secret_key = 14;
 }
 
-message Service {
-  message Business {
-    string third_company_id = 1;
-    string platform_ids = 2;
-    string company_id = 3;
-    string ecisaccountsync_url = 4;
-    string ecisaccountsync_url_increment = 5;
+message Auth {
+  message Wpsapp {
+    string client_id = 1;
+    string client_secret = 2;
+    string auth_url = 3;
+    string auth_path = 4;
+    string grant_type = 5;
   }
-  message Auth {
-    message Self {
-      string app_package = 1;
-      string app_secret = 2;
-      string access_key = 3;
-      string secret_key = 4;
-    }
-    message App {
-      string client_id = 1;
-      string client_secret = 2;
-      string auth_url = 3;
-      string auth_path = 4;
-      string grant_type = 5;
-    }
 
-    message Third {
-      string client_id = 1;
-      string client_secret = 2;
-      string auth_url = 3;
-      string auth_path = 4;
-      string grant_type = 5;
-      string company_id = 6;
-    }
-
-    message User {
-      string client_id = 1;
-      string client_secret = 2;
-      string auth_url = 3;
-      string auth_path = 4;
-      string grant_type = 5;
-      string redirect_uri = 6;
-    }
-
-    message Dingtalk {
-      string endpoint = 1;
-      string app_key = 2;
-      string app_secret = 3;
-      string timeout = 4;
-      int64 maxConcurrent = 5;
-    }
-    Self self = 1;
-    App app = 2;
-    Third third = 3;
-    User user = 4;
-    Dingtalk dingtalk=5;
+  message Dingtalk {
+    string endpoint = 1;
+    string app_key = 2;
+    string app_secret = 3;
+    string timeout = 4;
+    int64 maxConcurrent = 5;
   }
-  Business business = 1;
-  Auth auth = 2;
+  Wpsapp wpsapp = 1;
+  Dingtalk dingtalk= 2;
 }

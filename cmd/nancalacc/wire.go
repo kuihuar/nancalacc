@@ -6,7 +6,6 @@
 package main
 
 import (
-	"nancalacc/internal/auth"
 	"nancalacc/internal/biz"
 	"nancalacc/internal/conf"
 	"nancalacc/internal/data"
@@ -22,13 +21,10 @@ import (
 )
 
 // wireApp init kratos application.
-func wireApp(*conf.Server, *conf.Service, *conf.Data, log.Logger) (*kratos.App, func(), error) {
+func wireApp(*conf.Server, *conf.App, *conf.Data, *conf.Auth, log.Logger) (*kratos.App, func(), error) {
 	panic(wire.Build(
 		server.ProviderSet,
-		auth.AuthProviderSet,
 		data.ProviderSet,
-		conf.ProvideDingtalkConfig,
-		conf.ProvideBusinessConfig,
 		wps.WpsProviderSet,
 		dingtalk.DingtalkProviderSet,
 		biz.ProviderSet,

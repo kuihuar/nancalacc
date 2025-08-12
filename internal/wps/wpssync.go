@@ -3,28 +3,13 @@ package wps
 import (
 	"context"
 	"encoding/json"
-	"nancalacc/internal/conf"
-
-	"github.com/go-kratos/kratos/v2/log"
 )
-
-type wpsSync struct {
-	serviceConf *conf.Service
-	log         *log.Helper
-}
 
 var (
 	Source = "sync"
 )
 
-func NewWpsSync(serviceConf *conf.Service, logger log.Logger) WpsSync {
-	return &wpsSync{
-		serviceConf: serviceConf,
-		log:         log.NewHelper(logger),
-	}
-}
-
-func (ws *wpsSync) PostEcisaccountsyncAll(ctx context.Context, accessToken string, input *EcisaccountsyncAllRequest) (EcisaccountsyncAllResponse, error) {
+func (ws *wps) PostEcisaccountsyncAll(ctx context.Context, accessToken string, input *EcisaccountsyncAllRequest) (EcisaccountsyncAllResponse, error) {
 
 	ws.log.Infof("PostEcisaccountsyncAll input:%+v", input)
 	var resp EcisaccountsyncAllResponse
@@ -33,8 +18,8 @@ func (ws *wpsSync) PostEcisaccountsyncAll(ctx context.Context, accessToken strin
 	// 	ThirdCompanyId: thirdCompanyId,
 	// }
 	input.CollectCost = CollectCost
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
 
 	ws.log.Infof("PostEcisaccountsyncAll.req path:%s,input:%+v\n", ECISACCOUNTSYNC_PATH_INCREMENT, input)
@@ -57,15 +42,15 @@ func (ws *wpsSync) PostEcisaccountsyncAll(ctx context.Context, accessToken strin
 	return resp, nil
 }
 
-func (ws *wpsSync) PostEcisaccountsyncIncrement(ctx context.Context, accessToken string, input *EcisaccountsyncIncrementRequest) (EcisaccountsyncIncrementResponse, error) {
+func (ws *wps) PostEcisaccountsyncIncrement(ctx context.Context, accessToken string, input *EcisaccountsyncIncrementRequest) (EcisaccountsyncIncrementResponse, error) {
 
 	var resp EcisaccountsyncIncrementResponse
 
 	// input := &EcisaccountsyncIncrementRequest{
 	// 	ThirdCompanyId: thirdCompanyId,
 	// }
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
 
 	ws.log.Infof("PostEcisaccountsyncIncrement.req path:%s,input:%+v\n", ECISACCOUNTSYNC_PATH_INCREMENT, input)

@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-type WpsSync interface {
-	PostEcisaccountsyncAll(ctx context.Context, accessToken string, input *EcisaccountsyncAllRequest) (EcisaccountsyncAllResponse, error)
-	PostEcisaccountsyncIncrement(ctx context.Context, accessToken string, input *EcisaccountsyncIncrementRequest) (EcisaccountsyncIncrementResponse, error)
-}
-
 type Wps interface {
 
 	// 获取根部门(4)
@@ -19,6 +14,8 @@ type Wps interface {
 	// user..
 	BatchPostUsers(ctx context.Context, accessToken string, input BatchPostUsersRequest) (BatchPostUsersResponse, error)
 	PostBatchUsersByExDepIds(ctx context.Context, accessToken string, input PostBatchUsersByExDepIdsRequest) (*PostBatchUsersByExDepIdsResponse, error)
+
+	GetUsersSearch(ctx context.Context, accessToken string, input GetUsersSearchRequest) (*GetUsersSearchResponse, error)
 
 	// 获取用户所在部门列表
 	GetUserDeptsByUserId(ctx context.Context, accessToken string, input GetUserDeptsByUserIdRequest) (*GetUserDeptsByUserIdResponse, error)
@@ -57,4 +54,13 @@ type Wps interface {
 	CacheSet(ctx context.Context, accessToken string, key string, value interface{}, expiration time.Duration) error
 	CacheGet(ctx context.Context, accessToken string, key string) (interface{}, error)
 	CacheDel(ctx context.Context, accessToken string, key string) error
+
+	// 获取通讯录权限
+	GetContactPermission(ctx context.Context, accessToken string, input GetContactPermissionRequest) (*GetContactPermissionResponse, error)
+
+	GetObjUploadUrl(ctx context.Context, accessToken string, input GetObjUploadUrlRequest) (*GetObjUploadUrlResponse, error)
+
+	// 通知
+	PostEcisaccountsyncAll(ctx context.Context, accessToken string, input *EcisaccountsyncAllRequest) (EcisaccountsyncAllResponse, error)
+	PostEcisaccountsyncIncrement(ctx context.Context, accessToken string, input *EcisaccountsyncIncrementRequest) (EcisaccountsyncIncrementResponse, error)
 }

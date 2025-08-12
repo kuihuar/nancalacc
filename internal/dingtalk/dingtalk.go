@@ -21,15 +21,16 @@ import (
 )
 
 type dingTalkRepo struct {
-	data           *conf.Service_Auth_Dingtalk
-	log            *log.Helper
-	dingtalkAuthor auth.Authenticator
-	dingtalkCli    *dingtalkoauth2_1_0.Client
+	data      *conf.Auth_Dingtalk
+	log       *log.Helper
+	tokenAuth auth.Authenticator
+	// unifiedAuthService auth.UnifiedAuthService
+	dingtalkCli *dingtalkoauth2_1_0.Client
 
 	dingtalkCliContact *dingtalkcontact_1_0.Client
 }
 
-func NewDingTalkRepo(data *conf.Service_Auth_Dingtalk, dingtalkAuthor auth.Authenticator, logger log.Logger) Dingtalk {
+func NewDingTalkRepo(logger log.Logger) Dingtalk {
 
 	config := &openapi.Config{
 		Protocol: tea.String("https"),
@@ -48,19 +49,20 @@ func NewDingTalkRepo(data *conf.Service_Auth_Dingtalk, dingtalkAuthor auth.Authe
 		//return nil, cleanup, err
 		logger.Log(log.LevelError, "NewClientErr", err)
 	}
+	tokenAuth := auth.NewDingTalkAuthenticator()
 
 	return &dingTalkRepo{
 		dingtalkCli:        client,
-		dingtalkAuthor:     dingtalkAuthor,
+		tokenAuth:          tokenAuth,
 		dingtalkCliContact: clientContact,
-		data:               data,
+		data:               conf.Get().GetAuth().GetDingtalk(),
 		log:                log.NewHelper(log.With(logger, "module", "data/dingtalk")),
 	}
 }
 
 func (r *dingTalkRepo) GetAccessToken(ctx context.Context) (*auth.AccessTokenResp, error) {
 
-	return r.dingtalkAuthor.GetAccessToken(ctx)
+	return r.tokenAuth.GetAccessToken(ctx)
 	// 	log := r.log.WithContext(ctx)
 	// 	log.Info("GetAccessToken")
 

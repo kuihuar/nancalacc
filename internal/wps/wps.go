@@ -16,14 +16,14 @@ import (
 )
 
 type wps struct {
-	serviceConf *conf.Service
-	log         *log.Helper
+	cfg *conf.Auth_Wpsapp
+	log *log.Helper
 }
 
-func NewWps(serviceConf *conf.Service, logger log.Logger) Wps {
+func NewWps(logger log.Logger) Wps {
 	return &wps{
-		serviceConf: serviceConf,
-		log:         log.NewHelper(logger),
+		cfg: conf.Get().GetAuth().GetWpsapp(),
+		log: log.NewHelper(logger),
 	}
 }
 
@@ -34,8 +34,8 @@ func (ws *wps) BatchPostUsers(ctx context.Context, accessToken string, input Bat
 
 	var resp BatchPostUsersResponse
 
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
 	log.Infof("BatchPostUsers uri: %s, input: %+v\n", BATCH_POST_USERS_PATH, input)
@@ -61,8 +61,8 @@ func (ws *wps) BatchPostDepartments(ctx context.Context, accessToken string, inp
 
 	var resp BatchPostDepartmentsResponse
 
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
 	bs, err := wpsReq.PostJSON(context.Background(), BATCH_POST_DEPTS_PATH, accessToken, input)
@@ -88,8 +88,8 @@ func (ws *wps) PostBatchDepartmentsByExDepIds(ctx context.Context, accessToken s
 	log.Infof("PostBatchDepartmentsByExDepIds req %v", input)
 	var resp *PostBatchDepartmentsByExDepIdsResponse
 
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
 
 	log.Infof("PostBatchDepartmentsByExDepIds uri: %s, input: %+v\n", POST_DEPTS_BY_EXDEPTIDS_PATH, input)
@@ -118,8 +118,8 @@ func (ws *wps) PostBatchDeleteDept(ctx context.Context, accessToken string, inpu
 	log.Infof("PostBatchDeleteDept req %v", input)
 	var resp *PostBatchDeleteDeptResponse
 
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
 
 	log.Infof("PostBatchDeleteDept uri: %s, input: %+v\n", POST_DELETE_DEPTS_PATH, input)
@@ -145,8 +145,8 @@ func (ws *wps) PostBatchDeleteUser(ctx context.Context, accessToken string, inpu
 	log.Infof("PostBatchDeleteUser req %v", input)
 	var resp *PostBatchDeleteUserResponse
 
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
 
 	log.Infof("PostBatchDeleteUser uri: %s, input: %+v\n", POST_DELETE_USERS_PATH, input)
@@ -173,8 +173,8 @@ func (ws *wps) PostRomoveUserIdFromDeptId(ctx context.Context, accessToken strin
 	log.Infof("PostRomoveUserIdFromDeptId req %v", input)
 	var resp *PostRomoveUserIdFromDeptIdResponse
 
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
 
 	uri := strings.Replace(POST_DELETE_USERID_FROM_DEPTID_PATH, "{dept_id}", input.DeptID, 1)
@@ -203,8 +203,8 @@ func (ws *wps) PostAddUserIdToDeptId(ctx context.Context, accessToken string, in
 	log.Infof("PostAddUserIdToDeptId req %v", input)
 	var resp *PostAddUserIdToDeptIdResponse
 
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
 
 	uri := strings.Replace(POST_ADD_USERID_TO_DEPTID_PATH, "{dept_id}", input.DeptID, 1)
@@ -238,8 +238,8 @@ func (ws *wps) PostBatchUsersByExDepIds(ctx context.Context, accessToken string,
 	// input := &EcisaccountsyncIncrementRequest{
 	// 	ThirdCompanyId: thirdCompanyId,
 	// }
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
 	log.Infof("PostBatchUsersByExDepIds uri: %s, input: %+v\n", POST_USERS_BY_EXDEPTIDS_PATH, input)
@@ -272,8 +272,8 @@ func (ws *wps) GetDepartmentRoot(ctx context.Context, accessToken string, input 
 	// input := &EcisaccountsyncIncrementRequest{
 	// 	ThirdCompanyId: thirdCompanyId,
 	// }
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
 	bs, err := wpsReq.GET(context.Background(), GET_DEPARTMENT_ROOT, accessToken, "")
@@ -306,8 +306,8 @@ func (ws *wps) GetUserByUserId(ctx context.Context, accessToken string, input Ge
 
 	var resp GetUserByUserIdResponse
 
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
 	uri := strings.Replace(GET_USER_DEPT_BY_USERID, "{user_id}", input.UserID, 1)
@@ -439,8 +439,8 @@ func (ws *wps) GetUserDeptsByUserId(ctx context.Context, accessToken string, inp
 
 	var resp GetUserDeptsByUserIdResponse
 
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
 	uri := strings.Replace(GET_USER_DEPT_BY_USERID, "{user_id}", input.UserID, 1)
@@ -471,8 +471,8 @@ func (ws *wps) GetDeptChildren(ctx context.Context, accessToken string, input Ge
 
 	var resp GetDeptChildrenResponse
 
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
 	path := strings.Replace(GET_DEPT_CHILDREN, "{dept_id}", input.DeptID, 1)
@@ -519,8 +519,8 @@ func (ws *wps) GetCompAllUsers(ctx context.Context, accessToken string, input Ge
 
 	var resp GetCompAllUsersResponse
 
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
 	uri := fmt.Sprintf(
@@ -569,8 +569,8 @@ func (ws *wps) PostCreateDept(ctx context.Context, accessToken string, input Pos
 	// input := &EcisaccountsyncIncrementRequest{
 	// 	ThirdCompanyId: thirdCompanyId,
 	// }
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
 	log.Infof("PostCreateDept uri: %s, input: %+v\n", POST_CREATE_DEPT_PATH, input)
@@ -602,14 +602,131 @@ func (ws *wps) PostCreateUser(ctx context.Context, accessToken string, input Pos
 	// input := &EcisaccountsyncIncrementRequest{
 	// 	ThirdCompanyId: thirdCompanyId,
 	// }
-	ak := ws.serviceConf.Auth.App.ClientId
-	sk := ws.serviceConf.Auth.App.ClientSecret
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
 	log.Infof("PostCreateUser uri: %s, input: %+v\n", POST_CREATE_USER_PATH, input)
 	bs, err := wpsReq.PostJSON(context.Background(), POST_CREATE_USER_PATH, accessToken, input)
 
 	log.Infof("PostCreateUser res: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, err
+	}
+	if resp.Code != 0 {
+		return resp, ErrCodeNot0
+	}
+
+	return resp, nil
+}
+
+func (ws *wps) GetUsersSearch(ctx context.Context, accessToken string, input GetUsersSearchRequest) (*GetUsersSearchResponse, error) {
+	log := ws.log.WithContext(ctx)
+	log.Infof("GetUsersSearch req %v", input)
+
+	var resp *GetUsersSearchResponse
+
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
+
+	log.Infof("GetUsersSearch uri: %s, input: %+v\n", GET_USERS_SEARCH_PATH, input)
+	uri := fmt.Sprintf("%s?keyword=%s&page_size=%d", GET_USERS_SEARCH_PATH, input.Keyword, input.PageSize)
+
+	if input.PageToken != "" {
+		uri += "&page_token=true"
+		uri += fmt.Sprintf("&page_token=%s", input.PageToken)
+	}
+	if len(input.Status) > 0 {
+		for _, status := range input.Status {
+			uri += fmt.Sprintf("&status=%s", status)
+		}
+	}
+	if input.SearchFieldConfigEnabled {
+		uri += "&search_field_config_enabled=true"
+	}
+
+	if len(input.SearchSource) > 0 {
+		for _, searchSource := range input.SearchSource {
+			uri += fmt.Sprintf("&search_source=%s", searchSource)
+		}
+	}
+	bs, err := wpsReq.GET(context.Background(), uri, accessToken, "")
+
+	log.Infof("GetUsersSearch res: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, err
+	}
+	if resp.Code != 0 {
+		return resp, ErrCodeNot0
+	}
+
+	return resp, nil
+}
+
+func (ws *wps) GetContactPermission(ctx context.Context, accessToken string, input GetContactPermissionRequest) (*GetContactPermissionResponse, error) {
+	log := ws.log.WithContext(ctx)
+	log.Infof("GetContactPermission req %v", input)
+
+	var resp *GetContactPermissionResponse
+
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
+
+	log.Infof("GetUsersSearch uri: %s, input: %+v\n", GET_CONTACT_PERMISSION_PATH, input)
+	var uri string
+	for _, status := range input.Scopes {
+		uri += fmt.Sprintf("&scope=%s", status)
+	}
+	bs, err := wpsReq.GET(context.Background(), GET_CONTACT_PERMISSION_PATH+"?"+uri, accessToken, "")
+
+	log.Infof("GetUsersSearch res: %s, err: %+v\n", string(bs), err)
+	if err != nil {
+		return resp, err
+	}
+
+	err = json.Unmarshal(bs, &resp)
+	if err != nil {
+		return resp, err
+	}
+	if resp.Code != 0 {
+		return resp, ErrCodeNot0
+	}
+
+	return resp, nil
+}
+
+// 内部网关
+func (ws *wps) GetObjUploadUrl(ctx context.Context, accessToken string, input GetObjUploadUrlRequest) (*GetObjUploadUrlResponse, error) {
+	log := ws.log.WithContext(ctx)
+	log.Infof("GetObjUploadUrl req %v", input)
+
+	var resp *GetObjUploadUrlResponse
+
+	ak := ws.cfg.ClientId
+	sk := ws.cfg.ClientSecret
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
+
+	// http: //encs-pri-cams-engine/{c}/asyncacc/v1/task
+
+	uri := "http://119.3.173.229/api/cams/sdk/api/v1/wps3/presigned_upload"
+	uri = "http://119.3.173.229/api/cams/sdk/api/v1/wps3/presigned_upload"
+
+	log.Infof("GetObjUploadUrl uri: %s, input: %+v\n", uri, "")
+	bs, err := wpsReq.GET(context.Background(), uri, accessToken, "")
+
+	log.Infof("GetObjUploadUrl res: %s, err: %+v\n", string(bs), err)
 	if err != nil {
 		return resp, err
 	}

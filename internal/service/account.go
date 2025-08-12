@@ -1,10 +1,8 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -15,25 +13,23 @@ import (
 	"nancalacc/internal/pkg/limiter"
 
 	"github.com/go-kratos/kratos/v2/log"
-	"golang.org/x/time/rate"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
-
-	"github.com/xuri/excelize/v2"
 )
 
 type AccountService struct {
 	v1.UnimplementedAccountServer
 	accounterUsecase *biz.AccounterUsecase
 	oauth2Usecase    *biz.Oauth2Usecase
+	fullSyncUsecase  *biz.FullSyncUsecase
 	limiter          *limiter.RateLimiter
 	log              *log.Helper
 }
 
-func NewAccountService(accounterUsecase *biz.AccounterUsecase, oauth2Usecase *biz.Oauth2Usecase, logger log.Logger) *AccountService {
+func NewAccountService(accounterUsecase *biz.AccounterUsecase, oauth2Usecase *biz.Oauth2Usecase, fullSyncUsecase *biz.FullSyncUsecase, logger log.Logger) *AccountService {
 	limiter := limiter.NewRateLimiter()
-	return &AccountService{accounterUsecase: accounterUsecase, oauth2Usecase: oauth2Usecase, limiter: limiter, log: log.NewHelper(logger)}
+	return &AccountService{accounterUsecase: accounterUsecase, oauth2Usecase: oauth2Usecase, fullSyncUsecase: fullSyncUsecase, limiter: limiter, log: log.NewHelper(logger)}
 }
 
 func (s *AccountService) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
@@ -49,7 +45,7 @@ func (s *AccountService) CreateSyncAccount(ctx context.Context, req *v1.CreateSy
 	// 这里设置传进来的最大分钟数
 	ctx, cancel := context.WithTimeout(ctx, 50*time.Minute)
 	defer cancel()
-	return s.accounterUsecase.CreateSyncAccount(ctx, req)
+	return s.fullSyncUsecase.CreateSyncAccount(ctx, req)
 }
 func (s *AccountService) GetSyncAccount(ctx context.Context, req *v1.GetSyncAccountRequest) (*v1.GetSyncAccountReply, error) {
 
@@ -58,7 +54,7 @@ func (s *AccountService) GetSyncAccount(ctx context.Context, req *v1.GetSyncAcco
 	log.Infof("globalConf: %v", globalConf)
 	ctx, cancel := context.WithTimeout(ctx, 50*time.Minute)
 	defer cancel()
-	return s.accounterUsecase.GetSyncAccount(ctx, req)
+	return s.fullSyncUsecase.GetSyncAccount(ctx, req)
 }
 func (s *AccountService) CancelSyncTask(ctx context.Context, req *v1.CancelSyncAccountRequest) (*emptypb.Empty, error) {
 	log := s.log.WithContext(ctx)
@@ -66,7 +62,7 @@ func (s *AccountService) CancelSyncTask(ctx context.Context, req *v1.CancelSyncA
 	if req.TaskId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "task_id is empty")
 	}
-	err := s.accounterUsecase.CleanSyncAccount(ctx, req.TaskId, req.GetTags())
+	err := s.fullSyncUsecase.CleanSyncAccount(ctx, req.TaskId, req.GetTags())
 
 	if err != nil {
 		return nil, err
@@ -127,58 +123,44 @@ func (s *AccountService) Callback(ctx context.Context, req *v1.CallbackRequest) 
 func (s *AccountService) UploadFile(ctx context.Context, req *v1.UploadRequest) (*v1.UploadReply, error) {
 
 	log := s.log.WithContext(ctx)
-	log.Infof("UploadFile req: %v", req.Filename)
+	log.Infof("UploadFile req: %v", req)
 
-	limiter := s.limiter.GetLimiter("UploadFile", rate.Every(time.Minute*10), 5)
-	if !limiter.Allow() {
-		return nil, status.Errorf(codes.ResourceExhausted, "upload too frequently")
-	}
-	// maxUploadSize := 4
-	// if len(req.File) > maxUploadSize {
-	// 	return nil, status.Errorf(codes.InvalidArgument,
-	// 		"max support file size  %dMB", maxUploadSize/(1<<20))
-	// }
 	taskId := time.Now().Add(time.Duration(1) * time.Second).Format("20060102150405")
 
-	filename := req.Filename
-
-	uploadDir := "/tmp"
-	if filename == "" {
-		filename = fmt.Sprintf("upload_%d.xlsx", time.Now().UnixNano())
+	if req.GetFile() == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "file is empty")
 	}
 
-	// 2. 验证确实是Excel文件
-	if _, err := excelize.OpenReader(bytes.NewReader(req.File)); err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalied Excel file")
+	// 检查文件类型
+	// if req.GetFile().GetContentType() != "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" {
+	// 	return nil, status.Errorf(codes.InvalidArgument, "file type is not excel")
+	// }
+
+	// // 检查文件大小
+	// if req.GetFile().GetSize() > 10*1024*1024 {
+	// 	return nil, status.Errorf(codes.InvalidArgument, "file size is too large")
+	// }
+
+	// 创建临时文件
+	tempDir := os.TempDir()
+	filename := filepath.Join(tempDir, taskId+".xlsx")
+
+	// 写入文件
+	err := os.WriteFile(filename, req.GetFile(), 0644)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to write file: %v", err)
 	}
 
-	// 3. 创建上传目录
-	if err := os.MkdirAll(uploadDir, 0755); err != nil {
-		return nil, status.Errorf(codes.Internal, "create folder failed: %v", err)
-	}
-
-	// 4. 生成唯一文件名
-
-	filePath := filepath.Join(uploadDir, filename)
-
-	// 5. 保存文件
-	if err := os.WriteFile(filePath, req.GetFile(), 0644); err != nil {
-		return nil, status.Errorf(codes.Internal, "safe file failed: %v", err)
-	}
-	// _, err := s.accounterUsecase.CreateTask(ctx, taskId)
+	// 解析Excel文件
+	go s.fullSyncUsecase.ParseExecell(ctx, taskId, filename)
 	// if err != nil {
-	// 	return nil, status.Errorf(codes.Internal, "create task failed: %v", err)
+	// 	return nil, status.Errorf(codes.Internal, "failed to parse excel: %v", err)
 	// }
 	s.accounterUsecase.CreateCacheTask(ctx, taskId, "")
-	//taskCachekey := prefix + taskId
-	//uc.localCache.Set(ctx, taskCachekey, taskId, 300*time.Minute)
-
-	go s.accounterUsecase.ParseExecell(ctx, taskId, filePath)
 	return &v1.UploadReply{
-		Url:  filePath,
+		//Message: "Upload success",
 		Task: taskId,
 	}, nil
-
 }
 
 func (s *AccountService) GetTask(ctx context.Context, in *v1.GetTaskRequest) (*v1.GetTaskReply, error) {

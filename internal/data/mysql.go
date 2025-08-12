@@ -57,7 +57,7 @@ func NewMysqlSyncDB(c *conf.Data, logger log.Logger) (*SyncDB, error) {
 			logger.Log(log.LevelError, envkey, err)
 			return nil, err
 		}
-		appSecret := c.Auth.AppSecret
+		appSecret := conf.Get().GetApp().GetAppSecret()
 		dsn, err = cipherutil.DecryptByAes(encryptedDsn, appSecret)
 		if err != nil {
 			logger.Log(log.LevelError, envkey, err)

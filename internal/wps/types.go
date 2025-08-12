@@ -519,3 +519,59 @@ type GetCompAllUsersResponse struct {
 	Code int    `json:"code"`
 	Msg  string `json:"msg"`
 }
+
+type GetUsersSearchRequest struct {
+	Keyword                  string   `json:"keyword"`
+	PageSize                 int64    `json:"page_size"`
+	PageToken                string   `json:"page_token"`
+	Status                   []string `json:"status"`
+	SearchFieldConfigEnabled bool     `json:"search_field_config_enabled"`
+	SearchSource             []string `json:"search_source"`
+}
+
+type UsersSearchUserItem struct {
+	Avatar      string              `json:"avatar"`
+	Ctime       int                 `json:"ctime"`
+	Email       string              `json:"email"`
+	ExUserID    string              `json:"ex_user_id"`
+	HighLight   map[string][]string `json:"high_light"`
+	ID          string              `json:"id"`
+	LoginName   string              `json:"login_name"`
+	Phone       string              `json:"phone"`
+	Status      string              `json:"status"`
+	Title       string              `json:"title"`
+	UserName    string              `json:"user_name"`
+	DefDeptID   string              `json:"def_dept_id"`
+	DefDeptName string              `json:"def_dept_name"`
+}
+type GetUsersSearchResponse struct {
+	Code   int    `json:"code"`
+	Detail string `json:"detail"`
+	Msg    string `json:"msg"`
+	Data   struct {
+		Items         []UsersSearchUserItem `json:"items"`
+		NextPageToken string                `json:"next_page_token"`
+	} `json:"data"`
+}
+
+type GetContactPermissionRequest struct {
+	Scopes []string `json:"scopes"`
+}
+type GetContactPermissionResponse struct {
+	Code   int    `json:"code"`
+	Detail string `json:"detail"`
+	Msg    string `json:"msg"`
+	Data   struct {
+		ContactPermission string `json:"contact_permission"`
+	} `json:"data"`
+}
+
+type GetObjUploadUrlRequest struct {
+}
+type GetObjUploadUrlResponse struct {
+	Code   int    `json:"code"`
+	Detail string `json:"detail"`
+	Msg    string `json:"msg"`
+	Data   struct {
+	} `json:"data"`
+}

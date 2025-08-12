@@ -11,24 +11,25 @@ import (
 )
 
 type DingTalkEventService struct {
-	confService      *conf.Service
-	log              *log.Helper
-	accounterUsecase *biz.AccounterIncreUsecase
-	running          atomic.Bool
-	cancel           context.CancelFunc
+	cfg                    *conf.Auth_Dingtalk
+	log                    *log.Helper
+	incrementalSyncUsecase *biz.IncrementalSyncUsecase
+	running                atomic.Bool
+	cancel                 context.CancelFunc
 	//client clientV2.OpenDingTalkClient
 }
 
-func NewDingTalkEventService(confService *conf.Service, logger log.Logger, accounterUsecase *biz.AccounterIncreUsecase) *DingTalkEventService {
-	return &DingTalkEventService{confService: confService, log: log.NewHelper(logger), accounterUsecase: accounterUsecase}
+func NewDingTalkEventService(incrementalSyncUsecase *biz.IncrementalSyncUsecase, logger log.Logger) *DingTalkEventService {
+	cfg := conf.Get().GetAuth().GetDingtalk()
+	return &DingTalkEventService{cfg: cfg, log: log.NewHelper(logger), incrementalSyncUsecase: incrementalSyncUsecase}
 }
 
 func (es *DingTalkEventService) Start() {
-	log.Info(es.confService.Auth.Dingtalk)
+	log.Info(es.cfg)
 
 	cred := &clientV2.AuthClientCredential{
-		ClientId:     es.confService.Auth.Dingtalk.AppKey,
-		ClientSecret: es.confService.Auth.Dingtalk.AppSecret,
+		ClientId:     es.cfg.AppKey,
+		ClientSecret: es.cfg.AppSecret,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -95,7 +96,7 @@ func (es *DingTalkEventService) HandleEvent(event *clientV2.GenericOpenDingTalkE
 
 func (es *DingTalkEventService) OrgDeptCreate(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) clientV2.EventStatus {
 	es.log.Infof("OrgDeptCreate: %v", event.Data)
-	err := es.accounterUsecase.OrgDeptCreate(ctx, event)
+	err := es.incrementalSyncUsecase.OrgDeptCreate(ctx, event)
 	if err != nil {
 		return clientV2.EventStatusLater
 	}
@@ -104,7 +105,7 @@ func (es *DingTalkEventService) OrgDeptCreate(ctx context.Context, event *client
 }
 func (es *DingTalkEventService) OrgDeptModify(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) clientV2.EventStatus {
 
-	err := es.accounterUsecase.OrgDeptModify(ctx, event)
+	err := es.incrementalSyncUsecase.OrgDeptModify(ctx, event)
 	if err != nil {
 		return clientV2.EventStatusLater
 	}
@@ -112,7 +113,7 @@ func (es *DingTalkEventService) OrgDeptModify(ctx context.Context, event *client
 }
 func (es *DingTalkEventService) OrgDeptRemove(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) clientV2.EventStatus {
 
-	err := es.accounterUsecase.OrgDeptRemove(ctx, event)
+	err := es.incrementalSyncUsecase.OrgDeptRemove(ctx, event)
 	if err != nil {
 		return clientV2.EventStatusLater
 	}
@@ -120,7 +121,7 @@ func (es *DingTalkEventService) OrgDeptRemove(ctx context.Context, event *client
 }
 func (es *DingTalkEventService) UserAddOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) clientV2.EventStatus {
 
-	err := es.accounterUsecase.UserAddOrg(ctx, event)
+	err := es.incrementalSyncUsecase.UserAddOrg(ctx, event)
 	if err != nil {
 		return clientV2.EventStatusLater
 	}
@@ -128,7 +129,7 @@ func (es *DingTalkEventService) UserAddOrg(ctx context.Context, event *clientV2.
 }
 func (es *DingTalkEventService) UserModifyOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) clientV2.EventStatus {
 
-	err := es.accounterUsecase.UserModifyOrg(ctx, event)
+	err := es.incrementalSyncUsecase.UserModifyOrg(ctx, event)
 	if err != nil {
 		return clientV2.EventStatusLater
 	}
@@ -136,7 +137,7 @@ func (es *DingTalkEventService) UserModifyOrg(ctx context.Context, event *client
 }
 func (es *DingTalkEventService) UserLeaveOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) clientV2.EventStatus {
 
-	err := es.accounterUsecase.UserLeaveOrg(ctx, event)
+	err := es.incrementalSyncUsecase.UserLeaveOrg(ctx, event)
 	if err != nil {
 		return clientV2.EventStatusLater
 	}

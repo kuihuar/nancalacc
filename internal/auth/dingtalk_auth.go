@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"nancalacc/internal/conf"
+	"time"
 
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
 	dingtalkoauth2_1_0 "github.com/alibabacloud-go/dingtalk/oauth2_1_0"
@@ -15,16 +16,22 @@ const (
 	DingtalkAuthType = "dingtalk"
 )
 
-type DingTalkAuthenticator struct {
+type DingTalkAuthenticator interface {
+	Authenticator
+}
+
+type DingTalkAuth struct {
 	AppKey    string
 	AppSecret string
 	Endpoint  string
 	//Timeout     string
 	dingtalkCli *dingtalkoauth2_1_0.Client
+	cache       Cache
 }
 
-func NewDingTalkAuthenticator(cfg *conf.Service) Authenticator {
+func NewDingTalkAuthenticator() DingTalkAuthenticator {
 
+	cfg := conf.Get().GetAuth().GetDingtalk()
 	config := &openapi.Config{
 		Protocol: tea.String("https"),
 		RegionId: tea.String("central"),
@@ -33,16 +40,40 @@ func NewDingTalkAuthenticator(cfg *conf.Service) Authenticator {
 	if err != nil {
 		fmt.Printf("NewClient err: %v", err)
 	}
-	return &DingTalkAuthenticator{
-		Endpoint:    cfg.Auth.Dingtalk.Endpoint,
-		AppKey:      cfg.Auth.Dingtalk.AppKey,
-		AppSecret:   cfg.Auth.Dingtalk.AppSecret,
+	return &DingTalkAuth{
+		Endpoint:    cfg.Endpoint,
+		AppKey:      cfg.AppKey,
+		AppSecret:   cfg.AppSecret,
 		dingtalkCli: client,
+		cache:       NewLocalCache(),
 	}
 }
 
-func (r *DingTalkAuthenticator) GetAccessToken(ctx context.Context) (*AccessTokenResp, error) {
+func (r *DingTalkAuth) GetAccessToken(ctx context.Context) (*AccessTokenResp, error) {
+	// 尝试从缓存获取
+	cacheKey := fmt.Sprintf("dingtalk_token_%s", r.AppKey)
+	if cached, found := r.cache.Get(cacheKey); found {
+		if token, ok := cached.(*AccessTokenResp); ok {
+			return token, nil
+		}
+	}
 
+	// 缓存中没有，从API获取
+	token, err := r.getAccessTokenFromAPI(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// 缓存token，提前5分钟过期
+	cacheTTL := time.Duration(token.ExpiresIn-300) * time.Second
+	if cacheTTL > 0 {
+		r.cache.Set(cacheKey, token, cacheTTL)
+	}
+
+	return token, nil
+}
+
+func (r *DingTalkAuth) getAccessTokenFromAPI(ctx context.Context) (*AccessTokenResp, error) {
 	request := &dingtalkoauth2_1_0.GetAccessTokenRequest{
 		AppKey:    tea.String(r.AppKey),
 		AppSecret: tea.String(r.AppSecret),
@@ -87,5 +118,10 @@ func (r *DingTalkAuthenticator) GetAccessToken(ctx context.Context) (*AccessToke
 		AccessToken: *accessToken.AccessToken,
 		ExpiresIn:   int(*accessToken.ExpireIn),
 	}, nil
+}
 
+// InvalidateCache 清除缓存
+func (r *DingTalkAuth) InvalidateCache() {
+	cacheKey := fmt.Sprintf("dingtalk_token_%s", r.AppKey)
+	r.cache.Delete(cacheKey)
 }

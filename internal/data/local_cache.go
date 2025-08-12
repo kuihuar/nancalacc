@@ -39,4 +39,9 @@ func (s *localCacheService) Get(ctx context.Context, key string) (interface{}, b
 	return res, true, nil
 }
 
+func (s *localCacheService) Del(ctx context.Context, key string) error {
+	s.client.Delete(key)
+	return nil
+}
+
 // other methods...

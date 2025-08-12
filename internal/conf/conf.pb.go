@@ -27,7 +27,7 @@ type Bootstrap struct {
 	Server        *Server                `protobuf:"bytes,1,opt,name=server,proto3" json:"server,omitempty"`
 	Data          *Data                  `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	App           *App                   `protobuf:"bytes,3,opt,name=app,proto3" json:"app,omitempty"`
-	Service       *Service               `protobuf:"bytes,4,opt,name=service,proto3" json:"service,omitempty"`
+	Auth          *Auth                  `protobuf:"bytes,4,opt,name=auth,proto3" json:"auth,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -83,9 +83,9 @@ func (x *Bootstrap) GetApp() *App {
 	return nil
 }
 
-func (x *Bootstrap) GetService() *Service {
+func (x *Bootstrap) GetAuth() *Auth {
 	if x != nil {
-		return x.Service
+		return x.Auth
 	}
 	return nil
 }
@@ -148,7 +148,6 @@ type Data struct {
 	DatabaseSync  *Data_DatabaseSync     `protobuf:"bytes,2,opt,name=database_sync,json=databaseSync,proto3" json:"database_sync,omitempty"`
 	Redis         *Data_Redis            `protobuf:"bytes,3,opt,name=redis,proto3" json:"redis,omitempty"`
 	Etcd          *Data_Etcd             `protobuf:"bytes,4,opt,name=etcd,proto3" json:"etcd,omitempty"`
-	Auth          *Data_Auth             `protobuf:"bytes,5,opt,name=auth,proto3" json:"auth,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -211,23 +210,24 @@ func (x *Data) GetEtcd() *Data_Etcd {
 	return nil
 }
 
-func (x *Data) GetAuth() *Data_Auth {
-	if x != nil {
-		return x.Auth
-	}
-	return nil
-}
-
 type App struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Version       string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
-	Env           string                 `protobuf:"bytes,4,opt,name=env,proto3" json:"env,omitempty"`
-	LogLevel      string                 `protobuf:"bytes,5,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`
-	LogOut        string                 `protobuf:"bytes,6,opt,name=log_out,json=logOut,proto3" json:"log_out,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name           string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Version        string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
+	Env            string                 `protobuf:"bytes,4,opt,name=env,proto3" json:"env,omitempty"`
+	LogLevel       string                 `protobuf:"bytes,5,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`
+	LogOut         string                 `protobuf:"bytes,6,opt,name=log_out,json=logOut,proto3" json:"log_out,omitempty"`
+	AppPackage     string                 `protobuf:"bytes,7,opt,name=app_package,json=appPackage,proto3" json:"app_package,omitempty"`
+	AppId          string                 `protobuf:"bytes,8,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	AppSecret      string                 `protobuf:"bytes,9,opt,name=app_secret,json=appSecret,proto3" json:"app_secret,omitempty"`
+	ThirdCompanyId string                 `protobuf:"bytes,10,opt,name=third_company_id,json=thirdCompanyId,proto3" json:"third_company_id,omitempty"`
+	PlatformIds    string                 `protobuf:"bytes,11,opt,name=platform_ids,json=platformIds,proto3" json:"platform_ids,omitempty"`
+	CompanyId      string                 `protobuf:"bytes,12,opt,name=company_id,json=companyId,proto3" json:"company_id,omitempty"`
+	AccessKey      string                 `protobuf:"bytes,13,opt,name=access_key,json=accessKey,proto3" json:"access_key,omitempty"`
+	SecretKey      string                 `protobuf:"bytes,14,opt,name=secret_key,json=secretKey,proto3" json:"secret_key,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *App) Reset() {
@@ -302,28 +302,84 @@ func (x *App) GetLogOut() string {
 	return ""
 }
 
-type Service struct {
+func (x *App) GetAppPackage() string {
+	if x != nil {
+		return x.AppPackage
+	}
+	return ""
+}
+
+func (x *App) GetAppId() string {
+	if x != nil {
+		return x.AppId
+	}
+	return ""
+}
+
+func (x *App) GetAppSecret() string {
+	if x != nil {
+		return x.AppSecret
+	}
+	return ""
+}
+
+func (x *App) GetThirdCompanyId() string {
+	if x != nil {
+		return x.ThirdCompanyId
+	}
+	return ""
+}
+
+func (x *App) GetPlatformIds() string {
+	if x != nil {
+		return x.PlatformIds
+	}
+	return ""
+}
+
+func (x *App) GetCompanyId() string {
+	if x != nil {
+		return x.CompanyId
+	}
+	return ""
+}
+
+func (x *App) GetAccessKey() string {
+	if x != nil {
+		return x.AccessKey
+	}
+	return ""
+}
+
+func (x *App) GetSecretKey() string {
+	if x != nil {
+		return x.SecretKey
+	}
+	return ""
+}
+
+type Auth struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Business      *Service_Business      `protobuf:"bytes,1,opt,name=business,proto3" json:"business,omitempty"`
-	Auth          *Service_Auth          `protobuf:"bytes,2,opt,name=auth,proto3" json:"auth,omitempty"`
+	Wpsapp        *Auth_Wpsapp           `protobuf:"bytes,1,opt,name=wpsapp,proto3" json:"wpsapp,omitempty"`
+	Dingtalk      *Auth_Dingtalk         `protobuf:"bytes,2,opt,name=dingtalk,proto3" json:"dingtalk,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Service) Reset() {
-	*x = Service{}
+func (x *Auth) Reset() {
+	*x = Auth{}
 	mi := &file_conf_conf_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Service) String() string {
+func (x *Auth) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Service) ProtoMessage() {}
+func (*Auth) ProtoMessage() {}
 
-func (x *Service) ProtoReflect() protoreflect.Message {
+func (x *Auth) ProtoReflect() protoreflect.Message {
 	mi := &file_conf_conf_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -335,21 +391,21 @@ func (x *Service) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Service.ProtoReflect.Descriptor instead.
-func (*Service) Descriptor() ([]byte, []int) {
+// Deprecated: Use Auth.ProtoReflect.Descriptor instead.
+func (*Auth) Descriptor() ([]byte, []int) {
 	return file_conf_conf_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *Service) GetBusiness() *Service_Business {
+func (x *Auth) GetWpsapp() *Auth_Wpsapp {
 	if x != nil {
-		return x.Business
+		return x.Wpsapp
 	}
 	return nil
 }
 
-func (x *Service) GetAuth() *Service_Auth {
+func (x *Auth) GetDingtalk() *Auth_Dingtalk {
 	if x != nil {
-		return x.Auth
+		return x.Dingtalk
 	}
 	return nil
 }
@@ -850,28 +906,31 @@ func (x *Data_Etcd) GetEnable() bool {
 	return false
 }
 
-type Data_Auth struct {
+type Auth_Wpsapp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AppId         string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
-	AppSecret     string                 `protobuf:"bytes,2,opt,name=app_secret,json=appSecret,proto3" json:"app_secret,omitempty"`
+	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	ClientSecret  string                 `protobuf:"bytes,2,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
+	AuthUrl       string                 `protobuf:"bytes,3,opt,name=auth_url,json=authUrl,proto3" json:"auth_url,omitempty"`
+	AuthPath      string                 `protobuf:"bytes,4,opt,name=auth_path,json=authPath,proto3" json:"auth_path,omitempty"`
+	GrantType     string                 `protobuf:"bytes,5,opt,name=grant_type,json=grantType,proto3" json:"grant_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Data_Auth) Reset() {
-	*x = Data_Auth{}
+func (x *Auth_Wpsapp) Reset() {
+	*x = Auth_Wpsapp{}
 	mi := &file_conf_conf_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Data_Auth) String() string {
+func (x *Auth_Wpsapp) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Data_Auth) ProtoMessage() {}
+func (*Auth_Wpsapp) ProtoMessage() {}
 
-func (x *Data_Auth) ProtoReflect() protoreflect.Message {
+func (x *Auth_Wpsapp) ProtoReflect() protoreflect.Message {
 	mi := &file_conf_conf_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -883,490 +942,47 @@ func (x *Data_Auth) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Data_Auth.ProtoReflect.Descriptor instead.
-func (*Data_Auth) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{2, 4}
-}
-
-func (x *Data_Auth) GetAppId() string {
-	if x != nil {
-		return x.AppId
-	}
-	return ""
-}
-
-func (x *Data_Auth) GetAppSecret() string {
-	if x != nil {
-		return x.AppSecret
-	}
-	return ""
-}
-
-type Service_Business struct {
-	state                       protoimpl.MessageState `protogen:"open.v1"`
-	ThirdCompanyId              string                 `protobuf:"bytes,1,opt,name=third_company_id,json=thirdCompanyId,proto3" json:"third_company_id,omitempty"`
-	PlatformIds                 string                 `protobuf:"bytes,2,opt,name=platform_ids,json=platformIds,proto3" json:"platform_ids,omitempty"`
-	CompanyId                   string                 `protobuf:"bytes,3,opt,name=company_id,json=companyId,proto3" json:"company_id,omitempty"`
-	EcisaccountsyncUrl          string                 `protobuf:"bytes,4,opt,name=ecisaccountsync_url,json=ecisaccountsyncUrl,proto3" json:"ecisaccountsync_url,omitempty"`
-	EcisaccountsyncUrlIncrement string                 `protobuf:"bytes,5,opt,name=ecisaccountsync_url_increment,json=ecisaccountsyncUrlIncrement,proto3" json:"ecisaccountsync_url_increment,omitempty"`
-	unknownFields               protoimpl.UnknownFields
-	sizeCache                   protoimpl.SizeCache
-}
-
-func (x *Service_Business) Reset() {
-	*x = Service_Business{}
-	mi := &file_conf_conf_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Service_Business) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Service_Business) ProtoMessage() {}
-
-func (x *Service_Business) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Service_Business.ProtoReflect.Descriptor instead.
-func (*Service_Business) Descriptor() ([]byte, []int) {
+// Deprecated: Use Auth_Wpsapp.ProtoReflect.Descriptor instead.
+func (*Auth_Wpsapp) Descriptor() ([]byte, []int) {
 	return file_conf_conf_proto_rawDescGZIP(), []int{4, 0}
 }
 
-func (x *Service_Business) GetThirdCompanyId() string {
-	if x != nil {
-		return x.ThirdCompanyId
-	}
-	return ""
-}
-
-func (x *Service_Business) GetPlatformIds() string {
-	if x != nil {
-		return x.PlatformIds
-	}
-	return ""
-}
-
-func (x *Service_Business) GetCompanyId() string {
-	if x != nil {
-		return x.CompanyId
-	}
-	return ""
-}
-
-func (x *Service_Business) GetEcisaccountsyncUrl() string {
-	if x != nil {
-		return x.EcisaccountsyncUrl
-	}
-	return ""
-}
-
-func (x *Service_Business) GetEcisaccountsyncUrlIncrement() string {
-	if x != nil {
-		return x.EcisaccountsyncUrlIncrement
-	}
-	return ""
-}
-
-type Service_Auth struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Self          *Service_Auth_Self     `protobuf:"bytes,1,opt,name=self,proto3" json:"self,omitempty"`
-	App           *Service_Auth_App      `protobuf:"bytes,2,opt,name=app,proto3" json:"app,omitempty"`
-	Third         *Service_Auth_Third    `protobuf:"bytes,3,opt,name=third,proto3" json:"third,omitempty"`
-	User          *Service_Auth_User     `protobuf:"bytes,4,opt,name=user,proto3" json:"user,omitempty"`
-	Dingtalk      *Service_Auth_Dingtalk `protobuf:"bytes,5,opt,name=dingtalk,proto3" json:"dingtalk,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Service_Auth) Reset() {
-	*x = Service_Auth{}
-	mi := &file_conf_conf_proto_msgTypes[13]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Service_Auth) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Service_Auth) ProtoMessage() {}
-
-func (x *Service_Auth) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[13]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Service_Auth.ProtoReflect.Descriptor instead.
-func (*Service_Auth) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{4, 1}
-}
-
-func (x *Service_Auth) GetSelf() *Service_Auth_Self {
-	if x != nil {
-		return x.Self
-	}
-	return nil
-}
-
-func (x *Service_Auth) GetApp() *Service_Auth_App {
-	if x != nil {
-		return x.App
-	}
-	return nil
-}
-
-func (x *Service_Auth) GetThird() *Service_Auth_Third {
-	if x != nil {
-		return x.Third
-	}
-	return nil
-}
-
-func (x *Service_Auth) GetUser() *Service_Auth_User {
-	if x != nil {
-		return x.User
-	}
-	return nil
-}
-
-func (x *Service_Auth) GetDingtalk() *Service_Auth_Dingtalk {
-	if x != nil {
-		return x.Dingtalk
-	}
-	return nil
-}
-
-type Service_Auth_Self struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AppPackage    string                 `protobuf:"bytes,1,opt,name=app_package,json=appPackage,proto3" json:"app_package,omitempty"`
-	AppSecret     string                 `protobuf:"bytes,2,opt,name=app_secret,json=appSecret,proto3" json:"app_secret,omitempty"`
-	AccessKey     string                 `protobuf:"bytes,3,opt,name=access_key,json=accessKey,proto3" json:"access_key,omitempty"`
-	SecretKey     string                 `protobuf:"bytes,4,opt,name=secret_key,json=secretKey,proto3" json:"secret_key,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Service_Auth_Self) Reset() {
-	*x = Service_Auth_Self{}
-	mi := &file_conf_conf_proto_msgTypes[14]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Service_Auth_Self) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Service_Auth_Self) ProtoMessage() {}
-
-func (x *Service_Auth_Self) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[14]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Service_Auth_Self.ProtoReflect.Descriptor instead.
-func (*Service_Auth_Self) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{4, 1, 0}
-}
-
-func (x *Service_Auth_Self) GetAppPackage() string {
-	if x != nil {
-		return x.AppPackage
-	}
-	return ""
-}
-
-func (x *Service_Auth_Self) GetAppSecret() string {
-	if x != nil {
-		return x.AppSecret
-	}
-	return ""
-}
-
-func (x *Service_Auth_Self) GetAccessKey() string {
-	if x != nil {
-		return x.AccessKey
-	}
-	return ""
-}
-
-func (x *Service_Auth_Self) GetSecretKey() string {
-	if x != nil {
-		return x.SecretKey
-	}
-	return ""
-}
-
-type Service_Auth_App struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	ClientSecret  string                 `protobuf:"bytes,2,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
-	AuthUrl       string                 `protobuf:"bytes,3,opt,name=auth_url,json=authUrl,proto3" json:"auth_url,omitempty"`
-	AuthPath      string                 `protobuf:"bytes,4,opt,name=auth_path,json=authPath,proto3" json:"auth_path,omitempty"`
-	GrantType     string                 `protobuf:"bytes,5,opt,name=grant_type,json=grantType,proto3" json:"grant_type,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Service_Auth_App) Reset() {
-	*x = Service_Auth_App{}
-	mi := &file_conf_conf_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Service_Auth_App) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Service_Auth_App) ProtoMessage() {}
-
-func (x *Service_Auth_App) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Service_Auth_App.ProtoReflect.Descriptor instead.
-func (*Service_Auth_App) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{4, 1, 1}
-}
-
-func (x *Service_Auth_App) GetClientId() string {
+func (x *Auth_Wpsapp) GetClientId() string {
 	if x != nil {
 		return x.ClientId
 	}
 	return ""
 }
 
-func (x *Service_Auth_App) GetClientSecret() string {
+func (x *Auth_Wpsapp) GetClientSecret() string {
 	if x != nil {
 		return x.ClientSecret
 	}
 	return ""
 }
 
-func (x *Service_Auth_App) GetAuthUrl() string {
+func (x *Auth_Wpsapp) GetAuthUrl() string {
 	if x != nil {
 		return x.AuthUrl
 	}
 	return ""
 }
 
-func (x *Service_Auth_App) GetAuthPath() string {
+func (x *Auth_Wpsapp) GetAuthPath() string {
 	if x != nil {
 		return x.AuthPath
 	}
 	return ""
 }
 
-func (x *Service_Auth_App) GetGrantType() string {
+func (x *Auth_Wpsapp) GetGrantType() string {
 	if x != nil {
 		return x.GrantType
 	}
 	return ""
 }
 
-type Service_Auth_Third struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	ClientSecret  string                 `protobuf:"bytes,2,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
-	AuthUrl       string                 `protobuf:"bytes,3,opt,name=auth_url,json=authUrl,proto3" json:"auth_url,omitempty"`
-	AuthPath      string                 `protobuf:"bytes,4,opt,name=auth_path,json=authPath,proto3" json:"auth_path,omitempty"`
-	GrantType     string                 `protobuf:"bytes,5,opt,name=grant_type,json=grantType,proto3" json:"grant_type,omitempty"`
-	CompanyId     string                 `protobuf:"bytes,6,opt,name=company_id,json=companyId,proto3" json:"company_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Service_Auth_Third) Reset() {
-	*x = Service_Auth_Third{}
-	mi := &file_conf_conf_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Service_Auth_Third) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Service_Auth_Third) ProtoMessage() {}
-
-func (x *Service_Auth_Third) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[16]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Service_Auth_Third.ProtoReflect.Descriptor instead.
-func (*Service_Auth_Third) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{4, 1, 2}
-}
-
-func (x *Service_Auth_Third) GetClientId() string {
-	if x != nil {
-		return x.ClientId
-	}
-	return ""
-}
-
-func (x *Service_Auth_Third) GetClientSecret() string {
-	if x != nil {
-		return x.ClientSecret
-	}
-	return ""
-}
-
-func (x *Service_Auth_Third) GetAuthUrl() string {
-	if x != nil {
-		return x.AuthUrl
-	}
-	return ""
-}
-
-func (x *Service_Auth_Third) GetAuthPath() string {
-	if x != nil {
-		return x.AuthPath
-	}
-	return ""
-}
-
-func (x *Service_Auth_Third) GetGrantType() string {
-	if x != nil {
-		return x.GrantType
-	}
-	return ""
-}
-
-func (x *Service_Auth_Third) GetCompanyId() string {
-	if x != nil {
-		return x.CompanyId
-	}
-	return ""
-}
-
-type Service_Auth_User struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ClientId      string                 `protobuf:"bytes,1,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	ClientSecret  string                 `protobuf:"bytes,2,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
-	AuthUrl       string                 `protobuf:"bytes,3,opt,name=auth_url,json=authUrl,proto3" json:"auth_url,omitempty"`
-	AuthPath      string                 `protobuf:"bytes,4,opt,name=auth_path,json=authPath,proto3" json:"auth_path,omitempty"`
-	GrantType     string                 `protobuf:"bytes,5,opt,name=grant_type,json=grantType,proto3" json:"grant_type,omitempty"`
-	RedirectUri   string                 `protobuf:"bytes,6,opt,name=redirect_uri,json=redirectUri,proto3" json:"redirect_uri,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Service_Auth_User) Reset() {
-	*x = Service_Auth_User{}
-	mi := &file_conf_conf_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Service_Auth_User) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Service_Auth_User) ProtoMessage() {}
-
-func (x *Service_Auth_User) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Service_Auth_User.ProtoReflect.Descriptor instead.
-func (*Service_Auth_User) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{4, 1, 3}
-}
-
-func (x *Service_Auth_User) GetClientId() string {
-	if x != nil {
-		return x.ClientId
-	}
-	return ""
-}
-
-func (x *Service_Auth_User) GetClientSecret() string {
-	if x != nil {
-		return x.ClientSecret
-	}
-	return ""
-}
-
-func (x *Service_Auth_User) GetAuthUrl() string {
-	if x != nil {
-		return x.AuthUrl
-	}
-	return ""
-}
-
-func (x *Service_Auth_User) GetAuthPath() string {
-	if x != nil {
-		return x.AuthPath
-	}
-	return ""
-}
-
-func (x *Service_Auth_User) GetGrantType() string {
-	if x != nil {
-		return x.GrantType
-	}
-	return ""
-}
-
-func (x *Service_Auth_User) GetRedirectUri() string {
-	if x != nil {
-		return x.RedirectUri
-	}
-	return ""
-}
-
-type Service_Auth_Dingtalk struct {
+type Auth_Dingtalk struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Endpoint      string                 `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
 	AppKey        string                 `protobuf:"bytes,2,opt,name=app_key,json=appKey,proto3" json:"app_key,omitempty"`
@@ -1377,21 +993,21 @@ type Service_Auth_Dingtalk struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Service_Auth_Dingtalk) Reset() {
-	*x = Service_Auth_Dingtalk{}
-	mi := &file_conf_conf_proto_msgTypes[18]
+func (x *Auth_Dingtalk) Reset() {
+	*x = Auth_Dingtalk{}
+	mi := &file_conf_conf_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Service_Auth_Dingtalk) String() string {
+func (x *Auth_Dingtalk) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Service_Auth_Dingtalk) ProtoMessage() {}
+func (*Auth_Dingtalk) ProtoMessage() {}
 
-func (x *Service_Auth_Dingtalk) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[18]
+func (x *Auth_Dingtalk) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1402,40 +1018,40 @@ func (x *Service_Auth_Dingtalk) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Service_Auth_Dingtalk.ProtoReflect.Descriptor instead.
-func (*Service_Auth_Dingtalk) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{4, 1, 4}
+// Deprecated: Use Auth_Dingtalk.ProtoReflect.Descriptor instead.
+func (*Auth_Dingtalk) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{4, 1}
 }
 
-func (x *Service_Auth_Dingtalk) GetEndpoint() string {
+func (x *Auth_Dingtalk) GetEndpoint() string {
 	if x != nil {
 		return x.Endpoint
 	}
 	return ""
 }
 
-func (x *Service_Auth_Dingtalk) GetAppKey() string {
+func (x *Auth_Dingtalk) GetAppKey() string {
 	if x != nil {
 		return x.AppKey
 	}
 	return ""
 }
 
-func (x *Service_Auth_Dingtalk) GetAppSecret() string {
+func (x *Auth_Dingtalk) GetAppSecret() string {
 	if x != nil {
 		return x.AppSecret
 	}
 	return ""
 }
 
-func (x *Service_Auth_Dingtalk) GetTimeout() string {
+func (x *Auth_Dingtalk) GetTimeout() string {
 	if x != nil {
 		return x.Timeout
 	}
 	return ""
 }
 
-func (x *Service_Auth_Dingtalk) GetMaxConcurrent() int64 {
+func (x *Auth_Dingtalk) GetMaxConcurrent() int64 {
 	if x != nil {
 		return x.MaxConcurrent
 	}
@@ -1447,12 +1063,12 @@ var File_conf_conf_proto protoreflect.FileDescriptor
 const file_conf_conf_proto_rawDesc = "" +
 	"\n" +
 	"\x0fconf/conf.proto\x12\n" +
-	"kratos.api\x1a\x1egoogle/protobuf/duration.proto\"\xaf\x01\n" +
+	"kratos.api\x1a\x1egoogle/protobuf/duration.proto\"\xa6\x01\n" +
 	"\tBootstrap\x12*\n" +
 	"\x06server\x18\x01 \x01(\v2\x12.kratos.api.ServerR\x06server\x12$\n" +
 	"\x04data\x18\x02 \x01(\v2\x10.kratos.api.DataR\x04data\x12!\n" +
-	"\x03app\x18\x03 \x01(\v2\x0f.kratos.api.AppR\x03app\x12-\n" +
-	"\aservice\x18\x04 \x01(\v2\x13.kratos.api.ServiceR\aservice\"\xb8\x02\n" +
+	"\x03app\x18\x03 \x01(\v2\x0f.kratos.api.AppR\x03app\x12$\n" +
+	"\x04auth\x18\x04 \x01(\v2\x10.kratos.api.AuthR\x04auth\"\xb8\x02\n" +
 	"\x06Server\x12+\n" +
 	"\x04http\x18\x01 \x01(\v2\x17.kratos.api.Server.HTTPR\x04http\x12+\n" +
 	"\x04grpc\x18\x02 \x01(\v2\x17.kratos.api.Server.GRPCR\x04grpc\x1ai\n" +
@@ -1463,14 +1079,12 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\x04GRPC\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x123\n" +
-	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\x80\n" +
-	"\n" +
+	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\x97\t\n" +
 	"\x04Data\x125\n" +
 	"\bdatabase\x18\x01 \x01(\v2\x19.kratos.api.Data.DatabaseR\bdatabase\x12B\n" +
 	"\rdatabase_sync\x18\x02 \x01(\v2\x1d.kratos.api.Data.DatabaseSyncR\fdatabaseSync\x12,\n" +
 	"\x05redis\x18\x03 \x01(\v2\x16.kratos.api.Data.RedisR\x05redis\x12)\n" +
-	"\x04etcd\x18\x04 \x01(\v2\x15.kratos.api.Data.EtcdR\x04etcd\x12)\n" +
-	"\x04auth\x18\x05 \x01(\v2\x15.kratos.api.Data.AuthR\x04auth\x1a\x8d\x02\n" +
+	"\x04etcd\x18\x04 \x01(\v2\x15.kratos.api.Data.EtcdR\x04etcd\x1a\x8d\x02\n" +
 	"\bDatabase\x12\x16\n" +
 	"\x06driver\x18\x01 \x01(\tR\x06driver\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12$\n" +
@@ -1505,67 +1119,38 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\fdial_timeout\x18\x02 \x01(\tR\vdialTimeout\x12#\n" +
 	"\rconfig_prefix\x18\x03 \x01(\tR\fconfigPrefix\x12.\n" +
 	"\x13enable_config_watch\x18\x04 \x01(\bR\x11enableConfigWatch\x12\x16\n" +
-	"\x06enable\x18\x05 \x01(\bR\x06enable\x1a<\n" +
-	"\x04Auth\x12\x15\n" +
-	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12\x1d\n" +
-	"\n" +
-	"app_secret\x18\x02 \x01(\tR\tappSecret\"\x8b\x01\n" +
+	"\x06enable\x18\x05 \x01(\bR\x06enable\"\x8c\x03\n" +
 	"\x03App\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
 	"\aversion\x18\x03 \x01(\tR\aversion\x12\x10\n" +
 	"\x03env\x18\x04 \x01(\tR\x03env\x12\x1b\n" +
 	"\tlog_level\x18\x05 \x01(\tR\blogLevel\x12\x17\n" +
-	"\alog_out\x18\x06 \x01(\tR\x06logOut\"\xc3\v\n" +
-	"\aService\x128\n" +
-	"\bbusiness\x18\x01 \x01(\v2\x1c.kratos.api.Service.BusinessR\bbusiness\x12,\n" +
-	"\x04auth\x18\x02 \x01(\v2\x18.kratos.api.Service.AuthR\x04auth\x1a\xeb\x01\n" +
-	"\bBusiness\x12(\n" +
-	"\x10third_company_id\x18\x01 \x01(\tR\x0ethirdCompanyId\x12!\n" +
-	"\fplatform_ids\x18\x02 \x01(\tR\vplatformIds\x12\x1d\n" +
+	"\alog_out\x18\x06 \x01(\tR\x06logOut\x12\x1f\n" +
+	"\vapp_package\x18\a \x01(\tR\n" +
+	"appPackage\x12\x15\n" +
+	"\x06app_id\x18\b \x01(\tR\x05appId\x12\x1d\n" +
 	"\n" +
-	"company_id\x18\x03 \x01(\tR\tcompanyId\x12/\n" +
-	"\x13ecisaccountsync_url\x18\x04 \x01(\tR\x12ecisaccountsyncUrl\x12B\n" +
-	"\x1decisaccountsync_url_increment\x18\x05 \x01(\tR\x1becisaccountsyncUrlIncrement\x1a\xe1\b\n" +
-	"\x04Auth\x121\n" +
-	"\x04self\x18\x01 \x01(\v2\x1d.kratos.api.Service.Auth.SelfR\x04self\x12.\n" +
-	"\x03app\x18\x02 \x01(\v2\x1c.kratos.api.Service.Auth.AppR\x03app\x124\n" +
-	"\x05third\x18\x03 \x01(\v2\x1e.kratos.api.Service.Auth.ThirdR\x05third\x121\n" +
-	"\x04user\x18\x04 \x01(\v2\x1d.kratos.api.Service.Auth.UserR\x04user\x12=\n" +
-	"\bdingtalk\x18\x05 \x01(\v2!.kratos.api.Service.Auth.DingtalkR\bdingtalk\x1a\x84\x01\n" +
-	"\x04Self\x12\x1f\n" +
-	"\vapp_package\x18\x01 \x01(\tR\n" +
-	"appPackage\x12\x1d\n" +
+	"app_secret\x18\t \x01(\tR\tappSecret\x12(\n" +
+	"\x10third_company_id\x18\n" +
+	" \x01(\tR\x0ethirdCompanyId\x12!\n" +
+	"\fplatform_ids\x18\v \x01(\tR\vplatformIds\x12\x1d\n" +
 	"\n" +
-	"app_secret\x18\x02 \x01(\tR\tappSecret\x12\x1d\n" +
+	"company_id\x18\f \x01(\tR\tcompanyId\x12\x1d\n" +
 	"\n" +
-	"access_key\x18\x03 \x01(\tR\taccessKey\x12\x1d\n" +
+	"access_key\x18\r \x01(\tR\taccessKey\x12\x1d\n" +
 	"\n" +
-	"secret_key\x18\x04 \x01(\tR\tsecretKey\x1a\x9e\x01\n" +
-	"\x03App\x12\x1b\n" +
+	"secret_key\x18\x0e \x01(\tR\tsecretKey\"\xb3\x03\n" +
+	"\x04Auth\x12/\n" +
+	"\x06wpsapp\x18\x01 \x01(\v2\x17.kratos.api.Auth.WpsappR\x06wpsapp\x125\n" +
+	"\bdingtalk\x18\x02 \x01(\v2\x19.kratos.api.Auth.DingtalkR\bdingtalk\x1a\xa1\x01\n" +
+	"\x06Wpsapp\x12\x1b\n" +
 	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12#\n" +
 	"\rclient_secret\x18\x02 \x01(\tR\fclientSecret\x12\x19\n" +
 	"\bauth_url\x18\x03 \x01(\tR\aauthUrl\x12\x1b\n" +
 	"\tauth_path\x18\x04 \x01(\tR\bauthPath\x12\x1d\n" +
 	"\n" +
-	"grant_type\x18\x05 \x01(\tR\tgrantType\x1a\xbf\x01\n" +
-	"\x05Third\x12\x1b\n" +
-	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12#\n" +
-	"\rclient_secret\x18\x02 \x01(\tR\fclientSecret\x12\x19\n" +
-	"\bauth_url\x18\x03 \x01(\tR\aauthUrl\x12\x1b\n" +
-	"\tauth_path\x18\x04 \x01(\tR\bauthPath\x12\x1d\n" +
-	"\n" +
-	"grant_type\x18\x05 \x01(\tR\tgrantType\x12\x1d\n" +
-	"\n" +
-	"company_id\x18\x06 \x01(\tR\tcompanyId\x1a\xc2\x01\n" +
-	"\x04User\x12\x1b\n" +
-	"\tclient_id\x18\x01 \x01(\tR\bclientId\x12#\n" +
-	"\rclient_secret\x18\x02 \x01(\tR\fclientSecret\x12\x19\n" +
-	"\bauth_url\x18\x03 \x01(\tR\aauthUrl\x12\x1b\n" +
-	"\tauth_path\x18\x04 \x01(\tR\bauthPath\x12\x1d\n" +
-	"\n" +
-	"grant_type\x18\x05 \x01(\tR\tgrantType\x12!\n" +
-	"\fredirect_uri\x18\x06 \x01(\tR\vredirectUri\x1a\x9e\x01\n" +
+	"grant_type\x18\x05 \x01(\tR\tgrantType\x1a\x9e\x01\n" +
 	"\bDingtalk\x12\x1a\n" +
 	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x12\x17\n" +
 	"\aapp_key\x18\x02 \x01(\tR\x06appKey\x12\x1d\n" +
@@ -1586,57 +1171,45 @@ func file_conf_conf_proto_rawDescGZIP() []byte {
 	return file_conf_conf_proto_rawDescData
 }
 
-var file_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_conf_conf_proto_goTypes = []any{
-	(*Bootstrap)(nil),             // 0: kratos.api.Bootstrap
-	(*Server)(nil),                // 1: kratos.api.Server
-	(*Data)(nil),                  // 2: kratos.api.Data
-	(*App)(nil),                   // 3: kratos.api.App
-	(*Service)(nil),               // 4: kratos.api.Service
-	(*Server_HTTP)(nil),           // 5: kratos.api.Server.HTTP
-	(*Server_GRPC)(nil),           // 6: kratos.api.Server.GRPC
-	(*Data_Database)(nil),         // 7: kratos.api.Data.Database
-	(*Data_DatabaseSync)(nil),     // 8: kratos.api.Data.DatabaseSync
-	(*Data_Redis)(nil),            // 9: kratos.api.Data.Redis
-	(*Data_Etcd)(nil),             // 10: kratos.api.Data.Etcd
-	(*Data_Auth)(nil),             // 11: kratos.api.Data.Auth
-	(*Service_Business)(nil),      // 12: kratos.api.Service.Business
-	(*Service_Auth)(nil),          // 13: kratos.api.Service.Auth
-	(*Service_Auth_Self)(nil),     // 14: kratos.api.Service.Auth.Self
-	(*Service_Auth_App)(nil),      // 15: kratos.api.Service.Auth.App
-	(*Service_Auth_Third)(nil),    // 16: kratos.api.Service.Auth.Third
-	(*Service_Auth_User)(nil),     // 17: kratos.api.Service.Auth.User
-	(*Service_Auth_Dingtalk)(nil), // 18: kratos.api.Service.Auth.Dingtalk
-	(*durationpb.Duration)(nil),   // 19: google.protobuf.Duration
+	(*Bootstrap)(nil),           // 0: kratos.api.Bootstrap
+	(*Server)(nil),              // 1: kratos.api.Server
+	(*Data)(nil),                // 2: kratos.api.Data
+	(*App)(nil),                 // 3: kratos.api.App
+	(*Auth)(nil),                // 4: kratos.api.Auth
+	(*Server_HTTP)(nil),         // 5: kratos.api.Server.HTTP
+	(*Server_GRPC)(nil),         // 6: kratos.api.Server.GRPC
+	(*Data_Database)(nil),       // 7: kratos.api.Data.Database
+	(*Data_DatabaseSync)(nil),   // 8: kratos.api.Data.DatabaseSync
+	(*Data_Redis)(nil),          // 9: kratos.api.Data.Redis
+	(*Data_Etcd)(nil),           // 10: kratos.api.Data.Etcd
+	(*Auth_Wpsapp)(nil),         // 11: kratos.api.Auth.Wpsapp
+	(*Auth_Dingtalk)(nil),       // 12: kratos.api.Auth.Dingtalk
+	(*durationpb.Duration)(nil), // 13: google.protobuf.Duration
 }
 var file_conf_conf_proto_depIdxs = []int32{
 	1,  // 0: kratos.api.Bootstrap.server:type_name -> kratos.api.Server
 	2,  // 1: kratos.api.Bootstrap.data:type_name -> kratos.api.Data
 	3,  // 2: kratos.api.Bootstrap.app:type_name -> kratos.api.App
-	4,  // 3: kratos.api.Bootstrap.service:type_name -> kratos.api.Service
+	4,  // 3: kratos.api.Bootstrap.auth:type_name -> kratos.api.Auth
 	5,  // 4: kratos.api.Server.http:type_name -> kratos.api.Server.HTTP
 	6,  // 5: kratos.api.Server.grpc:type_name -> kratos.api.Server.GRPC
 	7,  // 6: kratos.api.Data.database:type_name -> kratos.api.Data.Database
 	8,  // 7: kratos.api.Data.database_sync:type_name -> kratos.api.Data.DatabaseSync
 	9,  // 8: kratos.api.Data.redis:type_name -> kratos.api.Data.Redis
 	10, // 9: kratos.api.Data.etcd:type_name -> kratos.api.Data.Etcd
-	11, // 10: kratos.api.Data.auth:type_name -> kratos.api.Data.Auth
-	12, // 11: kratos.api.Service.business:type_name -> kratos.api.Service.Business
-	13, // 12: kratos.api.Service.auth:type_name -> kratos.api.Service.Auth
-	19, // 13: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
-	19, // 14: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
-	19, // 15: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
-	19, // 16: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
-	14, // 17: kratos.api.Service.Auth.self:type_name -> kratos.api.Service.Auth.Self
-	15, // 18: kratos.api.Service.Auth.app:type_name -> kratos.api.Service.Auth.App
-	16, // 19: kratos.api.Service.Auth.third:type_name -> kratos.api.Service.Auth.Third
-	17, // 20: kratos.api.Service.Auth.user:type_name -> kratos.api.Service.Auth.User
-	18, // 21: kratos.api.Service.Auth.dingtalk:type_name -> kratos.api.Service.Auth.Dingtalk
-	22, // [22:22] is the sub-list for method output_type
-	22, // [22:22] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	11, // 10: kratos.api.Auth.wpsapp:type_name -> kratos.api.Auth.Wpsapp
+	12, // 11: kratos.api.Auth.dingtalk:type_name -> kratos.api.Auth.Dingtalk
+	13, // 12: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
+	13, // 13: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
+	13, // 14: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
+	13, // 15: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
+	16, // [16:16] is the sub-list for method output_type
+	16, // [16:16] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_conf_conf_proto_init() }
@@ -1650,7 +1223,7 @@ func file_conf_conf_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_conf_conf_proto_rawDesc), len(file_conf_conf_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

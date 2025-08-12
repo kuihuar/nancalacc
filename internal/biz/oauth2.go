@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	v1 "nancalacc/api/account/v1"
-	"nancalacc/internal/conf"
 	"nancalacc/internal/dingtalk"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -13,13 +12,12 @@ import (
 // GreeterUsecase is a Greeter usecase.
 type Oauth2Usecase struct {
 	dingTalkRepo dingtalk.Dingtalk
-	bizConf      *conf.Service_Business
 	log          *log.Helper
 }
 
 // NewGreeterUsecase new a Greeter usecase.
-func NewOauth2Usecase(dingTalkRepo dingtalk.Dingtalk, bizConf *conf.Service_Business, logger log.Logger) *Oauth2Usecase {
-	return &Oauth2Usecase{dingTalkRepo: dingTalkRepo, bizConf: bizConf, log: log.NewHelper(logger)}
+func NewOauth2Usecase(dingTalkRepo dingtalk.Dingtalk, logger log.Logger) *Oauth2Usecase {
+	return &Oauth2Usecase{dingTalkRepo: dingTalkRepo, log: log.NewHelper(logger)}
 }
 
 func (uc *Oauth2Usecase) GetUserInfo(ctx context.Context, req *v1.GetUserInfoRequest) (*v1.GetUserInfoResponse, error) {

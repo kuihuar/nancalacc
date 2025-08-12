@@ -16,9 +16,9 @@ import (
 )
 
 type accounterRepo struct {
-	serviceConf *conf.Service
-	data        *Data
-	log         *log.Helper
+	bizConf *conf.App
+	data    *Data
+	log     *log.Helper
 }
 
 var (
@@ -27,11 +27,11 @@ var (
 )
 
 // NewAccounterRepo .
-func NewAccounterRepo(serviceConf *conf.Service, data *Data, logger log.Logger) biz.AccounterRepo {
+func NewAccounterRepo(data *Data, logger log.Logger) biz.AccounterRepo {
 	return &accounterRepo{
-		serviceConf: serviceConf,
-		data:        data,
-		log:         log.NewHelper(logger),
+		bizConf: conf.Get().GetApp(),
+		data:    data,
+		log:     log.NewHelper(logger),
 	}
 }
 
@@ -46,8 +46,8 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.Dingtal
 		r.log.Warn("users is empty")
 		return 0, nil
 	}
-	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
-	platformID := r.serviceConf.Business.PlatformIds
+	thirdCompanyID := r.bizConf.ThirdCompanyId
+	platformID := r.bizConf.PlatformIds
 	entities := make([]*models.TbLasUser, 0, len(users))
 	for _, user := range users {
 		err := dingtalk.ValidateDingTalkUser(ctx, user)
@@ -95,9 +95,9 @@ func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*dingtalk.D
 
 	entities := make([]*models.TbLasDepartment, 0, len(depts))
 
-	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
-	platformID := r.serviceConf.Business.PlatformIds
-	companyID := r.serviceConf.Business.CompanyId
+	thirdCompanyID := r.bizConf.ThirdCompanyId
+	platformID := r.bizConf.PlatformIds
+	companyID := r.bizConf.CompanyId
 	rootDep := models.MakeTbLasRootDepartment(thirdCompanyID, platformID, companyID, Source, taskId)
 	for _, dep := range depts {
 		entity := models.MakeTbLasDepartment(dep, thirdCompanyID, platformID, companyID, Source, taskId)
@@ -128,8 +128,8 @@ func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relatio
 
 	entities := make([]*models.TbLasDepartmentUser, 0, len(relations))
 
-	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
-	platformID := r.serviceConf.Business.PlatformIds
+	thirdCompanyID := r.bizConf.ThirdCompanyId
+	platformID := r.bizConf.PlatformIds
 
 	for _, relation := range relations {
 		entity := models.MakeTbLasDepartmentUser(relation, thirdCompanyID, platformID, "", Source, taskId)
@@ -151,9 +151,9 @@ func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relatio
 func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, cfg *dingtalk.DingtalkCompanyCfg) error {
 	r.log.Infof("SaveCompanyCfg: %v", cfg)
 
-	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
-	platformID := r.serviceConf.Business.PlatformIds
-	companyID := r.serviceConf.Business.CompanyId
+	thirdCompanyID := r.bizConf.ThirdCompanyId
+	platformID := r.bizConf.PlatformIds
+	companyID := r.bizConf.CompanyId
 	entity := &models.TbCompanyCfg{
 		ThirdCompanyId: thirdCompanyID,
 		PlatformIds:    platformID,
@@ -245,9 +245,9 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 
 	entities := make([]*models.TbLasUserIncrement, 0, inputlen)
 
-	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
-	platformID := r.serviceConf.Business.PlatformIds
-	companyID := r.serviceConf.Business.CompanyId
+	thirdCompanyID := r.bizConf.ThirdCompanyId
+	platformID := r.bizConf.PlatformIds
+	companyID := r.bizConf.CompanyId
 
 	// user_del/user_update/user_add
 	for _, add := range usersAdd {
@@ -311,8 +311,8 @@ func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, 
 
 	// dept_del/dept_update/dept_add
 	entities := make([]*models.TbLasDepartmentIncrement, 0, inputlen)
-	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
-	platformID := r.serviceConf.Business.PlatformIds
+	thirdCompanyID := r.bizConf.ThirdCompanyId
+	platformID := r.bizConf.PlatformIds
 
 	for _, add := range deptsAdd {
 		entity := models.MakeDepartmentIncrement(add, thirdCompanyID, platformID, "", Source, "dept_add")
@@ -376,8 +376,8 @@ func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context
 
 	entities := make([]*models.TbLasDepartmentUserIncrement, 0, inputlen)
 
-	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
-	platformID := r.serviceConf.Business.PlatformIds
+	thirdCompanyID := r.bizConf.ThirdCompanyId
+	platformID := r.bizConf.PlatformIds
 	// user_dept_add/user_dept_del/user_dept_update/user_dept_move
 	for _, add := range relationsAdd {
 		entity := models.MmakeTbLasDepartmentUserIncrement(add, thirdCompanyID, platformID, "", Source, "user_dept_add")

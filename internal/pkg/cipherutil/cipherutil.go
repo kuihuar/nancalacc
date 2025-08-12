@@ -30,8 +30,13 @@ var (
 	ErrGCMCreation       = errors.New("failed to create GCM instance")
 	ErrInvalidCiphertext = errors.New("ciphertext too short or invalid")
 	ErrDecryptionFailed  = errors.New("decryption failed")
-	uid                  = "nancalacc-426614174000"
 )
+
+// GetAppUID 获取应用UID，优先从环境变量获取，否则使用默认值
+func GetAppUID() string {
+	uid := conf.GetEnvWithDefault("APP_UID", "nancalacc-426614174000")
+	return uid
+}
 
 func DecryptByAes(content string, key string) (string, error) {
 	fmt.Printf("DecryptByAes.content: %s\n", content)
@@ -183,14 +188,15 @@ func EncryptValueWithEnvSalt(plaintext string) (string, error) {
 		return "", nil
 	}
 
-	//envKey := os.Getenv("ENCRYPTION_SALT")
-	salt, err := conf.GetEnv("salt")
+	salt, err := conf.GetEnv("ENCRYPTION_SALT")
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to get encryption salt: %w", err)
 	}
+
+	uid := GetAppUID()
 	envKey := GenerateKey(uid, salt)
 	if len(envKey) != 32 {
-		return "", fmt.Errorf("ENCRYPTION_SALT salt must be 32 bytes")
+		return "", fmt.Errorf("generated key must be 32 bytes, got %d", len(envKey))
 	}
 
 	encrypted, err := Encrypt(plaintext, []byte(envKey))
@@ -205,20 +211,20 @@ func DecryptValueWithEnvSalt(ciphertext string) (string, error) {
 		return "", nil
 	}
 
-	//envKey := os.Getenv("ENCRYPTION_SALT")
-	salt, err := conf.GetEnv("salt")
+	salt, err := conf.GetEnv("ENCRYPTION_SALT")
 	if err != nil {
-		return "", err
-	}
-	fmt.Printf("uid: %s, salt:%s\n", uid, salt)
-	envKey := GenerateKey(uid, salt)
-	if len(envKey) != 32 {
-		return "", fmt.Errorf("ENCRYPTION_SALT salt must be 32 bytes")
+		return "", fmt.Errorf("failed to get encryption salt: %w", err)
 	}
 
-	encrypted, err := Decrypt(ciphertext, []byte(envKey))
-	if err != nil {
-		return "", fmt.Errorf("encryption failed: %w", err)
+	uid := GetAppUID()
+	envKey := GenerateKey(uid, salt)
+	if len(envKey) != 32 {
+		return "", fmt.Errorf("generated key must be 32 bytes, got %d", len(envKey))
 	}
-	return encrypted, nil
+
+	decrypted, err := Decrypt(ciphertext, []byte(envKey))
+	if err != nil {
+		return "", fmt.Errorf("decryption failed: %w", err)
+	}
+	return decrypted, nil
 }

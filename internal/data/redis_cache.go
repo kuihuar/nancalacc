@@ -45,6 +45,11 @@ func (r *redisCacheService) Get(ctx context.Context, key string) (interface{}, b
 	return nil, false, nil
 }
 
+func (r *redisCacheService) Del(ctx context.Context, key string) error {
+	r.client.Del(ctx, key)
+	return nil
+}
+
 // func (r *redisRepo) GetWithCachePenetrationProtection(
 // 	ctx context.Context,
 // 	key string,

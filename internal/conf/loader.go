@@ -287,13 +287,6 @@ func mergeConfigs(fileConfig, etcdConfig *Bootstrap) *Bootstrap {
 		mergeApp(merged.App, etcdConfig.App)
 	}
 
-	if etcdConfig.Service != nil {
-		if merged.Service == nil {
-			merged.Service = &Service{}
-		}
-		mergeService(merged.Service, etcdConfig.Service)
-	}
-
 	return merged
 }
 
@@ -405,17 +398,6 @@ func mergeData(dst, src *Data) {
 		}
 		dst.Etcd.EnableConfigWatch = src.Etcd.EnableConfigWatch
 	}
-	if src.Auth != nil {
-		if dst.Auth == nil {
-			dst.Auth = &Data_Auth{}
-		}
-		if src.Auth.AppId != "" {
-			dst.Auth.AppId = src.Auth.AppId
-		}
-		if src.Auth.AppSecret != "" {
-			dst.Auth.AppSecret = src.Auth.AppSecret
-		}
-	}
 }
 
 func mergeApp(dst, src *App) {
@@ -437,124 +419,53 @@ func mergeApp(dst, src *App) {
 	if src.LogOut != "" {
 		dst.LogOut = src.LogOut
 	}
-}
-
-func mergeService(dst, src *Service) {
-	if src.Business != nil {
-		if dst.Business == nil {
-			dst.Business = &Service_Business{}
-		}
-		if src.Business.ThirdCompanyId != "" {
-			dst.Business.ThirdCompanyId = src.Business.ThirdCompanyId
-		}
-		if src.Business.PlatformIds != "" {
-			dst.Business.PlatformIds = src.Business.PlatformIds
-		}
-		if src.Business.CompanyId != "" {
-			dst.Business.CompanyId = src.Business.CompanyId
-		}
-		if src.Business.EcisaccountsyncUrl != "" {
-			dst.Business.EcisaccountsyncUrl = src.Business.EcisaccountsyncUrl
-		}
-		if src.Business.EcisaccountsyncUrlIncrement != "" {
-			dst.Business.EcisaccountsyncUrlIncrement = src.Business.EcisaccountsyncUrlIncrement
-		}
+	if src.AppPackage != "" {
+		dst.AppPackage = src.AppPackage
 	}
-	if src.Auth != nil {
-		if dst.Auth == nil {
-			dst.Auth = &Service_Auth{}
-		}
-		mergeServiceAuth(dst.Auth, src.Auth)
+	if src.AppId != "" {
+		dst.AppId = src.AppId
+	}
+	if src.AppSecret != "" {
+		dst.AppSecret = src.AppSecret
+	}
+	if src.ThirdCompanyId != "" {
+		dst.ThirdCompanyId = src.ThirdCompanyId
+	}
+	if src.PlatformIds != "" {
+		dst.PlatformIds = src.PlatformIds
+	}
+	if src.CompanyId != "" {
+		dst.CompanyId = src.CompanyId
+	}
+	if src.AccessKey != "" {
+		dst.AccessKey = src.AccessKey
+	}
+	if src.SecretKey != "" {
+		dst.SecretKey = src.SecretKey
 	}
 }
 
-func mergeServiceAuth(dst, src *Service_Auth) {
-	if src.Self != nil {
-		if dst.Self == nil {
-			dst.Self = &Service_Auth_Self{}
+func mergeAuth(dst, src *Auth) {
+	if src.Wpsapp != nil {
+		if dst.Wpsapp == nil {
+			dst.Wpsapp = &Auth_Wpsapp{}
 		}
-		if src.Self.AppPackage != "" {
-			dst.Self.AppPackage = src.Self.AppPackage
+		if src.Wpsapp.ClientId != "" {
+			dst.Wpsapp.ClientId = src.Wpsapp.ClientId
 		}
-		if src.Self.AppSecret != "" {
-			dst.Self.AppSecret = src.Self.AppSecret
+		if src.Wpsapp.ClientSecret != "" {
+			dst.Wpsapp.ClientSecret = src.Wpsapp.ClientSecret
 		}
-		if src.Self.AccessKey != "" {
-			dst.Self.AccessKey = src.Self.AccessKey
+		if src.Wpsapp.AuthUrl != "" {
+			dst.Wpsapp.AuthUrl = src.Wpsapp.AuthUrl
 		}
-		if src.Self.SecretKey != "" {
-			dst.Self.SecretKey = src.Self.SecretKey
-		}
-	}
-	if src.App != nil {
-		if dst.App == nil {
-			dst.App = &Service_Auth_App{}
-		}
-		if src.App.ClientId != "" {
-			dst.App.ClientId = src.App.ClientId
-		}
-		if src.App.ClientSecret != "" {
-			dst.App.ClientSecret = src.App.ClientSecret
-		}
-		if src.App.AuthUrl != "" {
-			dst.App.AuthUrl = src.App.AuthUrl
-		}
-		if src.App.AuthPath != "" {
-			dst.App.AuthPath = src.App.AuthPath
-		}
-		if src.App.GrantType != "" {
-			dst.App.GrantType = src.App.GrantType
-		}
-	}
-	if src.Third != nil {
-		if dst.Third == nil {
-			dst.Third = &Service_Auth_Third{}
-		}
-		if src.Third.ClientId != "" {
-			dst.Third.ClientId = src.Third.ClientId
-		}
-		if src.Third.ClientSecret != "" {
-			dst.Third.ClientSecret = src.Third.ClientSecret
-		}
-		if src.Third.AuthUrl != "" {
-			dst.Third.AuthUrl = src.Third.AuthUrl
-		}
-		if src.Third.AuthPath != "" {
-			dst.Third.AuthPath = src.Third.AuthPath
-		}
-		if src.Third.GrantType != "" {
-			dst.Third.GrantType = src.Third.GrantType
-		}
-		if src.Third.CompanyId != "" {
-			dst.Third.CompanyId = src.Third.CompanyId
-		}
-	}
-	if src.User != nil {
-		if dst.User == nil {
-			dst.User = &Service_Auth_User{}
-		}
-		if src.User.ClientId != "" {
-			dst.User.ClientId = src.User.ClientId
-		}
-		if src.User.ClientSecret != "" {
-			dst.User.ClientSecret = src.User.ClientSecret
-		}
-		if src.User.AuthUrl != "" {
-			dst.User.AuthUrl = src.User.AuthUrl
-		}
-		if src.User.AuthPath != "" {
-			dst.User.AuthPath = src.User.AuthPath
-		}
-		if src.User.GrantType != "" {
-			dst.User.GrantType = src.User.GrantType
-		}
-		if src.User.RedirectUri != "" {
-			dst.User.RedirectUri = src.User.RedirectUri
+		if src.Wpsapp.AuthPath != "" {
+			dst.Wpsapp.AuthPath = src.Wpsapp.AuthPath
 		}
 	}
 	if src.Dingtalk != nil {
 		if dst.Dingtalk == nil {
-			dst.Dingtalk = &Service_Auth_Dingtalk{}
+			dst.Dingtalk = &Auth_Dingtalk{}
 		}
 		if src.Dingtalk.Endpoint != "" {
 			dst.Dingtalk.Endpoint = src.Dingtalk.Endpoint
@@ -564,12 +475,6 @@ func mergeServiceAuth(dst, src *Service_Auth) {
 		}
 		if src.Dingtalk.AppSecret != "" {
 			dst.Dingtalk.AppSecret = src.Dingtalk.AppSecret
-		}
-		if src.Dingtalk.Timeout != "" {
-			dst.Dingtalk.Timeout = src.Dingtalk.Timeout
-		}
-		if src.Dingtalk.MaxConcurrent != 0 {
-			dst.Dingtalk.MaxConcurrent = src.Dingtalk.MaxConcurrent
 		}
 	}
 }

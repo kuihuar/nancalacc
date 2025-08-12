@@ -26,6 +26,9 @@ const (
 
 	GET_USER_DEPT_BY_USERID = "/v7/users/{user_id}/depts"
 
+	GET_USERS_SEARCH_PATH       = "/v7/users/search"
+	GET_CONTACT_PERMISSION_PATH = "/v7/contacts/permissions_scope"
+
 	POST_CREATE_DEPT_PATH = "/v7/depts/create"
 	POST_CREATE_USER_PATH = "/v7/depts/create"
 

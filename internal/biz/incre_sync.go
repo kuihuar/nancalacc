@@ -18,29 +18,29 @@ import (
 )
 
 // GreeterUsecase is a Greeter usecase.
-type AccounterIncreUsecase struct {
+type IncrementalSyncUsecase struct {
 	repo         AccounterRepo
 	dingTalkRepo dingtalk.Dingtalk
-	appAuth      auth.Authenticator
-	wpsSync      wps.WpsSync
-	wps          wps.Wps
-	bizConf      *conf.Service_Business
-	log          *log.Helper
+	// unifiedAuth  *auth.UnifiedAuthService
+	wpsAppAuth auth.Authenticator
+	wps        wps.Wps
+	log        *log.Helper
 }
 
 // NewGreeterUsecase new a Greeter usecase.
-func NewAccounterIncreUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, appAuth auth.Authenticator,
-	wpsSync wps.WpsSync, wps wps.Wps, bizConf *conf.Service_Business, logger log.Logger) *AccounterIncreUsecase {
-	return &AccounterIncreUsecase{
+func NewIncrementalSyncUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, wps wps.Wps, logger log.Logger) *IncrementalSyncUsecase {
+	wpsAppAuth := auth.NewWpsAppAuthenticator()
+	return &IncrementalSyncUsecase{
 		repo: repo, dingTalkRepo: dingTalkRepo,
-		appAuth: appAuth, wpsSync: wpsSync, wps: wps,
-		bizConf: bizConf,
-		log:     log.NewHelper(logger)}
+		wpsAppAuth: wpsAppAuth,
+		wps:        wps,
+		log:        log.NewHelper(logger)}
 }
 
 // OrgDeptAdd 部门新增
-func (uc *AccounterIncreUsecase) OrgDeptCreate(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
+func (uc *IncrementalSyncUsecase) OrgDeptCreate(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
+	thirdCompanyId := conf.Get().GetApp().GetThirdCompanyId()
 	log := uc.log.WithContext(ctx)
 	log.Infof("OrgDeptCreate data: %v", event.Data)
 
@@ -77,13 +77,13 @@ func (uc *AccounterIncreUsecase) OrgDeptCreate(ctx context.Context, event *clien
 		return err
 	}
 
-	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	appAccessToken, err := uc.wpsAppAuth.GetAccessToken(ctx)
 	if err != nil {
 		return err
 	}
 
-	res, err := uc.wpsSync.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
-		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
+	res, err := uc.wps.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
+		ThirdCompanyId: thirdCompanyId,
 	})
 	if err != nil {
 		return err
@@ -97,10 +97,11 @@ func (uc *AccounterIncreUsecase) OrgDeptCreate(ctx context.Context, event *clien
 }
 
 // OrgDeptRemove 部门删除
-func (uc *AccounterIncreUsecase) OrgDeptRemove(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
+func (uc *IncrementalSyncUsecase) OrgDeptRemove(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 	log := uc.log.WithContext(ctx)
 	log.Infof("OrgDeptRemove data: %v", event.Data)
 
+	thirdCompanyId := conf.Get().GetApp().GetThirdCompanyId()
 	if event.Data == nil {
 		return nil
 	}
@@ -127,7 +128,7 @@ func (uc *AccounterIncreUsecase) OrgDeptRemove(ctx context.Context, event *clien
 		return errors.New("OrgDeptRemove len(depIdstr) eq 0")
 	}
 
-	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	appAccessToken, err := uc.wpsAppAuth.GetAccessToken(ctx)
 	if err != nil {
 		return err
 	}
@@ -200,8 +201,8 @@ func (uc *AccounterIncreUsecase) OrgDeptRemove(ctx context.Context, event *clien
 		return err
 	}
 
-	res, err := uc.wpsSync.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
-		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
+	res, err := uc.wps.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
+		ThirdCompanyId: thirdCompanyId,
 	})
 	if err != nil {
 		return err
@@ -214,11 +215,12 @@ func (uc *AccounterIncreUsecase) OrgDeptRemove(ctx context.Context, event *clien
 }
 
 // OrgDeptModify 部门修改
-func (uc *AccounterIncreUsecase) OrgDeptModify(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
+func (uc *IncrementalSyncUsecase) OrgDeptModify(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
 	log := uc.log.WithContext(ctx)
 	log.Infof("OrgDeptModify data: %v", event.Data)
 
+	thirdCompanyId := conf.Get().GetApp().GetThirdCompanyId()
 	if event.Data == nil {
 		return fmt.Errorf("event.Data is nil")
 	}
@@ -247,13 +249,13 @@ func (uc *AccounterIncreUsecase) OrgDeptModify(ctx context.Context, event *clien
 		return err
 	}
 
-	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	appAccessToken, err := uc.wpsAppAuth.GetAccessToken(ctx)
 	if err != nil {
 		return err
 	}
 
-	res, err := uc.wpsSync.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
-		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
+	res, err := uc.wps.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
+		ThirdCompanyId: thirdCompanyId,
 	})
 	if err != nil {
 		return err
@@ -269,11 +271,12 @@ func (uc *AccounterIncreUsecase) OrgDeptModify(ctx context.Context, event *clien
 // UserAddOrg 用户加入部门
 // 1. 加用户
 // 2. 加关系
-func (uc *AccounterIncreUsecase) UserAddOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
+func (uc *IncrementalSyncUsecase) UserAddOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
 	log := uc.log.WithContext(ctx)
 	log.Infof("UserAddOrg data: %v", event.Data)
 
+	thirdCompanyId := conf.Get().GetApp().GetThirdCompanyId()
 	if event.Data == nil {
 		return nil
 	}
@@ -309,13 +312,13 @@ func (uc *AccounterIncreUsecase) UserAddOrg(ctx context.Context, event *clientV2
 		return err
 	}
 
-	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	appAccessToken, err := uc.wpsAppAuth.GetAccessToken(ctx)
 	if err != nil {
 		return err
 	}
 
-	res, err := uc.wpsSync.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
-		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
+	res, err := uc.wps.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
+		ThirdCompanyId: thirdCompanyId,
 	})
 
 	log.Infof("UserAddOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
@@ -333,8 +336,9 @@ func (uc *AccounterIncreUsecase) UserAddOrg(ctx context.Context, event *clientV2
 // UserLeaveOrg 用户退出部门
 // 1. 减用户
 // 2. 减关系 //未自测
-func (uc *AccounterIncreUsecase) UserLeaveOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
+func (uc *IncrementalSyncUsecase) UserLeaveOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
+	thirdCompanyId := conf.Get().GetApp().GetThirdCompanyId()
 	log := uc.log.WithContext(ctx)
 	log.Infof("UserLeaveOrg data: %v", event.Data)
 	if event.Data == nil {
@@ -346,7 +350,7 @@ func (uc *AccounterIncreUsecase) UserLeaveOrg(ctx context.Context, event *client
 		return err
 	}
 
-	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	appAccessToken, err := uc.wpsAppAuth.GetAccessToken(ctx)
 	if err != nil {
 		return err
 	}
@@ -373,8 +377,8 @@ func (uc *AccounterIncreUsecase) UserLeaveOrg(ctx context.Context, event *client
 		return err
 	}
 
-	res, err := uc.wpsSync.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
-		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
+	res, err := uc.wps.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
+		ThirdCompanyId: thirdCompanyId,
 	})
 
 	log.Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
@@ -388,10 +392,10 @@ func (uc *AccounterIncreUsecase) UserLeaveOrg(ctx context.Context, event *client
 	}
 	return nil
 }
-func (uc *AccounterIncreUsecase) FindWpsUser(ctx context.Context, userids []string) ([]*dingtalk.DingtalkDeptUser, error) {
+func (uc *IncrementalSyncUsecase) FindWpsUser(ctx context.Context, userids []string) ([]*dingtalk.DingtalkDeptUser, error) {
 	uc.log.WithContext(ctx).Infof("FindWpsUser req userids: %v", userids)
 	var users []*dingtalk.DingtalkDeptUser
-	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	appAccessToken, err := uc.wpsAppAuth.GetAccessToken(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -445,7 +449,7 @@ func (uc *AccounterIncreUsecase) FindWpsUser(ctx context.Context, userids []stri
 	}
 	return users, nil
 }
-func (uc *AccounterIncreUsecase) FindDingTalkUser(ctx context.Context, userids []string) ([]*dingtalk.DingtalkDeptUser, error) {
+func (uc *IncrementalSyncUsecase) FindDingTalkUser(ctx context.Context, userids []string) ([]*dingtalk.DingtalkDeptUser, error) {
 	uc.log.WithContext(ctx).Infof("FindDingTalkUser req: %v", userids)
 
 	dingTalkAccessToken, err := uc.dingTalkRepo.GetAccessToken(ctx)
@@ -465,8 +469,9 @@ func (uc *AccounterIncreUsecase) FindDingTalkUser(ctx context.Context, userids [
 }
 
 // UserModifyOrg 用户信息变更（有部门变正在实现）
-func (uc *AccounterIncreUsecase) UserModifyOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
+func (uc *IncrementalSyncUsecase) UserModifyOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
+	thirdCompanyId := conf.Get().GetApp().GetThirdCompanyId()
 	log := uc.log.WithContext(ctx)
 	log.Infof("UserModifyOrg data: %v", event.Data)
 	diffUserInfo, _ := uc.getUseInfoFromDingTalkEvent(event)
@@ -609,12 +614,12 @@ func (uc *AccounterIncreUsecase) UserModifyOrg(ctx context.Context, event *clien
 	}
 	log.Infof("UserModifyOrg.CallEcisaccountsyncIncrement test %s", event.Data)
 	//return nil
-	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	appAccessToken, err := uc.wpsAppAuth.GetAccessToken(ctx)
 	if err != nil {
 		return err
 	}
-	res, err := uc.wpsSync.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
-		ThirdCompanyId: uc.bizConf.ThirdCompanyId,
+	res, err := uc.wps.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
+		ThirdCompanyId: thirdCompanyId,
 	})
 
 	log.Infof("UserModifyOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
@@ -656,7 +661,7 @@ func generateUserDeptRelations(deptUsers []*dingtalk.DingtalkDeptUser) []*dingta
 	return deptUserRelations
 }
 
-func (uc *AccounterIncreUsecase) getDeptidsFromDingTalkEvent(event *clientV2.GenericOpenDingTalkEvent) ([]int64, error) {
+func (uc *IncrementalSyncUsecase) getDeptidsFromDingTalkEvent(event *clientV2.GenericOpenDingTalkEvent) ([]int64, error) {
 	uc.log.Infof("getDeptidsFromDingTalkEvent: %v", event.Data)
 
 	if event.Data == nil {
@@ -690,7 +695,7 @@ func (uc *AccounterIncreUsecase) getDeptidsFromDingTalkEvent(event *clientV2.Gen
 	return depIds, nil
 }
 
-func (uc *AccounterIncreUsecase) getUseridsFromDingTalkEvent(event *clientV2.GenericOpenDingTalkEvent) ([]string, error) {
+func (uc *IncrementalSyncUsecase) getUseridsFromDingTalkEvent(event *clientV2.GenericOpenDingTalkEvent) ([]string, error) {
 	uc.log.Infof("getUseridsFromDingTalkEvent: %v", event.Data)
 	if event.Data == nil {
 		return nil, errors.New("getUseridsFromDingTalkEvent event.Data is nil")
@@ -738,7 +743,7 @@ func (uc *AccounterIncreUsecase) getUseridsFromDingTalkEvent(event *clientV2.Gen
 //	userId:[03301410433273270]
 //
 // ]
-func (uc *AccounterIncreUsecase) getUseInfoFromDingTalkEvent(event *clientV2.GenericOpenDingTalkEvent) ([]*dingtalk.DingtalkDeptUser, error) {
+func (uc *IncrementalSyncUsecase) getUseInfoFromDingTalkEvent(event *clientV2.GenericOpenDingTalkEvent) ([]*dingtalk.DingtalkDeptUser, error) {
 	uc.log.Infof("getUseInfoFromDingTalkEvent: %v", event.Data)
 	data := event.Data
 
