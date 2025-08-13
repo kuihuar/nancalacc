@@ -183,46 +183,44 @@ func GenerateKey(uid, salt string) string {
 	return hash[:32]
 }
 
-func EncryptValueWithEnvSalt(plaintext string) (string, error) {
+func EncryptUserInfo(plaintext string, uid string) (string, error) {
 	if plaintext == "" {
 		return "", nil
 	}
 
-	salt, err := conf.GetEnv("ENCRYPTION_SALT")
+	salt, err := conf.GetEnv("salt")
 	if err != nil {
 		return "", fmt.Errorf("failed to get encryption salt: %w", err)
 	}
 
-	uid := GetAppUID()
-	envKey := GenerateKey(uid, salt)
-	if len(envKey) != 32 {
-		return "", fmt.Errorf("generated key must be 32 bytes, got %d", len(envKey))
+	uidSaltKey := GenerateKey(uid, salt)
+	if len(uidSaltKey) != 32 {
+		return "", fmt.Errorf("generated key must be 32 bytes, got %d", len(uidSaltKey))
 	}
 
-	encrypted, err := Encrypt(plaintext, []byte(envKey))
+	encrypted, err := Encrypt(plaintext, []byte(uidSaltKey))
 	if err != nil {
 		return "", fmt.Errorf("encryption failed: %w", err)
 	}
 	return encrypted, nil
 }
 
-func DecryptValueWithEnvSalt(ciphertext string) (string, error) {
+func DecryptUserInfo(ciphertext string, uid string) (string, error) {
 	if ciphertext == "" {
 		return "", nil
 	}
 
-	salt, err := conf.GetEnv("ENCRYPTION_SALT")
+	salt, err := conf.GetEnv("salt")
 	if err != nil {
 		return "", fmt.Errorf("failed to get encryption salt: %w", err)
 	}
 
-	uid := GetAppUID()
-	envKey := GenerateKey(uid, salt)
-	if len(envKey) != 32 {
-		return "", fmt.Errorf("generated key must be 32 bytes, got %d", len(envKey))
+	uidSaltKey := GenerateKey(uid, salt)
+	if len(uidSaltKey) != 32 {
+		return "", fmt.Errorf("generated key must be 32 bytes, got %d", len(uidSaltKey))
 	}
 
-	decrypted, err := Decrypt(ciphertext, []byte(envKey))
+	decrypted, err := Decrypt(ciphertext, []byte(uidSaltKey))
 	if err != nil {
 		return "", fmt.Errorf("decryption failed: %w", err)
 	}

@@ -14,28 +14,29 @@ data:
     max_idle_conns: 10
     conn_max_lifetime: 6h
     tag: migrate
-    enable: true
+    enable: false
   database_sync:
     driver: mysql
-    source: ${SYNC_DB_SOURCE}
+    source: root:liujianfeng@tcp(192.168.1.142:3306)/nancalacc?timeout=15s&charset=utf8mb4&parseTime=True
     source_key: ECIS_ECISACCOUNTSYNC_DB
     max_open_conns: 20
     max_idle_conns: 10
     conn_max_lifetime: 6h
-    env: "prod"
+    env: "prov"
+    enable: true
   redis:
     addr: ${REDIS_ADDR}
     password: ${REDIS_PASSWORD}
     read_timeout: 0.2s
     write_timeout: 0.2s
-    enable: true
+    enable: false
   etcd:
     endpoints:
       - ${ETCD_ENDPOINT}
     dial_timeout: "5s"
     config_prefix: "/configs/nancalacc/"
     enable_config_watch: true
-    enable: true  
+    enable: false  
 app:
   id: "nancalacc"
   name: "nancalacc"
@@ -44,23 +45,23 @@ app:
   log_level: "INFO"
   logout: "stdout"
   app_package: "com.acc.async"
-  app_id: ${APP_ID}
-  app_secret: ${APP_SECRET}
-  third_company_id: ${THIRD_COMPANY_ID}
-  platform_ids: ${PLATFORM_IDS}
-  company_id: ${COMPANY_ID}
+  app_id: "com.acc.async"
+  app_secret: "dSv5TAv7fDArmoI9GQY0dxImQcb85SiO"
+  third_company_id: "1" # 三方租户ID nancal
+  platform_ids: "1" # 客户源数据ID dingtalkofnancal
+  company_id: "1" # 云文档租户公司ID nancal
   access_key: ${ACCESS_KEY}
   secret_key: ${SECRET_KEY
 auth:
   wpsapp:
-    client_id: ${WPS_CLIENT_ID}
-    client_secret: ${WPS_CLIENT_SECRET}
-    auth_url: ${WPS_AUTH_URL}
+    client_id: "com.acc.async"
+    client_secret: "dSv5TAv7fDArmoI9GQY0dxImQcb85SiO"
+    auth_url: "http://119.3.173.229"
     auth_path: "/openapi/oauth2/token"
     grant_type: "client_credentials"
   dingtalk:
-    endpoint: "https://oapi.dingtalk.com"
-    app_key: ${DINGTALK_APP_KEY}
-    app_secret: ${DINGTALK_APP_SECRET}
-    timeout: "5s"
-    maxConcurrent: 20
+   endpoint: "https://oapi.dingtalk.com"
+   app_key: "dinglz1setxqhrpp7aa0"       
+   app_secret: "uHVTlmVFojonyjlBIDbzsxLZ_iJfviqUMpT1LKNxP9P4TYr8LhaiwymiQfb0fjxr"
+   timeout: "5s"
+   maxConcurrent: 10

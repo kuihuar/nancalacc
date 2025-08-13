@@ -24,7 +24,7 @@ func NewMysqlDB(c *conf.Data, logger log.Logger) (*MainDB, error) {
 	})
 	if err != nil {
 		logger.Log(log.LevelError, "open mysql failed", err)
-		return nil, nil
+		return nil, err
 	}
 
 	sqlDB, err := db.DB()
@@ -78,7 +78,7 @@ func NewMysqlSyncDB(c *conf.Data, logger log.Logger) (*SyncDB, error) {
 	})
 	if err != nil {
 		logger.Log(log.LevelError, "open mysql failed", err)
-		return nil, nil
+		return nil, err
 	}
 
 	sqlDB, err := db.DB()
