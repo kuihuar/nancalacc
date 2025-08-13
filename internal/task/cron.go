@@ -23,16 +23,17 @@ func NewCronService(accounterUsecase *biz.AccounterUsecase, logger log.Logger) *
 }
 
 func (s *CronService) Start() {
-	s.log.Info("启动 CronService")
+	s.log.Info("cron service starting...")
 	s.cron.Start()
+	s.log.Info("cron service start success")
 }
 
 func (s *CronService) Stop() {
-	s.log.Info("停止 CronService")
+	s.log.Info("cron service stoping...")
 	s.cron.Stop()
 }
 
 func (s *CronService) AddFunc(spec string, cmd func()) (cron.EntryID, error) {
-	s.log.Infof("注册任务 [%s]", spec)
+	s.log.Infof("add task [%s]", spec)
 	return s.cron.AddFunc(spec, cmd)
 }

@@ -102,6 +102,10 @@ func main() {
 		//"span.id", tracing.SpanID(),
 	)
 
+	logger.Log(log.LevelInfo,
+		"company:", bc.GetApp().GetCompanyId(),
+		"third company:", bc.GetApp().GetThirdCompanyId(),
+		"platform ids:", bc.GetApp().GetPlatformIds())
 	app, cleanup, err := wireApp(bc.Server, bc.App, bc.Data, bc.Auth, logger)
 	if err != nil {
 		panic(err)

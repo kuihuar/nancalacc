@@ -25,7 +25,7 @@ func NewDingTalkEventService(incrementalSyncUsecase *biz.IncrementalSyncUsecase,
 }
 
 func (es *DingTalkEventService) Start() {
-	log.Info(es.cfg)
+	//log.Info(es.cfg)
 
 	cred := &clientV2.AuthClientCredential{
 		ClientId:     es.cfg.AppKey,
@@ -47,9 +47,9 @@ func (es *DingTalkEventService) Start() {
 		if e != nil {
 			log.Error("DingTalkEventService.Start failed", e.Error())
 		}
-		log.Info("DingTalkEventService Start")
+		log.Info("event service start success")
 	}()
-	log.Info("DingTalkEventService.Starting...")
+	log.Info("event service starting...")
 
 }
 func (es *DingTalkEventService) Stop() {

@@ -14,7 +14,7 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 # 目录配置
 BIN_DIR="bin"
 CONFIG_DIR="configs"
-CONFIG_FILE="config.yaml"
+CONFIG_FILE="config_dev.yaml"
 
 # 默认参数
 BINARY_NAME="nancalacc-linux-amd64"
@@ -53,7 +53,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # 检查必要文件
-log_info "检查构建文件..."
+log_info "检查构建文件 GOOS=linux GOARCH=amd64 go build -o ./bin/nancalacc-linux-amd64 ./cmd/nancalacc..."
 if [ ! -f "$BIN_DIR/$BINARY_NAME" ]; then
     log_error "二进制文件不存在: $BIN_DIR/$BINARY_NAME"
     log_info "请先运行: ./build.sh -b --env prod"
@@ -64,6 +64,7 @@ if [ ! -f "$CONFIG_DIR/$CONFIG_FILE" ]; then
     log_error "配置文件不存在: $CONFIG_DIR/$CONFIG_FILE"
     exit 1
 fi
+
 
 log_success "文件检查通过"
 
@@ -77,6 +78,7 @@ log_info "  镜像名: $IMAGE_NAME:$TAG"
 log_info "开始构建 Docker 镜像..."
 if docker build \
     --build-arg BINARY_NAME="$BINARY_NAME" \
+    --build-arg CONFIG_FILE="$CONFIG_DIR/$CONFIG_FILE" \
     -t "$IMAGE_NAME:$TAG" \
     .; then
     log_success "Docker 镜像构建成功: $IMAGE_NAME:$TAG"
