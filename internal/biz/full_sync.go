@@ -8,12 +8,13 @@ import (
 	"nancalacc/internal/conf"
 	"nancalacc/internal/data/models"
 	"nancalacc/internal/dingtalk"
+	"nancalacc/internal/log"
 	"nancalacc/internal/wps"
 	"strconv"
 	"time"
 
 	//"github.com/go-kratos/kratos/v2/errors"
-	"github.com/go-kratos/kratos/v2/log"
+	kratoslog "github.com/go-kratos/kratos/v2/log"
 	"github.com/xuri/excelize/v2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -32,7 +33,7 @@ type FullSyncUsecase struct {
 }
 
 // NewGreeterUsecase new a Greeter usecase.
-func NewFullSyncUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, wps wps.Wps, cache CacheService, logger log.Logger) *FullSyncUsecase {
+func NewFullSyncUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, wps wps.Wps, cache CacheService, logger kratoslog.Logger) *FullSyncUsecase {
 	appAuth := auth.NewWpsAppAuthenticator()
 	bizConf := conf.Get().GetApp()
 	return &FullSyncUsecase{repo: repo, dingTalkRepo: dingTalkRepo, appAuth: appAuth, wps: wps, localCache: cache, bizConf: bizConf, log: log.NewHelper(logger)}
@@ -162,20 +163,21 @@ func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.Create
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("CreateSyncAccount CallEcisaccountsyncAll taskId: %v", taskId)
+	//log.Infof("CreateSyncAccount CallEcisaccountsyncAll taskId: %v", taskId)
 
 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("appAccessToken", appAccessToken)
+	// log.Infof("appAccessToken", appAccessToken)
 
-	res, err := uc.wps.PostEcisaccountsyncAll(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncAllRequest{
+	_, err = uc.wps.PostEcisaccountsyncAll(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncAllRequest{
 		TaskId:         taskId,
 		ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
 	})
-	log.Infof("CreateSyncAccount CallEcisaccountsyncAll res: %v, err: %v", res, err)
 
+	uc.log.WithContext(ctx).WithField("task_id", taskId).Info("CreateSyncAccount.CallEcisaccountsyncAll")
+	uc.log.WithField("task_id_1", taskId).Info("CreateSyncAccount.CallEcisaccountsyncAll")
 	if err != nil {
 		return nil, err
 	}
@@ -239,11 +241,11 @@ func (uc *FullSyncUsecase) ParseExecell(ctx context.Context, taskId, filename st
 
 	f, err := excelize.OpenFile(filename)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err.Error())
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
-			log.Fatal(err)
+			log.Error(err.Error())
 		}
 	}()
 
@@ -307,7 +309,7 @@ func (uc *FullSyncUsecase) transUser(ctx context.Context, taskId string, rows *e
 		if err != nil {
 			return fmt.Errorf("err: %w", err)
 		}
-		log.Info(row)
+		// log.Info(row)
 		if len(row) < 3 {
 			log.Warnf("row len < 3: %v", row)
 			continue
@@ -360,7 +362,7 @@ func (uc *FullSyncUsecase) transDept(ctx context.Context, taskId string, rows *e
 			return fmt.Errorf("err: %w", err)
 		}
 
-		log.Info(row)
+		// log.Info(row)
 		if len(row) < 3 {
 			log.Warnf("row len < 3: %v", row)
 			continue
@@ -413,7 +415,7 @@ func (uc *FullSyncUsecase) transUserDept(ctx context.Context, taskId string, row
 		if err != nil {
 			return fmt.Errorf("err: %w", err)
 		}
-		log.Info(row)
+		//log.Info(row)
 		if len(row) < 2 {
 			log.Warnf("row len < 2: %v", row)
 			continue
@@ -543,7 +545,7 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 
 		var deleteUsers []*dingtalk.DingtalkDeptUser
 		for _, user := range users.Data.Items {
-			log.Infof("user: %+v", user)
+			uc.log.Infof("user: %+v", user)
 
 			for _, phone := range tags {
 				if user.Phone == phone || user.LoginName == phone {
@@ -571,7 +573,7 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 
 		err = uc.repo.SaveIncrementUsers(ctx, nil, deleteUsers, nil)
 		if err != nil {
-			log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
+			uc.log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
 			return err
 		}
 
@@ -579,13 +581,13 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 			ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
 		})
 
-		log.Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+		uc.log.Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
 
 		if err != nil {
 			return err
 		}
 		if res.Code != "200" {
-			log.Errorf("code %v, not '200'", res.Code)
+			uc.log.Errorf("code %v, not '200'", res.Code)
 			return fmt.Errorf("code %s not 200", res.Code)
 		}
 	}
@@ -596,7 +598,7 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 		if err != nil {
 			return err
 		}
-		log.Infof("rootDept: %v", rootDept)
+		uc.log.Infof("rootDept: %v", rootDept)
 
 		// 2. 查询部门下的子部门(要递归)
 		allDepts, err := uc.wps.GetDeptChildren(ctx, appAccessToken.AccessToken, wps.GetDeptChildrenRequest{
@@ -608,7 +610,7 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 		if err != nil {
 			return err
 		}
-		log.Infof("children: %v", allDepts)
+		uc.log.Infof("children: %v", allDepts)
 
 		var deleteDepts []*dingtalk.DingtalkDept
 		//删除部门除了根部门
@@ -650,7 +652,7 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 
 		err = uc.repo.SaveIncrementDepartments(ctx, nil, deleteDepts, nil)
 		if err != nil {
-			log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
+			uc.log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
 			return err
 		}
 
@@ -658,13 +660,13 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 			ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
 		})
 
-		log.Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+		uc.log.Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
 
 		if err != nil {
 			return err
 		}
 		if res.Code != "200" {
-			log.Errorf("code %v, not '200'", res.Code)
+			uc.log.Errorf("code %v, not '200'", res.Code)
 			return fmt.Errorf("code %s not 200", res.Code)
 		}
 

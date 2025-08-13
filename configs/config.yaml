@@ -51,7 +51,37 @@ app:
   platform_ids: "1" # 客户源数据ID dingtalkofnancal
   company_id: "1" # 云文档租户公司ID nancal
   access_key: ${ACCESS_KEY}
-  secret_key: ${SECRET_KEY
+  secret_key: ${SECRET_KEY}
+# 新增日志配置
+logging:
+  level: "info"           # 日志级别: debug, info, warn, error, fatal
+  format: "json"          # 日志格式: json, console
+  output: "both"          # 输出方式: stdout, file, both
+  file_path: "logs/app.log"  # 日志文件路径
+  max_size: 100           # 单个文件最大大小(MB)
+  max_backups: 10         # 最大备份文件数
+  max_age: 30             # 最大保留天数
+  compress: true          # 是否压缩
+  caller: true            # 是否显示调用者信息
+  stacktrace: false       # 是否显示堆栈信息
+  # GORM日志配置
+  gorm:
+    slow_threshold: "200ms"  # 慢查询阈值
+    log_level: "warn"        # GORM日志级别
+  # Loki配置
+  loki:
+    url: "http://localhost:3100"  # Loki服务地址
+    username: ""                  # 用户名（可选）
+    password: ""                  # 密码（可选）
+    tenant_id: "nancalacc"        # 租户ID
+    enable: false                 # 是否启用Loki
+    batch_size: 100              # 批处理大小
+    batch_wait: "1s"             # 批处理等待时间
+    timeout: "10s"               # 请求超时时间
+    labels:                      # 标签
+      service: "nancalacc"
+      environment: "production"
+      version: "v1.0.0"
 auth:
   wpsapp:
     client_id: "com.acc.async"

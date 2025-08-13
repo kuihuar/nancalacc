@@ -4,6 +4,7 @@ import (
 	"io"
 	v1 "nancalacc/api/account/v1"
 	"nancalacc/internal/conf"
+	"nancalacc/internal/middleware"
 	"nancalacc/internal/service"
 
 	nethttp "net/http"
@@ -20,6 +21,7 @@ func NewHTTPServer(c *conf.Server, accountService *service.AccountService, logge
 		http.Middleware(
 			recovery.Recovery(),
 			tracing.Server(),
+			middleware.LoggingMiddleware(logger),
 		),
 
 		http.RequestDecoder(func(r *http.Request, v interface{}) error {

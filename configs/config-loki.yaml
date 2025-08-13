@@ -8,7 +8,6 @@ server:
 data:
   database:
     driver: mysql
-    # 使用环境变量或加密配置
     source: ${DB_SOURCE}
     max_open_conns: 20
     max_idle_conns: 10
@@ -22,11 +21,11 @@ data:
     max_open_conns: 20
     max_idle_conns: 10
     conn_max_lifetime: 6h
-    env: "dev"
+    env: "prov"
     enable: true
   redis:
-    addr: 192.168.1.142:6379
-    password: liujianfeng
+    addr: ${REDIS_ADDR}
+    password: ${REDIS_PASSWORD}
     read_timeout: 0.2s
     write_timeout: 0.2s
     enable: false
@@ -51,7 +50,8 @@ app:
   platform_ids: "1" # 客户源数据ID dingtalkofnancal
   company_id: "1" # 云文档租户公司ID nancal
   access_key: ${ACCESS_KEY}
-  secret_key: ${SECRET_KEY
+  secret_key: ${SECRET_KEY}
+# Loki日志配置
 logging:
   level: "info"           # 日志级别: debug, info, warn, error, fatal
   format: "json"          # 日志格式: json, console
@@ -67,20 +67,22 @@ logging:
   gorm:
     slow_threshold: "200ms"  # 慢查询阈值
     log_level: "warn"        # GORM日志级别
-  # Loki配置
+  # Loki配置 - 启用
   loki:
-    url: "http://localhost:3100"  # Loki服务地址
-    username: ""                  # 用户名（可选）
-    password: ""                  # 密码（可选）
-    tenant_id: "nancalacc"        # 租户ID
-    enable: false                 # 是否启用Loki
-    batch_size: 100              # 批处理大小
-    batch_wait: "1s"             # 批处理等待时间
-    timeout: "10s"               # 请求超时时间
-    labels:                      # 标签
+    url: "http://loki:3100"  # Loki服务地址
+    username: ""             # 用户名（可选）
+    password: ""             # 密码（可选）
+    tenant_id: "nancalacc"   # 租户ID
+    enable: true             # 启用Loki
+    batch_size: 100         # 批处理大小
+    batch_wait: "1s"        # 批处理等待时间
+    timeout: "10s"          # 请求超时时间
+    labels:                 # 标签
       service: "nancalacc"
       environment: "production"
       version: "v1.0.0"
+      component: "api"
+      team: "backend"
 auth:
   wpsapp:
     client_id: "com.acc.async"
@@ -93,4 +95,4 @@ auth:
    app_key: "dinglz1setxqhrpp7aa0"       
    app_secret: "uHVTlmVFojonyjlBIDbzsxLZ_iJfviqUMpT1LKNxP9P4TYr8LhaiwymiQfb0fjxr"
    timeout: "5s"
-   maxConcurrent: 10
+   maxConcurrent: 10 

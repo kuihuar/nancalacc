@@ -3,6 +3,7 @@ package server
 import (
 	v1 "nancalacc/api/account/v1"
 	"nancalacc/internal/conf"
+	"nancalacc/internal/middleware"
 	"nancalacc/internal/service"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -20,6 +21,7 @@ func NewGRPCServer(c *conf.Server, accountService *service.AccountService, logge
 		grpc.Middleware(
 			recovery.Recovery(),
 			tracing.Server(),
+			middleware.LoggingMiddleware(logger),
 		),
 	}
 	if c.Grpc.Network != "" {

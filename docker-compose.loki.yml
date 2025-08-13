@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # Loki服务
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml
+    networks:
+      - monitoring
+
+  # Grafana服务
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    networks:
+      - monitoring
+    depends_on:
+      - loki
+
+  # 应用服务
+  nancalacc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nancalacc
+    ports:
+      - "8000:8000"
+      - "9000:9000"
+    environment:
+      - DB_SOURCE=root:password@tcp(mysql:3306)/nancalacc?charset=utf8mb4&parseTime=True&loc=Local
+      - REDIS_ADDR=redis:6379
+      - REDIS_PASSWORD=
+      - ETCD_ENDPOINT=etcd:2379
+      - ACCESS_KEY=your_access_key
+      - SECRET_KEY=your_secret_key
+    volumes:
+      - ./configs/config-loki.yaml:/app/configs/config.yaml
+      - ./logs:/app/logs
+    networks:
+      - monitoring
+      - app-network
+    depends_on:
+      - mysql
+      - redis
+      - etcd
+
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: nancalacc
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
+  # Etcd配置中心
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.0
+    container_name: etcd
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+    command: etcd --advertise-client-urls http://0.0.0.0:2379 --listen-client-urls http://0.0.0.0:2379
+    networks:
+      - app-network
+
+volumes:
+  grafana-storage:
+  mysql-data:
+
+networks:
+  monitoring:
+    driver: bridge
+  app-network:
+    driver: bridge 
