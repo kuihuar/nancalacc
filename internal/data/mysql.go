@@ -2,6 +2,7 @@ package data
 
 import (
 	"errors"
+	"fmt"
 	"nancalacc/internal/conf"
 	"nancalacc/internal/pkg/cipherutil"
 	"strings"
@@ -46,10 +47,11 @@ func NewMysqlDB(c *conf.Data, logger log.Logger) (*MainDB, error) {
 // ECIS_ECISACCOUNTSYNC_DB=rESQpZX7v1v4YZletn9rCPJXehB9GFT/dzVFk3R99aMEjCKAG6w+vQKYdwFjEil8Lz4JLaZu8ziT1U3oHwv02MwjBfKed1/xNwhlGrt9jQ+zcQod+0W8QS5SNDr3InBlJzFYqPpAu9UkDpHsYsheVgZGouFz6qVKetVn17ZpdFZgnS2Ct8mJgYLFr3Sry9m8
 func NewMysqlSyncDB(c *conf.Data, logger log.Logger) (*SyncDB, error) {
 	var dsn string
-	if c.GetDatabaseSync().Env == "dev" {
-		dsn = c.Database.Source
+	syncdb := c.GetDatabaseSync()
+	if syncdb.GetEnv() == "dev" {
+		dsn = syncdb.GetSource()
 	} else {
-		envkey := c.DatabaseSync.SourceKey
+		envkey := syncdb.GetSourceKey()
 		encryptedDsn, err := conf.GetEnv(envkey)
 
 		//logger.Log(log.LevelDebug, "envkey:", envkey, "encryptedDsn:", encryptedDsn, "err", err)
@@ -58,6 +60,7 @@ func NewMysqlSyncDB(c *conf.Data, logger log.Logger) (*SyncDB, error) {
 			return nil, err
 		}
 		appSecret := conf.Get().GetApp().GetAppSecret()
+		fmt.Printf("appSecret: %s\n", appSecret)
 		dsn, err = cipherutil.DecryptByAes(encryptedDsn, appSecret)
 		if err != nil {
 			logger.Log(log.LevelError, envkey, err)
@@ -72,7 +75,7 @@ func NewMysqlSyncDB(c *conf.Data, logger log.Logger) (*SyncDB, error) {
 			dsn = dsn + "&parseTime=True"
 		}
 	}
-	//logger.Log(log.LevelInfo, "sync dsn: %s", dsn)
+	// logger.Log(log.LevelInfo, "sync dsn", dsn)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: gormlogger.Default.LogMode(gormlogger.Info),
 	})
@@ -85,9 +88,9 @@ func NewMysqlSyncDB(c *conf.Data, logger log.Logger) (*SyncDB, error) {
 	if err != nil {
 		return nil, err
 	}
-	sqlDB.SetMaxOpenConns(int(c.GetDatabaseSync().GetMaxOpenConns()))
-	sqlDB.SetMaxIdleConns(int(c.GetDatabaseSync().GetMaxIdleConns()))
-	duration, err := time.ParseDuration(c.GetDatabaseSync().GetConnMaxLifetime())
+	sqlDB.SetMaxOpenConns(int(syncdb.GetMaxOpenConns()))
+	sqlDB.SetMaxIdleConns(int(syncdb.GetMaxIdleConns()))
+	duration, err := time.ParseDuration(syncdb.GetConnMaxLifetime())
 	if err != nil {
 		return nil, err
 	}

@@ -21,17 +21,18 @@ import (
 type IncrementalSyncUsecase struct {
 	repo         AccounterRepo
 	dingTalkRepo dingtalk.Dingtalk
-	// unifiedAuth  *auth.UnifiedAuthService
-	wpsAppAuth auth.Authenticator
-	wps        wps.Wps
-	log        *log.Helper
+	bizConf      *conf.App
+	wpsAppAuth   auth.Authenticator
+	wps          wps.Wps
+	log          *log.Helper
 }
 
 // NewGreeterUsecase new a Greeter usecase.
 func NewIncrementalSyncUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, wps wps.Wps, logger log.Logger) *IncrementalSyncUsecase {
 	wpsAppAuth := auth.NewWpsAppAuthenticator()
+	bizConf := conf.Get().GetApp()
 	return &IncrementalSyncUsecase{
-		repo: repo, dingTalkRepo: dingTalkRepo,
+		repo: repo, dingTalkRepo: dingTalkRepo, bizConf: bizConf,
 		wpsAppAuth: wpsAppAuth,
 		wps:        wps,
 		log:        log.NewHelper(logger)}
@@ -40,7 +41,7 @@ func NewIncrementalSyncUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtal
 // OrgDeptAdd 部门新增
 func (uc *IncrementalSyncUsecase) OrgDeptCreate(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
-	thirdCompanyId := conf.Get().GetApp().GetThirdCompanyId()
+	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
 	log := uc.log.WithContext(ctx)
 	log.Infof("OrgDeptCreate data: %v", event.Data)
 
@@ -101,7 +102,7 @@ func (uc *IncrementalSyncUsecase) OrgDeptRemove(ctx context.Context, event *clie
 	log := uc.log.WithContext(ctx)
 	log.Infof("OrgDeptRemove data: %v", event.Data)
 
-	thirdCompanyId := conf.Get().GetApp().GetThirdCompanyId()
+	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
 	if event.Data == nil {
 		return nil
 	}
@@ -220,7 +221,7 @@ func (uc *IncrementalSyncUsecase) OrgDeptModify(ctx context.Context, event *clie
 	log := uc.log.WithContext(ctx)
 	log.Infof("OrgDeptModify data: %v", event.Data)
 
-	thirdCompanyId := conf.Get().GetApp().GetThirdCompanyId()
+	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
 	if event.Data == nil {
 		return fmt.Errorf("event.Data is nil")
 	}
@@ -276,7 +277,7 @@ func (uc *IncrementalSyncUsecase) UserAddOrg(ctx context.Context, event *clientV
 	log := uc.log.WithContext(ctx)
 	log.Infof("UserAddOrg data: %v", event.Data)
 
-	thirdCompanyId := conf.Get().GetApp().GetThirdCompanyId()
+	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
 	if event.Data == nil {
 		return nil
 	}
@@ -338,7 +339,7 @@ func (uc *IncrementalSyncUsecase) UserAddOrg(ctx context.Context, event *clientV
 // 2. 减关系 //未自测
 func (uc *IncrementalSyncUsecase) UserLeaveOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
-	thirdCompanyId := conf.Get().GetApp().GetThirdCompanyId()
+	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
 	log := uc.log.WithContext(ctx)
 	log.Infof("UserLeaveOrg data: %v", event.Data)
 	if event.Data == nil {
@@ -471,7 +472,7 @@ func (uc *IncrementalSyncUsecase) FindDingTalkUser(ctx context.Context, userids 
 // UserModifyOrg 用户信息变更（有部门变正在实现）
 func (uc *IncrementalSyncUsecase) UserModifyOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
-	thirdCompanyId := conf.Get().GetApp().GetThirdCompanyId()
+	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
 	log := uc.log.WithContext(ctx)
 	log.Infof("UserModifyOrg data: %v", event.Data)
 	diffUserInfo, _ := uc.getUseInfoFromDingTalkEvent(event)

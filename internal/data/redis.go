@@ -12,7 +12,7 @@ func NewRedisClient(c *conf.Data, logger log.Logger) (*redis.Client, error) {
 
 	if !c.Redis.Enable {
 		logger.Log(log.LevelWarn, "redis Enable", c.Redis.Enable)
-		return &redis.Client{}, nil
+		return nil, nil
 	}
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     c.Redis.Addr,

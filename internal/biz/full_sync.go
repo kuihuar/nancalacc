@@ -26,6 +26,7 @@ type FullSyncUsecase struct {
 	dingTalkRepo dingtalk.Dingtalk
 	appAuth      auth.Authenticator
 	wps          wps.Wps
+	bizConf      *conf.App
 	localCache   CacheService
 	log          *log.Helper
 }
@@ -33,7 +34,8 @@ type FullSyncUsecase struct {
 // NewGreeterUsecase new a Greeter usecase.
 func NewFullSyncUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, wps wps.Wps, cache CacheService, logger log.Logger) *FullSyncUsecase {
 	appAuth := auth.NewWpsAppAuthenticator()
-	return &FullSyncUsecase{repo: repo, dingTalkRepo: dingTalkRepo, appAuth: appAuth, wps: wps, localCache: cache, log: log.NewHelper(logger)}
+	bizConf := conf.Get().GetApp()
+	return &FullSyncUsecase{repo: repo, dingTalkRepo: dingTalkRepo, appAuth: appAuth, wps: wps, localCache: cache, bizConf: bizConf, log: log.NewHelper(logger)}
 }
 
 func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
@@ -170,7 +172,7 @@ func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.Create
 
 	res, err := uc.wps.PostEcisaccountsyncAll(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncAllRequest{
 		TaskId:         taskId,
-		ThirdCompanyId: conf.Get().GetApp().GetThirdCompanyId(),
+		ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
 	})
 	log.Infof("CreateSyncAccount CallEcisaccountsyncAll res: %v, err: %v", res, err)
 
@@ -285,7 +287,7 @@ func (uc *FullSyncUsecase) ParseExecell(ctx context.Context, taskId, filename st
 
 	_, err = uc.wps.PostEcisaccountsyncAll(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncAllRequest{
 		TaskId:         taskId,
-		ThirdCompanyId: conf.Get().GetApp().GetThirdCompanyId(),
+		ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
 	})
 	return err
 }
@@ -296,8 +298,8 @@ func (uc *FullSyncUsecase) transUser(ctx context.Context, taskId string, rows *e
 	log.Infof("transUser taskId: %s", taskId)
 
 	//uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
-	thirdCompanyId := conf.Get().GetApp().GetThirdCompanyId()
-	platformIds := conf.Get().GetApp().GetPlatformIds()
+	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
+	platformIds := uc.bizConf.GetPlatformIds()
 	users := make([]*models.TbLasUser, 0, 100)
 	now := time.Now()
 	for rows.Next() {
@@ -348,8 +350,8 @@ func (uc *FullSyncUsecase) transDept(ctx context.Context, taskId string, rows *e
 	log.Infof("transDept taskId: %s", taskId)
 
 	//uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
-	thirdCompanyId := conf.Get().GetApp().GetThirdCompanyId()
-	platformIds := conf.Get().GetApp().GetPlatformIds()
+	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
+	platformIds := uc.bizConf.GetPlatformIds()
 	depts := make([]*models.TbLasDepartment, 0, 100)
 	now := time.Now()
 	for rows.Next() {
@@ -402,8 +404,8 @@ func (uc *FullSyncUsecase) transUserDept(ctx context.Context, taskId string, row
 	log.Infof("transUserDept taskId: %s", taskId)
 
 	//uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
-	thirdCompanyId := conf.Get().GetApp().GetThirdCompanyId()
-	platformIds := conf.Get().GetApp().GetPlatformIds()
+	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
+	platformIds := uc.bizConf.GetPlatformIds()
 	deptusers := make([]*models.TbLasDepartmentUser, 0, 100)
 	now := time.Now()
 	for rows.Next() {
@@ -574,7 +576,7 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 		}
 
 		res, err := uc.wps.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
-			ThirdCompanyId: conf.Get().GetApp().GetThirdCompanyId(),
+			ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
 		})
 
 		log.Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
@@ -653,7 +655,7 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 		}
 
 		res, err := uc.wps.PostEcisaccountsyncIncrement(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncIncrementRequest{
-			ThirdCompanyId: conf.Get().GetApp().GetThirdCompanyId(),
+			ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
 		})
 
 		log.Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
