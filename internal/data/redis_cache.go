@@ -35,6 +35,9 @@ func (r *redisCacheService) Set(ctx context.Context, key string, value interface
 func (r *redisCacheService) Get(ctx context.Context, key string) (interface{}, bool, error) {
 	p, err := r.client.Get(ctx, key).Bytes()
 	if err != nil {
+		if err == redis.Nil {
+			return nil, false, nil
+		}
 		return nil, false, err
 	}
 	var v interface{}
@@ -42,7 +45,7 @@ func (r *redisCacheService) Get(ctx context.Context, key string) (interface{}, b
 	if err != nil {
 		return nil, false, err
 	}
-	return nil, false, nil
+	return v, true, nil
 }
 
 func (r *redisCacheService) Del(ctx context.Context, key string) error {

@@ -1,39 +1,41 @@
-# Reference https://github.com/github/gitignore/blob/master/Go.gitignore
-# Binaries for programs and plugins
+# 构建产物
+bin/
+build/
+.cgc/
+buildcgc/
+
+# Go 相关
 *.exe
 *.exe~
 *.dll
+*.so
 *.dylib
-
-# Test binary, built with `go test -c`
 *.test
-
-# Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-
-# Dependency directories (remove the comment below to include it)
-vendor/
-
-# Go workspace file
 go.work
 
-# Compiled Object files, Static and Dynamic libs (Shared Objects)
-*.o
-*.a
-*.so
-
-# OS General
-Thumbs.db
-.DS_Store
-
-# project
-*.cert
-*.key
-*.log
-bin/
-
-# Develop tools
+# IDE 相关
 .vscode/
 .idea/
-.cgc/
 *.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志文件
+*.log
+
+# 临时文件
+*.tmp
+*.temp
+
+# 环境变量文件
+.env
+.env.local
+.env.*.local
+
+# Docker 相关
+.dockerignore

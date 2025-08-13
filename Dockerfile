@@ -6,16 +6,24 @@ RUN mkdir -p /app
 #     apt-get install -y ca-certificates curl openssl && \
 #     update-ca-certificates
 
+# 定义构建参数
+ARG BINARY_NAME
 
+RUN echo "BINARY_NAME=${BINARY_NAME}" > /dev/null
+
+# 设置工作目录为根目录
 WORKDIR /app
-COPY bin/nancalacc-linux-amd64 /app/nancalacc-linux-amd64
-COPY configs/config.yaml /app/config.yaml
+
+
+# 复制二进制文件到根目录
+COPY bin/nancalacc-linux-amd64 /app/nancalacc
+COPY configs/config.yaml /config.yaml
 
 # 确保二进制文件有执行权限
-RUN chmod +x /app/nancalacc-linux-amd64
+RUN chmod +x /app/nancalacc
 
 EXPOSE 8000 9000
 
-# ENTRYPOINT ["/app/nancalacc-linux-amd64"]
+ENTRYPOINT ["/app/nancalacc"]
 
-CMD ["/app/nancalacc-linux-amd64", "-conf", "/app/config.yaml"]
+CMD ["-conf", "/config.yaml"]

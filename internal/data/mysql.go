@@ -31,8 +31,8 @@ func NewMysqlDB(c *conf.Data, logger log.Logger) (*MainDB, error) {
 	if err != nil {
 		return nil, err
 	}
-	sqlDB.SetMaxOpenConns(10)
-	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(int(c.Database.MaxOpenConns))
+	sqlDB.SetMaxIdleConns(int(c.Database.MaxIdleConns))
 	duration, err := time.ParseDuration(c.GetDatabaseSync().GetConnMaxLifetime())
 	if err != nil {
 		return nil, err

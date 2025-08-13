@@ -196,8 +196,7 @@ func watchEtcdConfigChanges(ctx context.Context, source config.Source, baseConf 
 			merged := mergeConfigs(baseConf, &etcdBc)
 			setGlobalConfig(merged)
 			log.Info("Configuration updated from etcd")
-			log.Infof("Global config updated",
-				"changes: %s\n", diffConfigs(baseConf, &etcdBc)) // 变更差异日志
+			log.Infof("Global config updated changes: %s", diffConfigs(baseConf, &etcdBc)) // 变更差异日志
 		}
 	}
 }

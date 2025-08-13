@@ -8,60 +8,59 @@ server:
 data:
   database:
     driver: mysql
-    # source: root:|$tN_Rw!-"Eu<[50@tcp(127.0.0.1:3306)/nancalacc?timeout=15s&charset=utf8mb4&parseTime=True
-    source: root:liujianfeng@tcp(192.168.1.142:3306)/nancalacc?timeout=15s&charset=utf8mb4&parseTime=True
-    max_open_conns: 10
-    max_idle_conns: 5
+    # 使用环境变量或加密配置
+    source: ${DB_SOURCE}
+    max_open_conns: 20
+    max_idle_conns: 10
     conn_max_lifetime: 6h
     tag: migrate
-    enable: false
+    enable: true
   database_sync:
     driver: mysql
-    source: root:liujianfeng@tcp(192.168.1.141:3306)/nancalacc?timeout=15s&charset=utf8mb4&parseTime=True
+    source: ${SYNC_DB_SOURCE}
     source_key: ECIS_ECISACCOUNTSYNC_DB
-    max_open_conns: 10
-    max_idle_conns: 5
+    max_open_conns: 20
+    max_idle_conns: 10
     conn_max_lifetime: 6h
-    env: "nodev"
+    env: "prod"
   redis:
-    addr: 192.168.1.142:6379
-    password: liujianfeng
+    addr: ${REDIS_ADDR}
+    password: ${REDIS_PASSWORD}
     read_timeout: 0.2s
     write_timeout: 0.2s
-    enable: false
+    enable: true
   etcd:
     endpoints:
-      - "http://192.168.1.142:2379"  # etcd 集群地址
-    dial_timeout: "5s"            # 连接超时
-    config_prefix: "/configs/nancalacc/"     # etcd 中的配置根路径
-    enable_config_watch: true     # 是否启用配置监听
-    enable: false  
+      - ${ETCD_ENDPOINT}
+    dial_timeout: "5s"
+    config_prefix: "/configs/nancalacc/"
+    enable_config_watch: true
+    enable: true  
 app:
   id: "nancalacc"
   name: "nancalacc"
   version: "v1.0.0"
-  env: "dev" #dev #prov
-  log_level: "INFO" # DEBUG INFO WARN ERROR FATAL
-  logout : "stdout"
-  app_package: "com.acc.async" # 应用包名和app_secret在应用里是一对
-  app_id: "com.acc.async"
-  app_secret: "dSv5TAv7fDArmoI9GQY0dxImQcb85SiO"
-  third_company_id: "1" # 三方租户ID nancal
-  platform_ids: "1" # 客户源数据ID dingtalkofnancal
-  company_id: "1" # 云文档租户公司ID nancal
-  access_key: "NRSXWTPKNAIRUBMP" #有待确认
-  secret_key: "SKnwwvvngrhcrpgc" #有待确认
+  env: "prod"
+  log_level: "INFO"
+  logout: "stdout"
+  app_package: "com.acc.async"
+  app_id: ${APP_ID}
+  app_secret: ${APP_SECRET}
+  third_company_id: ${THIRD_COMPANY_ID}
+  platform_ids: ${PLATFORM_IDS}
+  company_id: ${COMPANY_ID}
+  access_key: ${ACCESS_KEY}
+  secret_key: ${SECRET_KEY
 auth:
   wpsapp:
-    client_id: "com.acc.async"
-    client_secret: "dSv5TAv7fDArmoI9GQY0dxImQcb85SiO"
-    auth_url: "http://119.3.173.229"
-    # auth_url: "http://192.168.1.141"
+    client_id: ${WPS_CLIENT_ID}
+    client_secret: ${WPS_CLIENT_SECRET}
+    auth_url: ${WPS_AUTH_URL}
     auth_path: "/openapi/oauth2/token"
     grant_type: "client_credentials"
   dingtalk:
     endpoint: "https://oapi.dingtalk.com"
-    app_key: "dinglz1setxqhrpp7aa0"       
-    app_secret: "uHVTlmVFojonyjlBIDbzsxLZ_iJfviqUMpT1LKNxP9P4TYr8LhaiwymiQfb0fjxr"
+    app_key: ${DINGTALK_APP_KEY}
+    app_secret: ${DINGTALK_APP_SECRET}
     timeout: "5s"
-    maxConcurrent: 10
+    maxConcurrent: 20

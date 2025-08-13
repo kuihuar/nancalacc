@@ -151,8 +151,18 @@ func (s *AccountService) UploadFile(ctx context.Context, req *v1.UploadRequest) 
 		return nil, status.Errorf(codes.Internal, "failed to write file: %v", err)
 	}
 
-	// 解析Excel文件
-	go s.fullSyncUsecase.ParseExecell(ctx, taskId, filename)
+	// 解析Excel文件 - 使用带超时的context
+	parseCtx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+	defer cancel()
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Errorf("ParseExecell panic: %v", r)
+			}
+		}()
+		s.fullSyncUsecase.ParseExecell(parseCtx, taskId, filename)
+	}()
 	// if err != nil {
 	// 	return nil, status.Errorf(codes.Internal, "failed to parse excel: %v", err)
 	// }

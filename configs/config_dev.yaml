@@ -1,0 +1,92 @@
+server:
+  http:
+    addr: 0.0.0.0:8000
+    timeout: 5s
+  grpc:
+    addr: 0.0.0.0:9000
+    timeout: 5s   
+data:
+  database:
+    driver: mysql
+    # source: root:|$tN_Rw!-"Eu<[50@tcp(127.0.0.1:3306)/nancalacc?timeout=15s&charset=utf8mb4&parseTime=True
+    source: root:liujianfeng@tcp(192.168.1.142:3306)/nancalacc?timeout=15s&charset=utf8mb4&parseTime=True
+    max_open_conns: 10
+    max_idle_conns: 5
+    conn_max_lifetime: 6h
+    tag: migrate
+    enable: false
+  database_sync:
+    driver: mysql
+    source: root:liujianfeng@tcp(192.168.1.141:3306)/nancalacc?timeout=15s&charset=utf8mb4&parseTime=True
+    source_key: ECIS_ECISACCOUNTSYNC_DB
+    max_open_conns: 10
+    max_idle_conns: 5
+    conn_max_lifetime: 6h
+    env: "nodev"
+  redis:
+    addr: 192.168.1.142:6379
+    password: liujianfeng
+    read_timeout: 0.2s
+    write_timeout: 0.2s
+    enable: false
+  etcd:
+    endpoints:
+      - "http://192.168.1.142:2379"  # etcd 集群地址
+    dial_timeout: "5s"            # 连接超时
+    config_prefix: "/configs/nancalacc/"     # etcd 中的配置根路径
+    enable_config_watch: true     # 是否启用配置监听
+    enable: false  
+  auth:
+   app_id: "com.acc.async"
+   app_secret: "dSv5TAv7fDArmoI9GQY0dxImQcb85SiO"
+
+app:
+  id: "nancalacc"
+  name: "nancalacc"
+  version: "v1.0.0"
+  env: "dev" #dev #prov
+  log_level: "INFO" # DEBUG INFO WARN ERROR FATAL
+  logout : "stdout"
+service:
+  business:
+    third_company_id: "1" # 三方租户ID nancal
+    platform_ids: "1" # 客户源数据ID dingtalkofnancal
+    company_id: "1" # 云文档租户公司ID nancal
+    ecisaccountsync_url: "http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/all"
+    ecisaccountsync_url_increment: "http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/increment"  
+  auth:
+    self:
+      app_id: "com.acc.async"
+      app_name: "nancalacc"
+      app_package: "com.acc.async" # 应用包名和app_secret在应用里是一对
+      app_secret: "dSv5TAv7fDArmoI9GQY0dxImQcb85SiO"
+
+      access_key: "NRSXWTPKNAIRUBMP" #有待确认
+      secret_key: "SKnwwvvngrhcrpgc" #有待确认
+    app:
+      client_id: "com.acc.async"
+      client_secret: "dSv5TAv7fDArmoI9GQY0dxImQcb85SiO"
+      auth_url: "http://119.3.173.229"
+      # auth_url: "http://192.168.1.141"
+      auth_path: "/openapi/oauth2/token"
+      grant_type: "client_credentials"
+    third:
+      client_id: "your_client_id"
+      client_secret: "your_secret"
+      auth_url: "https://api.example.com"
+      auth_path: "/openapi/oauth2/token"
+      grant_type: "client_credentials"
+      company_id: "1"
+    user:
+      client_id: "your_client_id"
+      client_secret: "your_secret"
+      auth_url: "https://api.example.com"
+      auth_path: "/openapi/oauth2/token"
+      grant_type: "authorization_code"
+      redirect_uri: "https://your-app.com/callback"
+    dingtalk:
+      endpoint: "https://oapi.dingtalk.com"
+      app_key: "dinglz1setxqhrpp7aa0"       
+      app_secret: "uHVTlmVFojonyjlBIDbzsxLZ_iJfviqUMpT1LKNxP9P4TYr8LhaiwymiQfb0fjxr"
+      timeout: "5s"
+      maxConcurrent: 10
