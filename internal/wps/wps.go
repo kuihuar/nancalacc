@@ -86,7 +86,7 @@ func (ws *wps) PostBatchDepartmentsByExDepIds(ctx context.Context, accessToken s
 
 	ak := ws.cfg.ClientId
 	sk := ws.cfg.ClientSecret
-	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
 	log.Infof("PostBatchDepartmentsByExDepIds uri: %s, input: %+v\n", POST_DEPTS_BY_EXDEPTIDS_PATH, input)
 	bs, err := wpsReq.PostJSON(context.Background(), POST_DEPTS_BY_EXDEPTIDS_PATH, accessToken, input)
@@ -116,7 +116,7 @@ func (ws *wps) PostBatchDeleteDept(ctx context.Context, accessToken string, inpu
 
 	ak := ws.cfg.ClientId
 	sk := ws.cfg.ClientSecret
-	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
 	log.Infof("PostBatchDeleteDept uri: %s, input: %+v\n", POST_DELETE_DEPTS_PATH, input)
 	bs, err := wpsReq.PostJSON(context.Background(), POST_DELETE_DEPTS_PATH, accessToken, input)
@@ -143,7 +143,7 @@ func (ws *wps) PostBatchDeleteUser(ctx context.Context, accessToken string, inpu
 
 	ak := ws.cfg.ClientId
 	sk := ws.cfg.ClientSecret
-	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
 	log.Infof("PostBatchDeleteUser uri: %s, input: %+v\n", POST_DELETE_USERS_PATH, input)
 	bs, err := wpsReq.PostJSON(context.Background(), POST_DELETE_USERS_PATH, accessToken, input)
@@ -171,7 +171,7 @@ func (ws *wps) PostRomoveUserIdFromDeptId(ctx context.Context, accessToken strin
 
 	ak := ws.cfg.ClientId
 	sk := ws.cfg.ClientSecret
-	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
 	uri := strings.Replace(POST_DELETE_USERID_FROM_DEPTID_PATH, "{dept_id}", input.DeptID, 1)
 	uri = strings.Replace(uri, "{user_id}", input.UserID, 1)
@@ -201,7 +201,7 @@ func (ws *wps) PostAddUserIdToDeptId(ctx context.Context, accessToken string, in
 
 	ak := ws.cfg.ClientId
 	sk := ws.cfg.ClientSecret
-	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
+	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
 
 	uri := strings.Replace(POST_ADD_USERID_TO_DEPTID_PATH, "{dept_id}", input.DeptID, 1)
 	uri = strings.Replace(uri, "{user_id}", input.UserID, 1)

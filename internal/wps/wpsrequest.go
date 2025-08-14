@@ -209,23 +209,21 @@ func (r *WPSRequest) Do(ctx context.Context) ([]byte, error) {
 	// fmt.Println()
 
 	//r.logger.Infof("request command: %s\n", command)
-	fmt.Printf("request command: %s\n", command)
+	r.logger.Log(log.LevelInfo, "request command", command)
 
 	// Execute request
 	resp, err := r.client.Do(req.WithContext(ctx))
 
-	fmt.Printf("request resp: %+v, err: %+v\n", resp, err)
-	// fmt.Println()
+	r.logger.Log(log.LevelInfo, "response", resp, "err", err)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrHTTPRequest, err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
-	fmt.Printf("request resp.StatusCode: %d, detail: %s, err:%+v\n", resp.StatusCode, string(body), err)
+	r.logger.Log(log.LevelInfo, "response body", string(body), "err", err)
 	if resp.StatusCode >= http.StatusBadRequest {
-
-		return nil, fmt.Errorf("%w: status %d", ErrHTTPRequest, resp.StatusCode)
+		return nil, fmt.Errorf("resp.StatusCode %d egt %d", ErrHTTPRequest, resp.StatusCode)
 	}
 
 	return body, err
@@ -239,6 +237,7 @@ func (r *WPSRequest) PostJSON(ctx context.Context, path string, accessToken stri
 		WithJSONBody(body),
 		WithKsoDate(time.Now().UTC().Format(RFC1123)),
 		WithAuthorization(accessToken),
+		WithLogger(r.logger),
 	)
 	return req.Do(ctx)
 }
@@ -250,6 +249,7 @@ func (r *WPSRequest) GET(ctx context.Context, path string, accessToken string, q
 		WithContentType(""),
 		WithKsoDate(time.Now().UTC().Format(RFC1123)),
 		WithAuthorization(accessToken),
+		WithLogger(r.logger),
 	)
 	return req.Do(ctx)
 }

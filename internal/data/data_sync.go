@@ -21,11 +21,15 @@ func (r *accounterRepo) BatchGetDeptUsers(ctx context.Context, taskName string) 
 		lastID     uint64
 		totalCount int
 	)
+	db, err := r.data.GetSyncDB()
+	if err != nil {
+		return nil, err
+	}
 
 	for {
 		var pageUsers []*models.TbLasDepartmentUser
 
-		query := r.data.db.WithContext(ctx).
+		query := db.WithContext(ctx).
 			Where("task_id = ?", taskName).
 			Order("id ASC") // 必须按ID排序
 
@@ -73,10 +77,14 @@ func (r *accounterRepo) BatchGetUsers(ctx context.Context, taskName string) ([]*
 
 	selectedFields := []string{"id", "name", "dept_id"} // 只选择必要字段
 
+	db, err := r.data.GetSyncDB()
+	if err != nil {
+		return nil, err
+	}
 	for {
 		var pageUsers []*models.TbLasUser
 
-		query := r.data.db.WithContext(ctx).
+		query := db.WithContext(ctx).
 			Select(selectedFields).
 			Where("task_id = ?", taskName).
 			Order("id ASC")
@@ -121,10 +129,14 @@ func (r *accounterRepo) BatchGetDepts(ctx context.Context, taskName string) ([]*
 		totalCount int
 	)
 
+	db, err := r.data.GetSyncDB()
+	if err != nil {
+		return nil, err
+	}
 	for {
 		var pageDepts []*models.TbLasDepartment
 
-		query := r.data.db.WithContext(ctx).
+		query := db.WithContext(ctx).
 			Where("task_id = ?", taskName).
 			Order("id ASC")
 

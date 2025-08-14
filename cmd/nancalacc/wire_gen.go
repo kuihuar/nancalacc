@@ -25,21 +25,14 @@ import (
 
 // Injectors from wire.go:
 
-// wireApp init kratos application.
+// wireApp init kratos application with database factory.
 func wireApp(confServer *conf.Server, confData *conf.Data, tracing *conf.Tracing, logger log.Logger) (*kratos.App, func(), error) {
-	syncDB, err := data.NewMysqlSyncDB(confData, logger)
-	if err != nil {
-		return nil, nil, err
-	}
-	mainDB, err := data.NewMysqlDB(confData, logger)
-	if err != nil {
-		return nil, nil, err
-	}
+	databaseFactory := data.NewDatabaseFactory(confData, logger)
 	client, err := data.NewRedisClient(confData, logger)
 	if err != nil {
 		return nil, nil, err
 	}
-	dataData, cleanup, err := data.NewData(syncDB, mainDB, client, logger)
+	dataData, cleanup, err := data.NewDataWithFactory(databaseFactory, client, logger)
 	if err != nil {
 		return nil, nil, err
 	}

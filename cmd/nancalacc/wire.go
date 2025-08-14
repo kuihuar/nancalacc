@@ -20,7 +20,7 @@ import (
 	"github.com/google/wire"
 )
 
-// wireApp init kratos application.
+// wireApp init kratos application with database factory.
 func wireApp(*conf.Server, *conf.Data, *conf.Tracing, log.Logger) (*kratos.App, func(), error) {
 	panic(wire.Build(
 		server.ProviderSet,

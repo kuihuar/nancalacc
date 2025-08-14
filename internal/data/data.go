@@ -1,6 +1,10 @@
 package data
 
 import (
+	"context"
+	"fmt"
+	"sync"
+
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/wire"
@@ -8,186 +12,219 @@ import (
 )
 
 // ProviderSet is data providers.
-// var ProviderSet = wire.NewSet(NewData, NewMysqlDB, NewMysqlSyncDB, NewRedisClient, NewAccounterRepo)
-// var ProviderSet = wire.NewSet(NewData, NewMysqlDB, NewMysqlSyncDB, NewRedisClient, NewAccounterRepo)
 var ProviderSet = wire.NewSet(
-	NewMysqlDB,     // 会绑定到 MainDB
-	NewMysqlSyncDB, // 会绑定到 SyncDB
 	NewRedisClient,
 	NewAccounterRepo,
-	// cache.NewRedisRepo,
 	NewLocalCacheService,
-	NewData,
+	NewDatabaseFactory,     // 数据库工厂
+	NewDatabaseInitializer, // 数据库初始化器
+	NewDataWithFactory,     // 使用工厂创建数据层
 )
 
-type (
-	MainDB struct{ *gorm.DB } // 包装结构体
-	SyncDB struct{ *gorm.DB }
+// DatabaseType 数据库类型
+type DatabaseType string
+
+const (
+	MainDBType  DatabaseType = "main"  // 主数据库
+	SyncDBType  DatabaseType = "sync"  // 同步数据库
+	UserDBType  DatabaseType = "user"  // 用户数据库
+	LogDBType   DatabaseType = "log"   // 日志数据库
+	CacheDBType DatabaseType = "cache" // 缓存数据库
 )
 
+// DatabaseConfig 数据库配置
+type DatabaseConfig struct {
+	Type     DatabaseType
+	Name     string
+	DB       *gorm.DB
+	Config   interface{}
+	IsActive bool
+}
+
+// DatabaseManager 数据库管理器
+type DatabaseManager struct {
+	databases map[DatabaseType]*DatabaseConfig
+	mu        sync.RWMutex
+}
+
+// NewDatabaseManager 创建数据库管理器
+func NewDatabaseManager() *DatabaseManager {
+	return &DatabaseManager{
+		databases: make(map[DatabaseType]*DatabaseConfig),
+	}
+}
+
+// RegisterDatabase 注册数据库
+func (dm *DatabaseManager) RegisterDatabase(dbType DatabaseType, name string, db *gorm.DB, config interface{}) {
+	dm.mu.Lock()
+	defer dm.mu.Unlock()
+
+	dm.databases[dbType] = &DatabaseConfig{
+		Type:     dbType,
+		Name:     name,
+		DB:       db,
+		Config:   config,
+		IsActive: db != nil,
+	}
+}
+
+// GetDatabase 获取数据库
+func (dm *DatabaseManager) GetDatabase(dbType DatabaseType) (*gorm.DB, error) {
+	dm.mu.RLock()
+	defer dm.mu.RUnlock()
+
+	if config, exists := dm.databases[dbType]; exists && config.IsActive {
+		return config.DB, nil
+	}
+	return nil, fmt.Errorf("database %s not found or not active", dbType)
+}
+
+// GetDatabaseConfig 获取数据库配置
+func (dm *DatabaseManager) GetDatabaseConfig(dbType DatabaseType) (*DatabaseConfig, error) {
+	dm.mu.RLock()
+	defer dm.mu.RUnlock()
+
+	if config, exists := dm.databases[dbType]; exists {
+		return config, nil
+	}
+	return nil, fmt.Errorf("database config %s not found", dbType)
+}
+
+// ListDatabases 列出所有数据库
+func (dm *DatabaseManager) ListDatabases() map[DatabaseType]*DatabaseConfig {
+	dm.mu.RLock()
+	defer dm.mu.RUnlock()
+
+	result := make(map[DatabaseType]*DatabaseConfig)
+	for k, v := range dm.databases {
+		result[k] = v
+	}
+	return result
+}
+
+// CloseAll 关闭所有数据库连接
+func (dm *DatabaseManager) CloseAll(logger log.Logger) {
+	dm.mu.Lock()
+	defer dm.mu.Unlock()
+
+	for dbType, config := range dm.databases {
+		if config.IsActive && config.DB != nil {
+			if sqlDB, err := config.DB.DB(); err == nil {
+				if err := sqlDB.Close(); err != nil {
+					logger.Log(log.LevelError, "msg", "failed to close database",
+						"type", dbType, "name", config.Name, "error", err)
+				} else {
+					logger.Log(log.LevelInfo, "msg", "database closed",
+						"type", dbType, "name", config.Name)
+				}
+			}
+			config.IsActive = false
+		}
+	}
+}
+
+// Data 数据层结构体
 type Data struct {
-	db       *gorm.DB // 主数据库
-	nancalDB *gorm.DB // 同步数据库
-	redis    *redis.Client
+	dbManager *DatabaseManager
+	redis     *redis.Client
+	logger    log.Logger
 }
 
-func NewData(
-	// mainDB *gorm.DB,
-	// syncDB *gorm.DB,
+// cleanup 清理资源
+func (d *Data) cleanup() {
+	// 关闭所有数据库连接
+	d.dbManager.CloseAll(d.logger)
 
-	syncDB *SyncDB, // ← 使用类型别名
-	mainDB *MainDB, // ← 使用类型别名
-	redis *redis.Client, logger log.Logger) (*Data, func(), error) {
-	return &Data{
-			// db:       syncDB,
-			// nancalDB: mainDB,
-			db:       syncDB.DB, // 类型转换
-			nancalDB: mainDB.DB, // 类型转换
-			redis:    redis,
-		}, func() {
-			// 清理函数保持原有逻辑
-			// if redis != nil {
-			// 	_ = redis.Close()
-			// }
-			// if sqlDB, err := mainDB.DB(); err == nil {
-			// 	_ = sqlDB.Close()
-			// }
-			// if sqlDB, err := nancalDB.DB(); err == nil {
-			// 	_ = sqlDB.Close()
-			// }
-			cleanup(mainDB.DB, syncDB.DB, redis, logger)
-		}, nil
-}
-func cleanup(mainDB *gorm.DB, syncDB *gorm.DB, redis *redis.Client, logger log.Logger) {
-	if redis != nil {
-		if err := redis.Close(); err != nil {
-			logger.Log(log.LevelError, "msg", "failed to close redis", "error", err)
+	// 关闭 Redis 连接
+	if d.redis != nil {
+		if err := d.redis.Close(); err != nil {
+			d.logger.Log(log.LevelError, "msg", "failed to close redis", "error", err)
+		} else {
+			d.logger.Log(log.LevelInfo, "msg", "redis connection closed")
 		}
 	}
 
-	if mainDB != nil {
-		gormDB := (*gorm.DB)(mainDB)
-		if sqlDB, err := gormDB.DB(); err == nil {
-			if err := sqlDB.Close(); err != nil {
-				logger.Log(log.LevelError, "msg", "failed to close main DB", "error", err)
+	d.logger.Log(log.LevelInfo, "msg", "all database connections closed")
+}
+
+// GetMainDB 获取主数据库
+func (d *Data) GetMainDB() (*gorm.DB, error) {
+	return d.dbManager.GetDatabase(MainDBType)
+}
+
+// GetSyncDB 获取同步数据库
+func (d *Data) GetSyncDB() (*gorm.DB, error) {
+	return d.dbManager.GetDatabase(SyncDBType)
+}
+
+// GetDatabase 获取指定类型的数据库
+func (d *Data) GetDatabase(dbType DatabaseType) (*gorm.DB, error) {
+	return d.dbManager.GetDatabase(dbType)
+}
+
+// GetRedis 获取 Redis 客户端
+func (d *Data) GetRedis() *redis.Client {
+	return d.redis
+}
+
+// IsRedisAvailable 检查 Redis 是否可用
+func (d *Data) IsRedisAvailable() bool {
+	if d.redis == nil {
+		return false
+	}
+
+	ctx := context.Background()
+	_, err := d.redis.Ping(ctx).Result()
+	return err == nil
+}
+
+// HealthCheck 健康检查
+func (d *Data) HealthCheck(ctx context.Context) map[string]interface{} {
+	health := make(map[string]interface{})
+
+	// 检查数据库连接
+	databases := d.dbManager.ListDatabases()
+	for dbType, config := range databases {
+		if config.IsActive && config.DB != nil {
+			if sqlDB, err := config.DB.DB(); err == nil {
+				if err := sqlDB.PingContext(ctx); err == nil {
+					health[string(dbType)] = "healthy"
+				} else {
+					health[string(dbType)] = fmt.Sprintf("unhealthy: %v", err)
+				}
+			} else {
+				health[string(dbType)] = "unhealthy: failed to get underlying sql.DB"
 			}
+		} else {
+			health[string(dbType)] = "inactive"
 		}
 	}
 
-	if syncDB != nil {
-		gormDB := (*gorm.DB)(syncDB)
-		if sqlDB, err := gormDB.DB(); err == nil {
-			if err := sqlDB.Close(); err != nil {
-				logger.Log(log.LevelError, "msg", "failed to close sync DB", "error", err)
-			}
+	// 检查 Redis 连接
+	if d.redis != nil {
+		if _, err := d.redis.Ping(ctx).Result(); err == nil {
+			health["redis"] = "healthy"
+		} else {
+			health["redis"] = fmt.Sprintf("unhealthy: %v", err)
 		}
+	} else {
+		health["redis"] = "inactive"
 	}
 
-	logger.Log(log.LevelInfo, "msg", "all database connections closed")
+	return health
 }
 
-// func NewData1(c *conf.Data, logger log.Logger) (*Data, func(), error) {
-// 	log.NewHelper(logger).Info("=====newData.c: %v\n", c)
+// 保持向后兼容的方法
+func (d *Data) DB() *gorm.DB {
+	if db, err := d.GetSyncDB(); err == nil {
+		return db
+	}
+	return nil
+}
 
-// 	var db *gorm.DB
-// 	var err error
-
-// 	db, err = NewMysqlDB(c)
-// 	if err != nil {
-// 		log.NewHelper(logger).Error("NewData: init db env failed")
-// 		return nil, nil, nil
-// 	}
-// 	rdb, err := NewRedisClient(c)
-// 	if err != nil {
-// 		log.NewHelper(logger).Error("NewRedisClient: init db env failed")
-// 		return nil, nil, nil
-// 	}
-// 	cleanup := func() {
-// 		log.NewHelper(logger).Info("closing the data resources")
-// 		if rdb != nil {
-// 			_ = rdb.Close()
-// 		}
-// 		sqlDB, _ := db.DB()
-// 		err = sqlDB.Close()
-// 		if err != nil {
-// 			log.NewHelper(logger).Error(err)
-// 		}
-// 	}
-
-// 	return &Data{
-// 		db:    db,
-// 		redis: rdb,
-// 	}, cleanup, nil
-// 	// tags := strings.Split(c.Database.Tag, ",")
-
-// 	// if len(tags) > 0 {
-// 	// 	for _, tag := range tags {
-// 	// 		if tag == "migrate" {
-// 	// 			if err := Migrate(db); err != nil {
-// 	// 				return nil, cleanup, err
-// 	// 			}
-// 	// 		}
-// 	// 	}
-// 	// }
-
-// }
-
-// func initDbEnv(c *conf.Data, logger log.Logger) (*gorm.DB, error) {
-// 	encryptedDsn, err := conf.GetEnv("ECIS_ECISACCOUNTSYNC_DB")
-
-// 	log.NewHelper(logger).Info("initDbEnv: %s", encryptedDsn)
-// 	if err != nil {
-// 		log.NewHelper(logger).Error("initDbEnv: %w", err)
-// 		return nil, err
-// 	}
-// 	appSecret := c.Auth.AppSecret
-// 	dsn, err := cipherutil.DecryptByAes(encryptedDsn, appSecret)
-// 	if err != nil {
-// 		log.NewHelper(logger).Error("initDbEnvDecryptByAes: %w", err)
-// 		return nil, err
-// 	}
-// 	if len(dsn) == 0 {
-// 		log.NewHelper(logger).Error("initDbEnvDecryptByAes: dsn is empty")
-// 		return nil, err
-// 	}
-
-// 	if !strings.Contains(dsn, "parseTime=True") {
-// 		dsn = dsn + "&parseTime=True"
-// 	}
-// 	return gorm.Open(mysql.Open(dsn), &gorm.Config{
-// 		Logger: gormlogger.Default.LogMode(gormlogger.Info),
-// 	})
-
-// }
-
-// 保持现有MySQL初始化逻辑
-// func NewMysqlDB(c *conf.Data) (*gorm.DB, error) {
-// 	db, err := gorm.Open(mysql.Open(c.Database.Source), &gorm.Config{})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	sqlDB, err := db.DB()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	sqlDB.SetMaxOpenConns(10)
-// 	sqlDB.SetMaxIdleConns(10)
-// 	sqlDB.SetConnMaxLifetime(time.Hour)
-
-// 	return db, nil
-// }
-
-// func NewRedisClient(c *conf.Data) (*redis.Client, error) {
-// 	rdb := redis.NewClient(&redis.Options{
-// 		Addr:     c.Redis.Addr,
-// 		Password: c.Redis.Password,
-// 		DB:       int(c.Redis.Db),
-// 		// PoolSize: int(c.Redis.Pool_size),
-// 	})
-
-// 	if _, err := rdb.Ping(context.Background()).Result(); err != nil {
-// 		return nil, err
-// 	}
-// 	return rdb, nil
-// }
+func (d *Data) NancalDB() *gorm.DB {
+	if db, err := d.GetMainDB(); err == nil {
+		return db
+	}
+	return nil
+}

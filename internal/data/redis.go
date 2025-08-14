@@ -23,7 +23,7 @@ func NewRedisClient(c *conf.Data, logger log.Logger) (*redis.Client, error) {
 
 	if _, err := rdb.Ping(context.Background()).Result(); err != nil {
 		logger.Log(log.LevelError, "ping redis failed", err)
-		return nil, nil
+		return nil, err
 	}
 	return rdb, nil
 }

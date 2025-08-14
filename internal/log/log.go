@@ -62,6 +62,7 @@ func NewLogger(config *Config) (Logger, error) {
 	// 选择编码器
 	var encoder zapcore.Encoder
 	if strings.ToLower(config.Format) == "json" {
+		// 使用自定义的JSON编码器配置，避免换行符转义
 		encoder = zapcore.NewJSONEncoder(encoderConfig)
 	} else {
 		encoder = zapcore.NewConsoleEncoder(encoderConfig)

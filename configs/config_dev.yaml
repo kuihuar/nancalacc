@@ -54,7 +54,7 @@ app:
   secret_key: ${SECRET_KEY
 logging:
   level: "info"           # 日志级别: debug, info, warn, error, fatal
-  format: "json"          # 日志格式: json, console
+  format: "console"       # 日志格式: json, console (改为console避免换行符转义)
   output: "both"          # 输出方式: stdout, file, both
   file_path: "logs/app.log"  # 日志文件路径
   max_size: 100           # 单个文件最大大小(MB)
@@ -63,6 +63,7 @@ logging:
   compress: true          # 是否压缩
   caller: true            # 是否显示调用者信息
   stacktrace: false       # 是否显示堆栈信息
+  escape_newlines: false  # 是否转义换行符 (false表示不转义，保持原始换行)
   # GORM日志配置
   gorm:
     slow_threshold: "200ms"  # 慢查询阈值
@@ -89,7 +90,7 @@ otel:
   environment: "production"         # 环境
   # Jaeger配置
   jaeger:
-    enabled: true                  # 是否启用Jaeger
+    enabled: false                  # 是否启用Jaeger
     endpoint: "http://localhost:14268/api/traces"  # Jaeger收集器端点
   # OTLP配置
   otlp:
@@ -99,7 +100,7 @@ otel:
 
 # 追踪配置
 tracing:
-  enable: true                     # 是否启用追踪
+  enable: false                     # 是否启用追踪
   verbose_logging: false           # 是否启用详细日志（默认false，只记录TraceID、SpanID、Name）
   log_request_size: false          # 是否记录请求体大小
   log_response_size: false         # 是否记录响应体大小

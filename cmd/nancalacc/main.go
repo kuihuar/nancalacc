@@ -38,8 +38,8 @@ func init() {
 	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
 }
 
+// newApp 创建应用实例
 func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, cronService *task.CronService, eventService *service.DingTalkEventService) *kratos.App {
-
 	return kratos.New(
 		kratos.ID(id),
 		kratos.Name(Name),
@@ -51,10 +51,12 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, cronService *ta
 			hs,
 		),
 		kratos.BeforeStart(func(ctx context.Context) error {
+			logger.Log(log.LevelInfo, "msg", "starting application with database factory")
 			cronService.Start()
 			return nil
 		}),
 		kratos.AfterStop(func(ctx context.Context) error {
+			logger.Log(log.LevelInfo, "msg", "stopping application with database factory")
 			cronService.Stop()
 			return nil
 		}),

@@ -6,18 +6,19 @@ import (
 
 // Config 日志配置
 type Config struct {
-	Level      string     `json:"level" yaml:"level"`
-	Format     string     `json:"format" yaml:"format"`
-	Output     string     `json:"output" yaml:"output"`
-	FilePath   string     `json:"file_path" yaml:"file_path"`
-	MaxSize    int        `json:"max_size" yaml:"max_size"`
-	MaxBackups int        `json:"max_backups" yaml:"max_backups"`
-	MaxAge     int        `json:"max_age" yaml:"max_age"`
-	Compress   bool       `json:"compress" yaml:"compress"`
-	Caller     bool       `json:"caller" yaml:"caller"`
-	Stacktrace bool       `json:"stacktrace" yaml:"stacktrace"`
-	Gorm       GormConfig `json:"gorm" yaml:"gorm"`
-	Loki       LokiConfig `json:"loki" yaml:"loki"`
+	Level          string     `json:"level" yaml:"level"`
+	Format         string     `json:"format" yaml:"format"`
+	Output         string     `json:"output" yaml:"output"`
+	FilePath       string     `json:"file_path" yaml:"file_path"`
+	MaxSize        int        `json:"max_size" yaml:"max_size"`
+	MaxBackups     int        `json:"max_backups" yaml:"max_backups"`
+	MaxAge         int        `json:"max_age" yaml:"max_age"`
+	Compress       bool       `json:"compress" yaml:"compress"`
+	Caller         bool       `json:"caller" yaml:"caller"`
+	Stacktrace     bool       `json:"stacktrace" yaml:"stacktrace"`
+	EscapeNewlines bool       `json:"escape_newlines" yaml:"escape_newlines"` // 是否转义换行符
+	Gorm           GormConfig `json:"gorm" yaml:"gorm"`
+	Loki           LokiConfig `json:"loki" yaml:"loki"`
 }
 
 // GormConfig GORM日志配置
@@ -42,16 +43,17 @@ type LokiConfig struct {
 // DefaultConfig 默认配置
 func DefaultConfig() *Config {
 	return &Config{
-		Level:      "info",
-		Format:     "json",
-		Output:     "stdout",
-		FilePath:   "logs/app.log",
-		MaxSize:    100,
-		MaxBackups: 10,
-		MaxAge:     30,
-		Compress:   true,
-		Caller:     true,
-		Stacktrace: false,
+		Level:          "info",
+		Format:         "json",
+		Output:         "stdout",
+		FilePath:       "logs/app.log",
+		MaxSize:        100,
+		MaxBackups:     10,
+		MaxAge:         30,
+		Compress:       true,
+		Caller:         true,
+		Stacktrace:     false,
+		EscapeNewlines: false,
 		Gorm: GormConfig{
 			SlowThreshold: "200ms",
 			LogLevel:      "warn",

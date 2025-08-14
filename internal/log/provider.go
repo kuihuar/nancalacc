@@ -53,15 +53,16 @@ func NewLogConfig() *Config {
 func NewLoggerFromBootstrap(bc *conf.Bootstrap) (log.Logger, error) {
 	// 从 Bootstrap 配置创建日志配置
 	logConfig := &Config{
-		Level:      bc.GetLogging().GetLevel(),
-		Format:     bc.GetLogging().GetFormat(),
-		Output:     bc.GetLogging().GetOutput(),
-		FilePath:   bc.GetLogging().GetFilePath(),
-		MaxSize:    int(bc.GetLogging().GetMaxSize()),
-		MaxBackups: int(bc.GetLogging().GetMaxBackups()),
-		MaxAge:     int(bc.GetLogging().GetMaxAge()),
-		Compress:   bc.GetLogging().GetCompress(),
-		Stacktrace: bc.GetLogging().GetStacktrace(),
+		Level:          bc.GetLogging().GetLevel(),
+		Format:         bc.GetLogging().GetFormat(),
+		Output:         bc.GetLogging().GetOutput(),
+		FilePath:       bc.GetLogging().GetFilePath(),
+		MaxSize:        int(bc.GetLogging().GetMaxSize()),
+		MaxBackups:     int(bc.GetLogging().GetMaxBackups()),
+		MaxAge:         int(bc.GetLogging().GetMaxAge()),
+		Compress:       bc.GetLogging().GetCompress(),
+		Stacktrace:     bc.GetLogging().GetStacktrace(),
+		EscapeNewlines: false, // 默认不转义换行符
 		Loki: LokiConfig{
 			Enable: bc.GetLogging().GetLoki().GetEnable(),
 		},
