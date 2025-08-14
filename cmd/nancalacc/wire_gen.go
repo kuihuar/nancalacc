@@ -26,7 +26,7 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, app *conf.App, confData *conf.Data, auth *conf.Auth, logger log.Logger) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, confData *conf.Data, tracing *conf.Tracing, logger log.Logger) (*kratos.App, func(), error) {
 	syncDB, err := data.NewMysqlSyncDB(confData, logger)
 	if err != nil {
 		return nil, nil, err
@@ -52,12 +52,12 @@ func wireApp(confServer *conf.Server, app *conf.App, confData *conf.Data, auth *
 	fullSyncUsecase := biz.NewFullSyncUsecase(accounterRepo, dingtalkDingtalk, wpsWps, cacheService, logger)
 	accountService := service.NewAccountService(accounterUsecase, oauth2Usecase, fullSyncUsecase, logger)
 	grpcServer := server.NewGRPCServer(confServer, accountService, logger)
-	httpServer := server.NewHTTPServer(confServer, accountService, logger)
+	httpServer := server.NewHTTPServer(confServer, accountService, logger, tracing)
 	cronService := task.NewCronServiceWithJobs(accounterUsecase, logger)
 	incrementalSyncUsecase := biz.NewIncrementalSyncUsecase(accounterRepo, dingtalkDingtalk, wpsWps, logger)
 	dingTalkEventService := service.NewDingTalkEventService(incrementalSyncUsecase, logger)
-	kratosApp := newApp(logger, grpcServer, httpServer, cronService, dingTalkEventService)
-	return kratosApp, func() {
+	app := newApp(logger, grpcServer, httpServer, cronService, dingTalkEventService)
+	return app, func() {
 		cleanup()
 	}, nil
 }

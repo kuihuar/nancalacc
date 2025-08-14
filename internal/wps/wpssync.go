@@ -2,7 +2,6 @@ package wps
 
 import (
 	"context"
-	"encoding/json"
 )
 
 var (
@@ -10,64 +9,51 @@ var (
 )
 
 func (ws *wps) PostEcisaccountsyncAll(ctx context.Context, accessToken string, input *EcisaccountsyncAllRequest) (EcisaccountsyncAllResponse, error) {
-
-	ws.log.Infof("PostEcisaccountsyncAll input:%+v", input)
 	var resp EcisaccountsyncAllResponse
 
-	// input := &EcisaccountsyncAllRequest{
-	// 	ThirdCompanyId: thirdCompanyId,
-	// }
+	// 设置收集成本标志
 	input.CollectCost = CollectCost
-	ak := ws.cfg.ClientId
-	sk := ws.cfg.ClientSecret
-	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
 
-	ws.log.Infof("PostEcisaccountsyncAll.req path:%s,input:%+v\n", ECISACCOUNTSYNC_PATH_INCREMENT, input)
+	// 记录请求
+	logAPIRequest(ctx, ws.log, "PostEcisaccountsyncAll", "POST", ECISACCOUNTSYNC_PATH_INCREMENT, input)
 
-	bs, err := wpsReq.PostJSON(context.Background(), ECISACCOUNTSYNC_PATH_INCREMENT, accessToken, input)
+	// 创建请求
+	wpsReq := NewWPSRequest(DOMAIN, ws.cfg.ClientId, ws.cfg.ClientSecret, WithLogger(ws.log))
 
-	ws.log.Infof("PostEcisaccountsyncAll.res bs:%s,err:%+v\n", string(bs), err)
+	// 执行请求
+	bs, err := wpsReq.PostJSON(ctx, ECISACCOUNTSYNC_PATH_INCREMENT, accessToken, input)
 	if err != nil {
+		ws.log.WithContext(ctx).Errorf("PostEcisaccountsyncAll request failed: %v", err)
 		return resp, err
 	}
 
-	err = json.Unmarshal(bs, &resp)
-	if err != nil {
+	// 使用泛型函数处理响应
+	if err := handleAPIResponse(ctx, ws.log, "PostEcisaccountsyncAll", bs, &resp, "200"); err != nil {
 		return resp, err
-	}
-	if resp.Code != "200" {
-		return resp, ErrCodeNot200
 	}
 
 	return resp, nil
 }
 
 func (ws *wps) PostEcisaccountsyncIncrement(ctx context.Context, accessToken string, input *EcisaccountsyncIncrementRequest) (EcisaccountsyncIncrementResponse, error) {
-
 	var resp EcisaccountsyncIncrementResponse
 
-	// input := &EcisaccountsyncIncrementRequest{
-	// 	ThirdCompanyId: thirdCompanyId,
-	// }
-	ak := ws.cfg.ClientId
-	sk := ws.cfg.ClientSecret
-	wpsReq := NewWPSRequest(DOMAIN, ak, sk)
+	// 记录请求
+	logAPIRequest(ctx, ws.log, "PostEcisaccountsyncIncrement", "POST", ECISACCOUNTSYNC_PATH_INCREMENT, input)
 
-	ws.log.Infof("PostEcisaccountsyncIncrement.req path:%s,input:%+v\n", ECISACCOUNTSYNC_PATH_INCREMENT, input)
+	// 创建请求
+	wpsReq := NewWPSRequest(DOMAIN, ws.cfg.ClientId, ws.cfg.ClientSecret, WithLogger(ws.log))
 
-	bs, err := wpsReq.PostJSON(context.Background(), ECISACCOUNTSYNC_PATH_INCREMENT, accessToken, input)
-
-	ws.log.Infof("PostEcisaccountsyncIncrement.res bs:%s,err:%+v\n", string(bs), err)
+	// 执行请求
+	bs, err := wpsReq.PostJSON(ctx, ECISACCOUNTSYNC_PATH_INCREMENT, accessToken, input)
 	if err != nil {
+		ws.log.WithContext(ctx).Errorf("PostEcisaccountsyncIncrement request failed: %v", err)
 		return resp, err
 	}
 
-	err = json.Unmarshal(bs, &resp)
-	if err != nil {
+	// 使用泛型函数处理响应
+	if err := handleAPIResponse(ctx, ws.log, "PostEcisaccountsyncIncrement", bs, &resp, "200"); err != nil {
 		return resp, err
-	}
-	if resp.Code != "200" {
-		return resp, ErrCodeNot200
 	}
 
 	return resp, nil

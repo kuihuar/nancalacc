@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v5.29.3
-// source: conf/conf.proto
+// source: conf.proto
 
 package conf
 
@@ -29,13 +29,14 @@ type Bootstrap struct {
 	App           *App                   `protobuf:"bytes,3,opt,name=app,proto3" json:"app,omitempty"`
 	Auth          *Auth                  `protobuf:"bytes,4,opt,name=auth,proto3" json:"auth,omitempty"`
 	Logging       *Logging               `protobuf:"bytes,5,opt,name=logging,proto3" json:"logging,omitempty"`
+	Tracing       *Tracing               `protobuf:"bytes,6,opt,name=tracing,proto3" json:"tracing,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Bootstrap) Reset() {
 	*x = Bootstrap{}
-	mi := &file_conf_conf_proto_msgTypes[0]
+	mi := &file_conf_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +48,7 @@ func (x *Bootstrap) String() string {
 func (*Bootstrap) ProtoMessage() {}
 
 func (x *Bootstrap) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[0]
+	mi := &file_conf_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +61,7 @@ func (x *Bootstrap) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Bootstrap.ProtoReflect.Descriptor instead.
 func (*Bootstrap) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{0}
+	return file_conf_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Bootstrap) GetServer() *Server {
@@ -98,6 +99,13 @@ func (x *Bootstrap) GetLogging() *Logging {
 	return nil
 }
 
+func (x *Bootstrap) GetTracing() *Tracing {
+	if x != nil {
+		return x.Tracing
+	}
+	return nil
+}
+
 type Server struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Http          *Server_HTTP           `protobuf:"bytes,1,opt,name=http,proto3" json:"http,omitempty"`
@@ -108,7 +116,7 @@ type Server struct {
 
 func (x *Server) Reset() {
 	*x = Server{}
-	mi := &file_conf_conf_proto_msgTypes[1]
+	mi := &file_conf_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -120,7 +128,7 @@ func (x *Server) String() string {
 func (*Server) ProtoMessage() {}
 
 func (x *Server) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[1]
+	mi := &file_conf_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -133,7 +141,7 @@ func (x *Server) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server.ProtoReflect.Descriptor instead.
 func (*Server) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{1}
+	return file_conf_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Server) GetHttp() *Server_HTTP {
@@ -162,7 +170,7 @@ type Data struct {
 
 func (x *Data) Reset() {
 	*x = Data{}
-	mi := &file_conf_conf_proto_msgTypes[2]
+	mi := &file_conf_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -174,7 +182,7 @@ func (x *Data) String() string {
 func (*Data) ProtoMessage() {}
 
 func (x *Data) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[2]
+	mi := &file_conf_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -187,7 +195,7 @@ func (x *Data) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data.ProtoReflect.Descriptor instead.
 func (*Data) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{2}
+	return file_conf_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Data) GetDatabase() *Data_Database {
@@ -240,7 +248,7 @@ type App struct {
 
 func (x *App) Reset() {
 	*x = App{}
-	mi := &file_conf_conf_proto_msgTypes[3]
+	mi := &file_conf_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -252,7 +260,7 @@ func (x *App) String() string {
 func (*App) ProtoMessage() {}
 
 func (x *App) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[3]
+	mi := &file_conf_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -265,7 +273,7 @@ func (x *App) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use App.ProtoReflect.Descriptor instead.
 func (*App) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{3}
+	return file_conf_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *App) GetId() string {
@@ -367,26 +375,28 @@ func (x *App) GetSecretKey() string {
 }
 
 type Logging struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Level         string                 `protobuf:"bytes,1,opt,name=level,proto3" json:"level,omitempty"`
-	Format        string                 `protobuf:"bytes,2,opt,name=format,proto3" json:"format,omitempty"`
-	Output        string                 `protobuf:"bytes,3,opt,name=output,proto3" json:"output,omitempty"`
-	FilePath      string                 `protobuf:"bytes,4,opt,name=file_path,json=filePath,proto3" json:"file_path,omitempty"`
-	MaxSize       int32                  `protobuf:"varint,5,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
-	MaxBackups    int32                  `protobuf:"varint,6,opt,name=max_backups,json=maxBackups,proto3" json:"max_backups,omitempty"`
-	MaxAge        int32                  `protobuf:"varint,7,opt,name=max_age,json=maxAge,proto3" json:"max_age,omitempty"`
-	Compress      bool                   `protobuf:"varint,8,opt,name=compress,proto3" json:"compress,omitempty"`
-	Caller        bool                   `protobuf:"varint,9,opt,name=caller,proto3" json:"caller,omitempty"`
-	Stacktrace    bool                   `protobuf:"varint,10,opt,name=stacktrace,proto3" json:"stacktrace,omitempty"`
-	Gorm          *GormLog               `protobuf:"bytes,11,opt,name=gorm,proto3" json:"gorm,omitempty"`
-	Loki          *Loki                  `protobuf:"bytes,12,opt,name=loki,proto3" json:"loki,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Level      string                 `protobuf:"bytes,1,opt,name=level,proto3" json:"level,omitempty"`
+	Format     string                 `protobuf:"bytes,2,opt,name=format,proto3" json:"format,omitempty"`
+	Output     string                 `protobuf:"bytes,3,opt,name=output,proto3" json:"output,omitempty"`
+	FilePath   string                 `protobuf:"bytes,4,opt,name=file_path,json=filePath,proto3" json:"file_path,omitempty"`
+	MaxSize    int32                  `protobuf:"varint,5,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
+	MaxBackups int32                  `protobuf:"varint,6,opt,name=max_backups,json=maxBackups,proto3" json:"max_backups,omitempty"`
+	MaxAge     int32                  `protobuf:"varint,7,opt,name=max_age,json=maxAge,proto3" json:"max_age,omitempty"`
+	Compress   bool                   `protobuf:"varint,8,opt,name=compress,proto3" json:"compress,omitempty"`
+	Caller     bool                   `protobuf:"varint,9,opt,name=caller,proto3" json:"caller,omitempty"`
+	Stacktrace bool                   `protobuf:"varint,10,opt,name=stacktrace,proto3" json:"stacktrace,omitempty"`
+	Gorm       *GormLog               `protobuf:"bytes,11,opt,name=gorm,proto3" json:"gorm,omitempty"`
+	Loki       *Loki                  `protobuf:"bytes,12,opt,name=loki,proto3" json:"loki,omitempty"`
+	// 追踪日志配置
+	VerboseTracing bool `protobuf:"varint,13,opt,name=verbose_tracing,json=verboseTracing,proto3" json:"verbose_tracing,omitempty"` // 是否启用详细追踪日志
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Logging) Reset() {
 	*x = Logging{}
-	mi := &file_conf_conf_proto_msgTypes[4]
+	mi := &file_conf_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -398,7 +408,7 @@ func (x *Logging) String() string {
 func (*Logging) ProtoMessage() {}
 
 func (x *Logging) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[4]
+	mi := &file_conf_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -411,7 +421,7 @@ func (x *Logging) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Logging.ProtoReflect.Descriptor instead.
 func (*Logging) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{4}
+	return file_conf_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Logging) GetLevel() string {
@@ -498,6 +508,13 @@ func (x *Logging) GetLoki() *Loki {
 	return nil
 }
 
+func (x *Logging) GetVerboseTracing() bool {
+	if x != nil {
+		return x.VerboseTracing
+	}
+	return false
+}
+
 type GormLog struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SlowThreshold string                 `protobuf:"bytes,1,opt,name=slow_threshold,json=slowThreshold,proto3" json:"slow_threshold,omitempty"`
@@ -508,7 +525,7 @@ type GormLog struct {
 
 func (x *GormLog) Reset() {
 	*x = GormLog{}
-	mi := &file_conf_conf_proto_msgTypes[5]
+	mi := &file_conf_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -520,7 +537,7 @@ func (x *GormLog) String() string {
 func (*GormLog) ProtoMessage() {}
 
 func (x *GormLog) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[5]
+	mi := &file_conf_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -533,7 +550,7 @@ func (x *GormLog) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GormLog.ProtoReflect.Descriptor instead.
 func (*GormLog) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{5}
+	return file_conf_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GormLog) GetSlowThreshold() string {
@@ -567,7 +584,7 @@ type Loki struct {
 
 func (x *Loki) Reset() {
 	*x = Loki{}
-	mi := &file_conf_conf_proto_msgTypes[6]
+	mi := &file_conf_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -579,7 +596,7 @@ func (x *Loki) String() string {
 func (*Loki) ProtoMessage() {}
 
 func (x *Loki) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[6]
+	mi := &file_conf_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -592,7 +609,7 @@ func (x *Loki) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Loki.ProtoReflect.Descriptor instead.
 func (*Loki) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{6}
+	return file_conf_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Loki) GetUrl() string {
@@ -668,7 +685,7 @@ type Auth struct {
 
 func (x *Auth) Reset() {
 	*x = Auth{}
-	mi := &file_conf_conf_proto_msgTypes[7]
+	mi := &file_conf_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -680,7 +697,7 @@ func (x *Auth) String() string {
 func (*Auth) ProtoMessage() {}
 
 func (x *Auth) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[7]
+	mi := &file_conf_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -693,7 +710,7 @@ func (x *Auth) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Auth.ProtoReflect.Descriptor instead.
 func (*Auth) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{7}
+	return file_conf_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Auth) GetWpsapp() *Auth_Wpsapp {
@@ -710,6 +727,106 @@ func (x *Auth) GetDingtalk() *Auth_Dingtalk {
 	return nil
 }
 
+type Tracing struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Enable          bool                   `protobuf:"varint,1,opt,name=enable,proto3" json:"enable,omitempty"`                                            // 是否启用追踪
+	VerboseLogging  bool                   `protobuf:"varint,2,opt,name=verbose_logging,json=verboseLogging,proto3" json:"verbose_logging,omitempty"`      // 是否启用详细日志
+	LogRequestSize  bool                   `protobuf:"varint,3,opt,name=log_request_size,json=logRequestSize,proto3" json:"log_request_size,omitempty"`    // 是否记录请求体大小
+	LogResponseSize bool                   `protobuf:"varint,4,opt,name=log_response_size,json=logResponseSize,proto3" json:"log_response_size,omitempty"` // 是否记录响应体大小
+	LogHeaders      bool                   `protobuf:"varint,5,opt,name=log_headers,json=logHeaders,proto3" json:"log_headers,omitempty"`                  // 是否记录请求头
+	LogQueryParams  bool                   `protobuf:"varint,6,opt,name=log_query_params,json=logQueryParams,proto3" json:"log_query_params,omitempty"`    // 是否记录查询参数
+	ServiceName     string                 `protobuf:"bytes,7,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`                // 服务名称
+	Environment     string                 `protobuf:"bytes,8,opt,name=environment,proto3" json:"environment,omitempty"`                                   // 环境
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *Tracing) Reset() {
+	*x = Tracing{}
+	mi := &file_conf_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tracing) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tracing) ProtoMessage() {}
+
+func (x *Tracing) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Tracing.ProtoReflect.Descriptor instead.
+func (*Tracing) Descriptor() ([]byte, []int) {
+	return file_conf_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *Tracing) GetEnable() bool {
+	if x != nil {
+		return x.Enable
+	}
+	return false
+}
+
+func (x *Tracing) GetVerboseLogging() bool {
+	if x != nil {
+		return x.VerboseLogging
+	}
+	return false
+}
+
+func (x *Tracing) GetLogRequestSize() bool {
+	if x != nil {
+		return x.LogRequestSize
+	}
+	return false
+}
+
+func (x *Tracing) GetLogResponseSize() bool {
+	if x != nil {
+		return x.LogResponseSize
+	}
+	return false
+}
+
+func (x *Tracing) GetLogHeaders() bool {
+	if x != nil {
+		return x.LogHeaders
+	}
+	return false
+}
+
+func (x *Tracing) GetLogQueryParams() bool {
+	if x != nil {
+		return x.LogQueryParams
+	}
+	return false
+}
+
+func (x *Tracing) GetServiceName() string {
+	if x != nil {
+		return x.ServiceName
+	}
+	return ""
+}
+
+func (x *Tracing) GetEnvironment() string {
+	if x != nil {
+		return x.Environment
+	}
+	return ""
+}
+
 type Server_HTTP struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Network       string                 `protobuf:"bytes,1,opt,name=network,proto3" json:"network,omitempty"`
@@ -721,7 +838,7 @@ type Server_HTTP struct {
 
 func (x *Server_HTTP) Reset() {
 	*x = Server_HTTP{}
-	mi := &file_conf_conf_proto_msgTypes[8]
+	mi := &file_conf_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -733,7 +850,7 @@ func (x *Server_HTTP) String() string {
 func (*Server_HTTP) ProtoMessage() {}
 
 func (x *Server_HTTP) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[8]
+	mi := &file_conf_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -746,7 +863,7 @@ func (x *Server_HTTP) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server_HTTP.ProtoReflect.Descriptor instead.
 func (*Server_HTTP) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{1, 0}
+	return file_conf_proto_rawDescGZIP(), []int{1, 0}
 }
 
 func (x *Server_HTTP) GetNetwork() string {
@@ -781,7 +898,7 @@ type Server_GRPC struct {
 
 func (x *Server_GRPC) Reset() {
 	*x = Server_GRPC{}
-	mi := &file_conf_conf_proto_msgTypes[9]
+	mi := &file_conf_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -793,7 +910,7 @@ func (x *Server_GRPC) String() string {
 func (*Server_GRPC) ProtoMessage() {}
 
 func (x *Server_GRPC) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[9]
+	mi := &file_conf_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -806,7 +923,7 @@ func (x *Server_GRPC) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server_GRPC.ProtoReflect.Descriptor instead.
 func (*Server_GRPC) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{1, 1}
+	return file_conf_proto_rawDescGZIP(), []int{1, 1}
 }
 
 func (x *Server_GRPC) GetNetwork() string {
@@ -847,7 +964,7 @@ type Data_Database struct {
 
 func (x *Data_Database) Reset() {
 	*x = Data_Database{}
-	mi := &file_conf_conf_proto_msgTypes[10]
+	mi := &file_conf_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -859,7 +976,7 @@ func (x *Data_Database) String() string {
 func (*Data_Database) ProtoMessage() {}
 
 func (x *Data_Database) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[10]
+	mi := &file_conf_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -872,7 +989,7 @@ func (x *Data_Database) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Database.ProtoReflect.Descriptor instead.
 func (*Data_Database) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{2, 0}
+	return file_conf_proto_rawDescGZIP(), []int{2, 0}
 }
 
 func (x *Data_Database) GetDriver() string {
@@ -954,7 +1071,7 @@ type Data_DatabaseSync struct {
 
 func (x *Data_DatabaseSync) Reset() {
 	*x = Data_DatabaseSync{}
-	mi := &file_conf_conf_proto_msgTypes[11]
+	mi := &file_conf_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -966,7 +1083,7 @@ func (x *Data_DatabaseSync) String() string {
 func (*Data_DatabaseSync) ProtoMessage() {}
 
 func (x *Data_DatabaseSync) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[11]
+	mi := &file_conf_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -979,7 +1096,7 @@ func (x *Data_DatabaseSync) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_DatabaseSync.ProtoReflect.Descriptor instead.
 func (*Data_DatabaseSync) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{2, 1}
+	return file_conf_proto_rawDescGZIP(), []int{2, 1}
 }
 
 func (x *Data_DatabaseSync) GetDriver() string {
@@ -1053,7 +1170,7 @@ type Data_Redis struct {
 
 func (x *Data_Redis) Reset() {
 	*x = Data_Redis{}
-	mi := &file_conf_conf_proto_msgTypes[12]
+	mi := &file_conf_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1065,7 +1182,7 @@ func (x *Data_Redis) String() string {
 func (*Data_Redis) ProtoMessage() {}
 
 func (x *Data_Redis) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[12]
+	mi := &file_conf_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1078,7 +1195,7 @@ func (x *Data_Redis) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Redis.ProtoReflect.Descriptor instead.
 func (*Data_Redis) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{2, 2}
+	return file_conf_proto_rawDescGZIP(), []int{2, 2}
 }
 
 func (x *Data_Redis) GetNetwork() string {
@@ -1143,7 +1260,7 @@ type Data_Etcd struct {
 
 func (x *Data_Etcd) Reset() {
 	*x = Data_Etcd{}
-	mi := &file_conf_conf_proto_msgTypes[13]
+	mi := &file_conf_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1155,7 +1272,7 @@ func (x *Data_Etcd) String() string {
 func (*Data_Etcd) ProtoMessage() {}
 
 func (x *Data_Etcd) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[13]
+	mi := &file_conf_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1168,7 +1285,7 @@ func (x *Data_Etcd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Etcd.ProtoReflect.Descriptor instead.
 func (*Data_Etcd) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{2, 3}
+	return file_conf_proto_rawDescGZIP(), []int{2, 3}
 }
 
 func (x *Data_Etcd) GetEndpoints() []string {
@@ -1219,7 +1336,7 @@ type Auth_Wpsapp struct {
 
 func (x *Auth_Wpsapp) Reset() {
 	*x = Auth_Wpsapp{}
-	mi := &file_conf_conf_proto_msgTypes[15]
+	mi := &file_conf_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1231,7 +1348,7 @@ func (x *Auth_Wpsapp) String() string {
 func (*Auth_Wpsapp) ProtoMessage() {}
 
 func (x *Auth_Wpsapp) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[15]
+	mi := &file_conf_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1244,7 +1361,7 @@ func (x *Auth_Wpsapp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Auth_Wpsapp.ProtoReflect.Descriptor instead.
 func (*Auth_Wpsapp) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{7, 0}
+	return file_conf_proto_rawDescGZIP(), []int{7, 0}
 }
 
 func (x *Auth_Wpsapp) GetClientId() string {
@@ -1295,7 +1412,7 @@ type Auth_Dingtalk struct {
 
 func (x *Auth_Dingtalk) Reset() {
 	*x = Auth_Dingtalk{}
-	mi := &file_conf_conf_proto_msgTypes[16]
+	mi := &file_conf_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1307,7 +1424,7 @@ func (x *Auth_Dingtalk) String() string {
 func (*Auth_Dingtalk) ProtoMessage() {}
 
 func (x *Auth_Dingtalk) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[16]
+	mi := &file_conf_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1320,7 +1437,7 @@ func (x *Auth_Dingtalk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Auth_Dingtalk.ProtoReflect.Descriptor instead.
 func (*Auth_Dingtalk) Descriptor() ([]byte, []int) {
-	return file_conf_conf_proto_rawDescGZIP(), []int{7, 1}
+	return file_conf_proto_rawDescGZIP(), []int{7, 1}
 }
 
 func (x *Auth_Dingtalk) GetEndpoint() string {
@@ -1358,18 +1475,20 @@ func (x *Auth_Dingtalk) GetMaxConcurrent() int64 {
 	return 0
 }
 
-var File_conf_conf_proto protoreflect.FileDescriptor
+var File_conf_proto protoreflect.FileDescriptor
 
-const file_conf_conf_proto_rawDesc = "" +
+const file_conf_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconf/conf.proto\x12\n" +
-	"kratos.api\x1a\x1egoogle/protobuf/duration.proto\"\xd5\x01\n" +
+	"\n" +
+	"conf.proto\x12\n" +
+	"kratos.api\x1a\x1egoogle/protobuf/duration.proto\"\x84\x02\n" +
 	"\tBootstrap\x12*\n" +
 	"\x06server\x18\x01 \x01(\v2\x12.kratos.api.ServerR\x06server\x12$\n" +
 	"\x04data\x18\x02 \x01(\v2\x10.kratos.api.DataR\x04data\x12!\n" +
 	"\x03app\x18\x03 \x01(\v2\x0f.kratos.api.AppR\x03app\x12$\n" +
 	"\x04auth\x18\x04 \x01(\v2\x10.kratos.api.AuthR\x04auth\x12-\n" +
-	"\alogging\x18\x05 \x01(\v2\x13.kratos.api.LoggingR\alogging\"\xb8\x02\n" +
+	"\alogging\x18\x05 \x01(\v2\x13.kratos.api.LoggingR\alogging\x12-\n" +
+	"\atracing\x18\x06 \x01(\v2\x13.kratos.api.TracingR\atracing\"\xb8\x02\n" +
 	"\x06Server\x12+\n" +
 	"\x04http\x18\x01 \x01(\v2\x17.kratos.api.Server.HTTPR\x04http\x12+\n" +
 	"\x04grpc\x18\x02 \x01(\v2\x17.kratos.api.Server.GRPCR\x04grpc\x1ai\n" +
@@ -1441,7 +1560,7 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\n" +
 	"access_key\x18\r \x01(\tR\taccessKey\x12\x1d\n" +
 	"\n" +
-	"secret_key\x18\x0e \x01(\tR\tsecretKey\"\xe4\x02\n" +
+	"secret_key\x18\x0e \x01(\tR\tsecretKey\"\x8d\x03\n" +
 	"\aLogging\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\x12\x16\n" +
 	"\x06format\x18\x02 \x01(\tR\x06format\x12\x16\n" +
@@ -1458,7 +1577,8 @@ const file_conf_conf_proto_rawDesc = "" +
 	" \x01(\bR\n" +
 	"stacktrace\x12'\n" +
 	"\x04gorm\x18\v \x01(\v2\x13.kratos.api.GormLogR\x04gorm\x12$\n" +
-	"\x04loki\x18\f \x01(\v2\x10.kratos.api.LokiR\x04loki\"M\n" +
+	"\x04loki\x18\f \x01(\v2\x10.kratos.api.LokiR\x04loki\x12'\n" +
+	"\x0fverbose_tracing\x18\r \x01(\bR\x0everboseTracing\"M\n" +
 	"\aGormLog\x12%\n" +
 	"\x0eslow_threshold\x18\x01 \x01(\tR\rslowThreshold\x12\x1b\n" +
 	"\tlog_level\x18\x02 \x01(\tR\blogLevel\"\xce\x02\n" +
@@ -1493,22 +1613,32 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\n" +
 	"app_secret\x18\x03 \x01(\tR\tappSecret\x12\x18\n" +
 	"\atimeout\x18\x04 \x01(\tR\atimeout\x12$\n" +
-	"\rmaxConcurrent\x18\x05 \x01(\x03R\rmaxConcurrentB\x1eZ\x1cnancalacc/internal/conf;confb\x06proto3"
+	"\rmaxConcurrent\x18\x05 \x01(\x03R\rmaxConcurrent\"\xb0\x02\n" +
+	"\aTracing\x12\x16\n" +
+	"\x06enable\x18\x01 \x01(\bR\x06enable\x12'\n" +
+	"\x0fverbose_logging\x18\x02 \x01(\bR\x0everboseLogging\x12(\n" +
+	"\x10log_request_size\x18\x03 \x01(\bR\x0elogRequestSize\x12*\n" +
+	"\x11log_response_size\x18\x04 \x01(\bR\x0flogResponseSize\x12\x1f\n" +
+	"\vlog_headers\x18\x05 \x01(\bR\n" +
+	"logHeaders\x12(\n" +
+	"\x10log_query_params\x18\x06 \x01(\bR\x0elogQueryParams\x12!\n" +
+	"\fservice_name\x18\a \x01(\tR\vserviceName\x12 \n" +
+	"\venvironment\x18\b \x01(\tR\venvironmentB\x1eZ\x1cnancalacc/internal/conf;confb\x06proto3"
 
 var (
-	file_conf_conf_proto_rawDescOnce sync.Once
-	file_conf_conf_proto_rawDescData []byte
+	file_conf_proto_rawDescOnce sync.Once
+	file_conf_proto_rawDescData []byte
 )
 
-func file_conf_conf_proto_rawDescGZIP() []byte {
-	file_conf_conf_proto_rawDescOnce.Do(func() {
-		file_conf_conf_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_conf_conf_proto_rawDesc), len(file_conf_conf_proto_rawDesc)))
+func file_conf_proto_rawDescGZIP() []byte {
+	file_conf_proto_rawDescOnce.Do(func() {
+		file_conf_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_conf_proto_rawDesc), len(file_conf_proto_rawDesc)))
 	})
-	return file_conf_conf_proto_rawDescData
+	return file_conf_proto_rawDescData
 }
 
-var file_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
-var file_conf_conf_proto_goTypes = []any{
+var file_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_conf_proto_goTypes = []any{
 	(*Bootstrap)(nil),           // 0: kratos.api.Bootstrap
 	(*Server)(nil),              // 1: kratos.api.Server
 	(*Data)(nil),                // 2: kratos.api.Data
@@ -1517,65 +1647,67 @@ var file_conf_conf_proto_goTypes = []any{
 	(*GormLog)(nil),             // 5: kratos.api.GormLog
 	(*Loki)(nil),                // 6: kratos.api.Loki
 	(*Auth)(nil),                // 7: kratos.api.Auth
-	(*Server_HTTP)(nil),         // 8: kratos.api.Server.HTTP
-	(*Server_GRPC)(nil),         // 9: kratos.api.Server.GRPC
-	(*Data_Database)(nil),       // 10: kratos.api.Data.Database
-	(*Data_DatabaseSync)(nil),   // 11: kratos.api.Data.DatabaseSync
-	(*Data_Redis)(nil),          // 12: kratos.api.Data.Redis
-	(*Data_Etcd)(nil),           // 13: kratos.api.Data.Etcd
-	nil,                         // 14: kratos.api.Loki.LabelsEntry
-	(*Auth_Wpsapp)(nil),         // 15: kratos.api.Auth.Wpsapp
-	(*Auth_Dingtalk)(nil),       // 16: kratos.api.Auth.Dingtalk
-	(*durationpb.Duration)(nil), // 17: google.protobuf.Duration
+	(*Tracing)(nil),             // 8: kratos.api.Tracing
+	(*Server_HTTP)(nil),         // 9: kratos.api.Server.HTTP
+	(*Server_GRPC)(nil),         // 10: kratos.api.Server.GRPC
+	(*Data_Database)(nil),       // 11: kratos.api.Data.Database
+	(*Data_DatabaseSync)(nil),   // 12: kratos.api.Data.DatabaseSync
+	(*Data_Redis)(nil),          // 13: kratos.api.Data.Redis
+	(*Data_Etcd)(nil),           // 14: kratos.api.Data.Etcd
+	nil,                         // 15: kratos.api.Loki.LabelsEntry
+	(*Auth_Wpsapp)(nil),         // 16: kratos.api.Auth.Wpsapp
+	(*Auth_Dingtalk)(nil),       // 17: kratos.api.Auth.Dingtalk
+	(*durationpb.Duration)(nil), // 18: google.protobuf.Duration
 }
-var file_conf_conf_proto_depIdxs = []int32{
+var file_conf_proto_depIdxs = []int32{
 	1,  // 0: kratos.api.Bootstrap.server:type_name -> kratos.api.Server
 	2,  // 1: kratos.api.Bootstrap.data:type_name -> kratos.api.Data
 	3,  // 2: kratos.api.Bootstrap.app:type_name -> kratos.api.App
 	7,  // 3: kratos.api.Bootstrap.auth:type_name -> kratos.api.Auth
 	4,  // 4: kratos.api.Bootstrap.logging:type_name -> kratos.api.Logging
-	8,  // 5: kratos.api.Server.http:type_name -> kratos.api.Server.HTTP
-	9,  // 6: kratos.api.Server.grpc:type_name -> kratos.api.Server.GRPC
-	10, // 7: kratos.api.Data.database:type_name -> kratos.api.Data.Database
-	11, // 8: kratos.api.Data.database_sync:type_name -> kratos.api.Data.DatabaseSync
-	12, // 9: kratos.api.Data.redis:type_name -> kratos.api.Data.Redis
-	13, // 10: kratos.api.Data.etcd:type_name -> kratos.api.Data.Etcd
-	5,  // 11: kratos.api.Logging.gorm:type_name -> kratos.api.GormLog
-	6,  // 12: kratos.api.Logging.loki:type_name -> kratos.api.Loki
-	14, // 13: kratos.api.Loki.labels:type_name -> kratos.api.Loki.LabelsEntry
-	15, // 14: kratos.api.Auth.wpsapp:type_name -> kratos.api.Auth.Wpsapp
-	16, // 15: kratos.api.Auth.dingtalk:type_name -> kratos.api.Auth.Dingtalk
-	17, // 16: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
-	17, // 17: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
-	17, // 18: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
-	17, // 19: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
-	20, // [20:20] is the sub-list for method output_type
-	20, // [20:20] is the sub-list for method input_type
-	20, // [20:20] is the sub-list for extension type_name
-	20, // [20:20] is the sub-list for extension extendee
-	0,  // [0:20] is the sub-list for field type_name
+	8,  // 5: kratos.api.Bootstrap.tracing:type_name -> kratos.api.Tracing
+	9,  // 6: kratos.api.Server.http:type_name -> kratos.api.Server.HTTP
+	10, // 7: kratos.api.Server.grpc:type_name -> kratos.api.Server.GRPC
+	11, // 8: kratos.api.Data.database:type_name -> kratos.api.Data.Database
+	12, // 9: kratos.api.Data.database_sync:type_name -> kratos.api.Data.DatabaseSync
+	13, // 10: kratos.api.Data.redis:type_name -> kratos.api.Data.Redis
+	14, // 11: kratos.api.Data.etcd:type_name -> kratos.api.Data.Etcd
+	5,  // 12: kratos.api.Logging.gorm:type_name -> kratos.api.GormLog
+	6,  // 13: kratos.api.Logging.loki:type_name -> kratos.api.Loki
+	15, // 14: kratos.api.Loki.labels:type_name -> kratos.api.Loki.LabelsEntry
+	16, // 15: kratos.api.Auth.wpsapp:type_name -> kratos.api.Auth.Wpsapp
+	17, // 16: kratos.api.Auth.dingtalk:type_name -> kratos.api.Auth.Dingtalk
+	18, // 17: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
+	18, // 18: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
+	18, // 19: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
+	18, // 20: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
+	21, // [21:21] is the sub-list for method output_type
+	21, // [21:21] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
-func init() { file_conf_conf_proto_init() }
-func file_conf_conf_proto_init() {
-	if File_conf_conf_proto != nil {
+func init() { file_conf_proto_init() }
+func file_conf_proto_init() {
+	if File_conf_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_conf_conf_proto_rawDesc), len(file_conf_conf_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_conf_proto_rawDesc), len(file_conf_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_conf_conf_proto_goTypes,
-		DependencyIndexes: file_conf_conf_proto_depIdxs,
-		MessageInfos:      file_conf_conf_proto_msgTypes,
+		GoTypes:           file_conf_proto_goTypes,
+		DependencyIndexes: file_conf_proto_depIdxs,
+		MessageInfos:      file_conf_proto_msgTypes,
 	}.Build()
-	File_conf_conf_proto = out.File
-	file_conf_conf_proto_goTypes = nil
-	file_conf_conf_proto_depIdxs = nil
+	File_conf_proto = out.File
+	file_conf_proto_goTypes = nil
+	file_conf_proto_depIdxs = nil
 }

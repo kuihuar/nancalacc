@@ -32,9 +32,12 @@ const (
 	POST_CREATE_DEPT_PATH = "/v7/depts/create"
 	POST_CREATE_USER_PATH = "/v7/depts/create"
 
-	// POST_CACHE_SET = "http://encs-pri-cams-engine/i/cams/sdk/api/v1/cache/set"
-	// POST_CACHE_GET = "http://encs-pri-cams-engine/i/cams/sdk/api/v1/cache/get"
-	// POST_CACHE_DEL = "http://encs-pri-cams-engine/i/cams/sdk/api/v1/cache/del"
+	CACHE_SET_PATH = ""
+	CACHE_GET_PATH = ""
+	CACHE_DEL_PATH = ""
+
+	// GET_USER_BY_ID_PATH   = ""
+	// ADD_USER_TO_DEPT_PATH = ""
 )
 
 var (

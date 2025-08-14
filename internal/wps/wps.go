@@ -29,28 +29,24 @@ func NewWps(logger log.Logger) Wps {
 
 // BATCH_POST_USERS_PATH        = "/v7/users/batch_read"
 func (ws *wps) BatchPostUsers(ctx context.Context, accessToken string, input BatchPostUsersRequest) (BatchPostUsersResponse, error) {
-	log := ws.log.WithContext(ctx)
-	log.Infof("PostBatchUsersByExDepIds req %v", input)
-
 	var resp BatchPostUsersResponse
 
-	ak := ws.cfg.ClientId
-	sk := ws.cfg.ClientSecret
-	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
+	// 记录请求
+	logAPIRequest(ctx, ws.log, "BatchPostUsers", "POST", BATCH_POST_USERS_PATH, input)
 
-	log.Infof("BatchPostUsers uri: %s, input: %+v\n", BATCH_POST_USERS_PATH, input)
-	bs, err := wpsReq.PostJSON(context.Background(), BATCH_POST_USERS_PATH, accessToken, input)
-	log.Infof("BatchPostUsers: %s, err: %+v\n", string(bs), err)
+	// 创建请求
+	wpsReq := NewWPSRequest(DOMAIN, ws.cfg.ClientId, ws.cfg.ClientSecret, WithLogger(ws.log))
+
+	// 执行请求
+	bs, err := wpsReq.PostJSON(ctx, BATCH_POST_USERS_PATH, accessToken, input)
 	if err != nil {
+		ws.log.WithContext(ctx).Errorf("BatchPostUsers request failed: %v", err)
 		return resp, err
 	}
 
-	err = json.Unmarshal(bs, &resp)
-	if err != nil {
+	// 处理响应
+	if err := handleAPIResponse(ctx, ws.log, "BatchPostUsers", bs, &resp, 0); err != nil {
 		return resp, err
-	}
-	if resp.Code != 200 {
-		return resp, ErrCodeNot200
 	}
 
 	return resp, nil
@@ -235,9 +231,6 @@ func (ws *wps) PostBatchUsersByExDepIds(ctx context.Context, accessToken string,
 
 	var resp *PostBatchUsersByExDepIdsResponse
 
-	// input := &EcisaccountsyncIncrementRequest{
-	// 	ThirdCompanyId: thirdCompanyId,
-	// }
 	ak := ws.cfg.ClientId
 	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
@@ -269,9 +262,6 @@ func (ws *wps) GetDepartmentRoot(ctx context.Context, accessToken string, input 
 
 	var resp GetDepartmentRootResponse
 
-	// input := &EcisaccountsyncIncrementRequest{
-	// 	ThirdCompanyId: thirdCompanyId,
-	// }
 	ak := ws.cfg.ClientId
 	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
@@ -296,10 +286,6 @@ func (ws *wps) GetDepartmentRoot(ctx context.Context, accessToken string, input 
 	return resp, nil
 }
 
-//	func (ws *wps) GetDepartmentChildrenList(ctx context.Context, accessToken string, input GetDepartmentChildrenListRequest) (GetDepartmentChildrenListResponse, error) {
-//		var resp GetDepartmentChildrenListResponse
-//		return resp, nil
-//	}
 func (ws *wps) GetUserByUserId(ctx context.Context, accessToken string, input GetUserByUserIdRequest) (GetUserByUserIdResponse, error) {
 	log := ws.log.WithContext(ctx)
 	log.Infof("GetUserByUserId req %v", input)
@@ -338,80 +324,19 @@ func (ws *wps) CacheSet(ctx context.Context, accessToken string, key string, val
 
 	ws.log.WithContext(ctx).Infof("CacheSet req %v", key)
 	return status.Error(codes.Unimplemented, "GetDeptByPage")
-	// log := ws.log.WithContext(ctx)
-	// log.Infof("CacheSet key: %s, value: %v", key, value)
-
-	// ak := ws.serviceConf.Auth.App.ClientId
-	// sk := ws.serviceConf.Auth.App.ClientSecret
-	// wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
-
-	// bs, err := wpsReq.PostJSON(context.Background(), POST_CACHE_SET, accessToken, map[string]interface{}{
-	// 	"key":       key,
-	// 	"value":     value,
-	// 	"expire":    expiration,
-	// 	"namespace": "nancalacc",
-	// })
-
-	// log.Infof("CacheSet: %s, err: %+v\n", string(bs), err)
-	// if err != nil {
-	// 	return err
-	// }
 
 }
 func (ws *wps) CacheGet(ctx context.Context, accessToken string, key string) (interface{}, error) {
 
 	ws.log.WithContext(ctx).Infof("CacheGet req %v", key)
 	return nil, status.Error(codes.Unimplemented, "GetDeptByPage")
-	// log := ws.log.WithContext(ctx)
-	// log.Infof("CacheGet key %v", key)
 
-	// ak := ws.serviceConf.Auth.App.ClientId
-	// sk := ws.serviceConf.Auth.App.ClientSecret
-	// wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
-
-	// bs, err := wpsReq.PostJSON(context.Background(), POST_CACHE_GET, accessToken, map[string]interface{}{
-	// 	"key":       key,
-	// 	"namespace": "nancalacc",
-	// })
-
-	// log.Infof("CacheGet: %s, err: %+v\n", string(bs), err)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// var resp map[string]interface{}
-	// err = json.Unmarshal(bs, &resp)
-	// if err != nil {
-	// 	return nil, err
-	// }
 }
 
 func (ws *wps) CacheDel(ctx context.Context, accessToken, input string) error {
 	ws.log.WithContext(ctx).Infof("CacheDel req %v", input)
 	return status.Error(codes.Unimplemented, "GetDeptByPage")
 
-	// log := ws.log.WithContext(ctx)
-	// log.Infof("CacheDel key %v", key)
-
-	// ak := ws.serviceConf.Auth.App.ClientId
-	// sk := ws.serviceConf.Auth.App.ClientSecret
-	// wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))
-
-	// bs, err := wpsReq.PostJSON(context.Background(), POST_CACHE_DEL, accessToken, map[string]interface{}{
-	// 	"key":       key,
-	// 	"namespace": "nancalacc",
-	// })
-
-	// log.Infof("CacheDel: %s, err: %+v\n", string(bs), err)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// var resp map[string]interface{}
-	// err = json.Unmarshal(bs, &resp)
-	// if err != nil {
-	// 	return err
-	// }
 }
 
 func (ws *wps) PostUpdateDept(ctx context.Context, accessToken string, input PostUpdateDeptRequest) (*PostUpdateDeptResponse, error) {
@@ -566,9 +491,6 @@ func (ws *wps) PostCreateDept(ctx context.Context, accessToken string, input Pos
 
 	var resp *PostCreateDeptResponse
 
-	// input := &EcisaccountsyncIncrementRequest{
-	// 	ThirdCompanyId: thirdCompanyId,
-	// }
 	ak := ws.cfg.ClientId
 	sk := ws.cfg.ClientSecret
 	wpsReq := NewWPSRequest(DOMAIN, ak, sk, WithLogger(ws.log))

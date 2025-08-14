@@ -17,7 +17,6 @@ var ProviderSet = wire.NewSet(
 	NewGormLoggerAdapter,
 	NewLogConfig,
 	NewLokiClientFromConfig,
-	NewLoggerFromBootstrap,
 )
 
 // NewLogConfig 创建日志配置

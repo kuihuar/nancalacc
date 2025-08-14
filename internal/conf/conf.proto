@@ -11,6 +11,7 @@ message Bootstrap {
   App app = 3;
   Auth auth = 4;
   Logging logging = 5;
+  Tracing tracing = 6;
 }
 
 message Server {
@@ -102,6 +103,8 @@ message Logging {
   bool stacktrace = 10;
   GormLog gorm = 11;
   Loki loki = 12;
+  // 追踪日志配置
+  bool verbose_tracing = 13; // 是否启用详细追踪日志
 }
 
 message GormLog {
@@ -139,4 +142,15 @@ message Auth {
   }
   Wpsapp wpsapp = 1;
   Dingtalk dingtalk= 2;
+}
+
+message Tracing {
+  bool enable = 1; // 是否启用追踪
+  bool verbose_logging = 2; // 是否启用详细日志
+  bool log_request_size = 3; // 是否记录请求体大小
+  bool log_response_size = 4; // 是否记录响应体大小
+  bool log_headers = 5; // 是否记录请求头
+  bool log_query_params = 6; // 是否记录查询参数
+  string service_name = 7; // 服务名称
+  string environment = 8; // 环境
 }

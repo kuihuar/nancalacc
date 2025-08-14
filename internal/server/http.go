@@ -11,17 +11,27 @@ import (
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
-	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/http"
 )
 
 // NewHTTPServer new an HTTP server.
-func NewHTTPServer(c *conf.Server, accountService *service.AccountService, logger log.Logger) *http.Server {
+func NewHTTPServer(c *conf.Server, accountService *service.AccountService, logger log.Logger, tracingConfig *conf.Tracing) *http.Server {
+	// 创建追踪中间件配置
+	var tracingMiddlewareConfig *middleware.TracingConfig
+	if tracingConfig != nil && tracingConfig.Enable {
+		tracingMiddlewareConfig = &middleware.TracingConfig{
+			VerboseLogging:  tracingConfig.VerboseLogging,
+			LogRequestSize:  tracingConfig.LogRequestSize,
+			LogResponseSize: tracingConfig.LogResponseSize,
+			LogHeaders:      tracingConfig.LogHeaders,
+			LogQueryParams:  tracingConfig.LogQueryParams,
+		}
+	}
+
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
-			tracing.Server(),
-			middleware.LoggingMiddleware(logger),
+			middleware.TracingMiddleware(logger, tracingMiddlewareConfig),
 		),
 
 		http.RequestDecoder(func(r *http.Request, v interface{}) error {

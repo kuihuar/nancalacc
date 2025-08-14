@@ -81,6 +81,33 @@ logging:
       service: "nancalacc"
       environment: "production"
       version: "v1.0.0"
+# OpenTelemetry配置
+otel:
+  enabled: true                    # 是否启用OpenTelemetry
+  service_name: "nancalacc"        # 服务名称
+  service_version: "v1.0.0"        # 服务版本
+  environment: "production"         # 环境
+  # Jaeger配置
+  jaeger:
+    enabled: true                  # 是否启用Jaeger
+    endpoint: "http://localhost:14268/api/traces"  # Jaeger收集器端点
+  # OTLP配置
+  otlp:
+    enabled: false                 # 是否启用OTLP
+    endpoint: "localhost:4317"     # OTLP端点
+    timeout: 10                    # 超时时间（秒）
+
+# 追踪配置
+tracing:
+  enable: true                     # 是否启用追踪
+  verbose_logging: false           # 是否启用详细日志（默认false，只记录TraceID、SpanID、Name）
+  log_request_size: false          # 是否记录请求体大小
+  log_response_size: false         # 是否记录响应体大小
+  log_headers: false               # 是否记录请求头
+  log_query_params: false          # 是否记录查询参数
+  service_name: "nancalacc"        # 服务名称
+  environment: "production"        # 环境
+
 auth:
   wpsapp:
     client_id: "com.acc.async"

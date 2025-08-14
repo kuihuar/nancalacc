@@ -13,6 +13,11 @@ type EcisaccountsyncAllResponse struct {
 	Detail string `json:"detail"`
 }
 
+// GetCode 实现 CodeChecker 接口
+func (r *EcisaccountsyncAllResponse) GetCode() string {
+	return r.Code
+}
+
 type EcisaccountsyncIncrementRequest struct {
 	ThirdCompanyId string `json:"third_company_id"`
 }
@@ -22,6 +27,11 @@ type EcisaccountsyncIncrementResponse struct {
 	Msg    string `json:"msg"`
 	Data   any    `json:"data"`
 	Detail string `json:"detail"`
+}
+
+// GetCode 实现 CodeChecker 接口
+func (r *EcisaccountsyncIncrementResponse) GetCode() string {
+	return r.Code
 }
 
 // dept...
@@ -182,6 +192,11 @@ type BatchPostUsersResponse struct {
 	Data   struct {
 		Items []WpsUserWithDept `json:"items"`
 	} `json:"data"`
+}
+
+// GetCode 实现 CodeChecker[int] 接口
+func (r *BatchPostUsersResponse) GetCode() int {
+	return r.Code
 }
 
 type WpsUserWithDept struct {
@@ -575,3 +590,11 @@ type GetObjUploadUrlResponse struct {
 	Data   struct {
 	} `json:"data"`
 }
+
+type CacheSetRequest struct {
+	Key        string      `json:"key"`
+	Value      interface{} `json:"value"`
+	Expiration int         `json:"expiration"`
+}
+
+type CacheSetResponse struct{}
