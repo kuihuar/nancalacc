@@ -109,8 +109,7 @@ func (r *dingTalkRepo) GetAccessToken(ctx context.Context) (*auth.AccessTokenRes
 }
 func (r *dingTalkRepo) FetchDepartments(ctx context.Context, token string) ([]*DingtalkDept, error) {
 
-	log := r.log.WithContext(ctx)
-	log.Infof("FetchDepartments token:%s", token)
+	r.log.WithContext(ctx).Infof("FetchDepartments input token:%s", token)
 
 	var deptList []*DingtalkDept
 
@@ -324,8 +323,7 @@ func (r *dingTalkRepo) FetchDeptDetails(ctx context.Context, token string, deptI
 
 }
 func (r *dingTalkRepo) FetchDepartmentUsers(ctx context.Context, token string, deptIds []int64) ([]*DingtalkDeptUser, error) {
-	log := r.log.WithContext(ctx)
-	log.Infof("FetchDepartmentUsers: %v, %v", token, deptIds)
+	r.log.WithContext(ctx).Infof("FetchDepartmentUsers input token: %v, deptIds: %v", token, deptIds)
 
 	// 服务端API.通讯录管理.用户管理.获取部门用户详情
 	//maxConcurrent := 10
@@ -410,7 +408,7 @@ func (r *dingTalkRepo) getUserListByDepId(ctx context.Context, token string, dep
 	//log.Info("getUserListByDepId.uri: %v, input: %v, jsonData: %v", uri, input, string(jsonData))
 
 	bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
-	log.Info("getUserListByDepId.body: %v, err: %v", string(bs), err)
+	log.Infof("getUserListByDepId.body: %v, err: %v", string(bs), err)
 	if err != nil {
 		return nil, 0, err
 	}

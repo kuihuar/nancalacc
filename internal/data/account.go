@@ -135,7 +135,12 @@ func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*dingtalk.D
 }
 
 func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relations []*dingtalk.DingtalkDeptUserRelation, taskId string) (int, error) {
-	r.log.WithContext(ctx).Infof("SaveDepartmentUserRelations relations: %v, taskId :%s", relations, taskId)
+	r.log.WithContext(ctx).Infof("SaveDepartmentUserRelations relations.size: %d, taskId :%s", len(relations), taskId)
+
+	for _, relation := range relations {
+		r.log.Infof("relation: %+v", relation)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -165,19 +170,17 @@ func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relatio
 	return int(result.RowsAffected), nil
 }
 
-func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, cfg *dingtalk.DingtalkCompanyCfg) error {
-	r.log.Infof("SaveCompanyCfg: %v", cfg)
+func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, input *dingtalk.DingtalkCompanyCfg) error {
+	r.log.WithContext(ctx).Infof("SaveCompanyCfg input: %+v", input)
 
-	thirdCompanyID := r.bizConf.ThirdCompanyId
-	platformID := r.bizConf.PlatformIds
-	companyID := r.bizConf.CompanyId
+	now := time.Now()
 	entity := &models.TbCompanyCfg{
-		ThirdCompanyId: thirdCompanyID,
-		PlatformIds:    platformID,
-		CompanyId:      companyID,
+		ThirdCompanyId: input.ThirdCompanyId,
+		PlatformIds:    input.PlatformIds,
+		CompanyId:      input.CompanyId,
 		Status:         1,
-		Ctime:          time.Now(),
-		Mtime:          time.Now(),
+		Ctime:          now,
+		Mtime:          now,
 	}
 
 	db, err := r.data.GetSyncDB()
@@ -185,8 +188,8 @@ func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, cfg *dingtalk.Dingta
 		return err
 	}
 	err = db.WithContext(ctx).Where(models.TbCompanyCfg{
-		ThirdCompanyId: thirdCompanyID,
-		CompanyId:      companyID,
+		ThirdCompanyId: input.ThirdCompanyId,
+		CompanyId:      input.CompanyId,
 	}).FirstOrCreate(entity).Error
 
 	if err != nil {

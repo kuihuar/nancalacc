@@ -58,15 +58,15 @@ func (s *OTelService) Init(ctx context.Context) error {
 
 	// 创建导出器
 	var exporter sdktrace.SpanExporter
-	if s.config.Jaeger != nil && s.config.Jaeger.Enabled {
-		exporter, err = jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(s.config.Jaeger.Endpoint)))
+	if s.config.Traces.Jaeger != nil && s.config.Traces.Jaeger.Enabled {
+		exporter, err = jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(s.config.Traces.Jaeger.Endpoint)))
 		if err != nil {
 			return err
 		}
-		s.logger.Infof("Jaeger exporter initialized: %s", s.config.Jaeger.Endpoint)
-	} else if s.config.OTLP != nil && s.config.OTLP.Enabled {
-		timeout := time.Duration(s.config.OTLP.Timeout) * time.Second
-		conn, err := grpc.DialContext(ctx, s.config.OTLP.Endpoint,
+		s.logger.Infof("Jaeger exporter initialized: %s", s.config.Traces.Jaeger.Endpoint)
+	} else if s.config.Traces.Otlp != nil && s.config.Traces.Otlp.Enabled {
+		timeout := time.Duration(s.config.Traces.Otlp.Timeout) * time.Second
+		conn, err := grpc.DialContext(ctx, s.config.Traces.Otlp.Endpoint,
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 			grpc.WithBlock(),
 			grpc.WithTimeout(timeout),
@@ -78,7 +78,7 @@ func (s *OTelService) Init(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		s.logger.Infof("OTLP exporter initialized: %s", s.config.OTLP.Endpoint)
+		s.logger.Infof("OTLP exporter initialized: %s", s.config.Traces.Otlp.Endpoint)
 	} else {
 		s.logger.Warn("No exporter configured, using noop exporter")
 		return nil

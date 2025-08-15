@@ -143,6 +143,9 @@ type DingTalkUserInfo struct {
 }
 
 type DingtalkCompanyCfg struct {
+	ThirdCompanyId string `json:"third_company_id"`
+	PlatformIds    string `json:"platform_ids"`
+	CompanyId      string `json:"company_id"`
 }
 
 type DingTalkUseridByUnionidRequest struct {

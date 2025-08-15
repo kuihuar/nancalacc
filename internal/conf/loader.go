@@ -412,12 +412,7 @@ func mergeApp(dst, src *App) {
 	if src.Env != "" {
 		dst.Env = src.Env
 	}
-	if src.LogLevel != "" {
-		dst.LogLevel = src.LogLevel
-	}
-	if src.LogOut != "" {
-		dst.LogOut = src.LogOut
-	}
+	// LogLevel and LogOut are now in OpenTelemetry.Logs
 	if src.AppPackage != "" {
 		dst.AppPackage = src.AppPackage
 	}

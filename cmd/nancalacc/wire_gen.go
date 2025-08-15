@@ -7,33 +7,36 @@
 package main
 
 import (
-	"github.com/go-kratos/kratos/v2"
-	"github.com/go-kratos/kratos/v2/log"
+	"fmt"
 	"nancalacc/internal/biz"
 	"nancalacc/internal/conf"
 	"nancalacc/internal/data"
 	"nancalacc/internal/dingtalk"
+	"nancalacc/internal/otel"
 	"nancalacc/internal/server"
 	"nancalacc/internal/service"
 	"nancalacc/internal/task"
 	"nancalacc/internal/wps"
-)
 
-import (
+	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/log"
+
 	_ "go.uber.org/automaxprocs"
 )
 
 // Injectors from wire.go:
 
-// wireApp init kratos application with database factory.
-func wireApp(confServer *conf.Server, confData *conf.Data, tracing *conf.Tracing, logger log.Logger) (*kratos.App, func(), error) {
-	databaseFactory := data.NewDatabaseFactory(confData, logger)
+// wireApp init kratos application with OpenTelemetry integration.
+func wireApp(confServer *conf.Server, confData *conf.Data, openTelemetry *conf.OpenTelemetry, integration *otel.Integration) (*kratos.App, func(), error) {
+	logger := provideLogger(integration)
+	databaseFactory := data.NewDatabaseFactory(confData, logger, openTelemetry)
 	client, err := data.NewRedisClient(confData, logger)
 	if err != nil {
 		return nil, nil, err
 	}
 	dataData, cleanup, err := data.NewDataWithFactory(databaseFactory, client, logger)
 	if err != nil {
+		fmt.Println("NewDataWithFactory error", err)
 		return nil, nil, err
 	}
 	accounterRepo := data.NewAccounterRepo(dataData, logger)
@@ -44,13 +47,20 @@ func wireApp(confServer *conf.Server, confData *conf.Data, tracing *conf.Tracing
 	oauth2Usecase := biz.NewOauth2Usecase(dingtalkDingtalk, logger)
 	fullSyncUsecase := biz.NewFullSyncUsecase(accounterRepo, dingtalkDingtalk, wpsWps, cacheService, logger)
 	accountService := service.NewAccountService(accounterUsecase, oauth2Usecase, fullSyncUsecase, logger)
-	grpcServer := server.NewGRPCServer(confServer, accountService, logger)
-	httpServer := server.NewHTTPServer(confServer, accountService, logger, tracing)
+	grpcServer := server.NewGRPCServer(confServer, accountService, integration)
+	httpServer := server.NewHTTPServer(confServer, accountService, integration, openTelemetry)
 	cronService := task.NewCronServiceWithJobs(accounterUsecase, logger)
 	incrementalSyncUsecase := biz.NewIncrementalSyncUsecase(accounterRepo, dingtalkDingtalk, wpsWps, logger)
 	dingTalkEventService := service.NewDingTalkEventService(incrementalSyncUsecase, logger)
-	app := newApp(logger, grpcServer, httpServer, cronService, dingTalkEventService)
+	app := newApp(integration, grpcServer, httpServer, cronService, dingTalkEventService)
 	return app, func() {
 		cleanup()
 	}, nil
+}
+
+// wire.go:
+
+// provideLogger creates a logger from the integration
+func provideLogger(integration *otel.Integration) log.Logger {
+	return integration.CreateLogger()
 }

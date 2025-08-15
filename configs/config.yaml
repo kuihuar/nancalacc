@@ -9,7 +9,7 @@ data:
   database:
     driver: mysql
     # 使用环境变量或加密配置
-    source: ${DB_SOURCE}
+    source: root:liujianfeng@tcp(192.168.1.142:3306)/nancalacc?timeout=15s&charset=utf8mb4&parseTime=True
     max_open_conns: 20
     max_idle_conns: 10
     conn_max_lifetime: 6h
@@ -22,11 +22,11 @@ data:
     max_open_conns: 20
     max_idle_conns: 10
     conn_max_lifetime: 6h
-    env: "prov"
+    env: "dev"
     enable: true
   redis:
-    addr: ${REDIS_ADDR}
-    password: ${REDIS_PASSWORD}
+    addr: 192.168.1.142:6379
+    password: liujianfeng
     read_timeout: 0.2s
     write_timeout: 0.2s
     enable: false
@@ -50,66 +50,63 @@ app:
   third_company_id: "1" # 三方租户ID nancal
   platform_ids: "1" # 客户源数据ID dingtalkofnancal
   company_id: "1" # 云文档租户公司ID nancal
-  access_key: ${ACCESS_KEY}
-  secret_key: ${SECRET_KEY}
-# 新增日志配置
-logging:
-  level: "info"           # 日志级别: debug, info, warn, error, fatal
-  format: "console"       # 日志格式: json, console (改为console避免换行符转义)
-  output: "both"          # 输出方式: stdout, file, both
-  file_path: "logs/app.log"  # 日志文件路径
-  max_size: 100           # 单个文件最大大小(MB)
-  max_backups: 10         # 最大备份文件数
-  max_age: 30             # 最大保留天数
-  compress: true          # 是否压缩
-  caller: true            # 是否显示调用者信息
-  stacktrace: false       # 是否显示堆栈信息
-  escape_newlines: false  # 是否转义换行符 (false表示不转义，保持原始换行)
-  # GORM日志配置
-  gorm:
-    slow_threshold: "200ms"  # 慢查询阈值
-    log_level: "warn"        # GORM日志级别
-  # Loki配置
-  loki:
-    url: "http://localhost:3100"  # Loki服务地址
-    username: ""                  # 用户名（可选）
-    password: ""                  # 密码（可选）
-    tenant_id: "nancalacc"        # 租户ID
-    enable: false                 # 是否启用Loki
-    batch_size: 100              # 批处理大小
-    batch_wait: "1s"             # 批处理等待时间
-    timeout: "10s"               # 请求超时时间
-    labels:                      # 标签
-      service: "nancalacc"
-      environment: "production"
-      version: "v1.0.0"
-# OpenTelemetry配置
+  access_key: "NRSXWTPKNAIRUBMP"
+  secret_key: "SKnwwvvngrhcrpgc"
+
 otel:
   enabled: true                    # 是否启用OpenTelemetry
   service_name: "nancalacc"        # 服务名称
   service_version: "v1.0.0"        # 服务版本
   environment: "production"         # 环境
-  # Jaeger配置
-  jaeger:
-    enabled: false                  # 是否启用Jaeger
-    endpoint: "http://localhost:14268/api/traces"  # Jaeger收集器端点
-  # OTLP配置
-  otlp:
-    enabled: false                 # 是否启用OTLP
-    endpoint: "localhost:4317"     # OTLP端点
-    timeout: 10                    # 超时时间（秒）
-
-# 追踪配置
-tracing:
-  enable: false                     # 是否启用追踪
-  verbose_logging: false           # 是否启用详细日志（默认false，只记录TraceID、SpanID、Name）
-  log_request_size: false          # 是否记录请求体大小
-  log_response_size: false         # 是否记录响应体大小
-  log_headers: false               # 是否记录请求头
-  log_query_params: false          # 是否记录查询参数
-  service_name: "nancalacc"        # 服务名称
-  environment: "production"        # 环境
-
+  
+  # 追踪配置
+  traces:
+    enabled: true                  # 是否启用分布式追踪
+    verbose_logging: true          # 详细日志
+    log_request_size: true         # 记录请求大小
+    log_response_size: true        # 记录响应大小
+    log_headers: true              # 记录请求头
+    log_query_params: true         # 记录查询参数
+    jaeger:
+      enabled: false                # 是否启用Jaeger
+      endpoint: "http://localhost:14268/api/traces"  # Jaeger收集器端点
+    otlp:
+      enabled: false               # 是否启用OTLP
+      endpoint: "localhost:4317"   # OTLP端点
+      timeout: 10                  # 超时时间（秒）
+    prometheus:
+      enabled: false               # 是否启用Prometheus追踪
+      endpoint: "localhost:9090"   # Prometheus端点
+      interval: "15s"              # 收集间隔
+  
+  # 指标配置
+  metrics:
+    enabled: false                  # 是否启用指标收集
+    prometheus:
+      enabled: false                # 是否启用Prometheus
+      endpoint: "localhost:9090"   # Prometheus端点
+      interval: "15s"              # 指标收集间隔
+  
+  # 日志配置
+  logs:
+    enabled: true                  # 是否启用日志收集
+    level: "info"                  # 日志级别: debug, info, warn, error, fatal
+    format: "json"                 # 日志格式: json, console
+    output: "file"               # 输出目标: stdout, stderr, file
+    file_path: "logs/app.log"                  # 文件路径（当output为file时）
+    max_size: 100                  # 最大文件大小（MB）
+    max_backups: 3                 # 最大备份文件数
+    max_age: 5                    # 最大保留天数
+    compress: true                 # 是否压缩
+    caller: true                   # 是否显示调用者信息
+    stacktrace: true               # 是否显示堆栈跟踪
+    escape_newlines: false         # 是否转义换行符
+    gorm:
+      slow_threshold: "1s"         # 慢查询阈值
+      log_level: "info"            # GORM日志级别
+    loki:
+      enabled: false                # 是否启用Loki
+      endpoint: "http://localhost:3100/loki/api/v1/push"  # Loki推送端点
 auth:
   wpsapp:
     client_id: "com.acc.async"

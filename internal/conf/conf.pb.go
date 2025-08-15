@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v5.29.3
-// source: conf.proto
+// source: conf/conf.proto
 
 package conf
 
@@ -28,15 +28,14 @@ type Bootstrap struct {
 	Data          *Data                  `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	App           *App                   `protobuf:"bytes,3,opt,name=app,proto3" json:"app,omitempty"`
 	Auth          *Auth                  `protobuf:"bytes,4,opt,name=auth,proto3" json:"auth,omitempty"`
-	Logging       *Logging               `protobuf:"bytes,5,opt,name=logging,proto3" json:"logging,omitempty"`
-	Tracing       *Tracing               `protobuf:"bytes,6,opt,name=tracing,proto3" json:"tracing,omitempty"`
+	Otel          *OpenTelemetry         `protobuf:"bytes,5,opt,name=otel,proto3" json:"otel,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Bootstrap) Reset() {
 	*x = Bootstrap{}
-	mi := &file_conf_proto_msgTypes[0]
+	mi := &file_conf_conf_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +47,7 @@ func (x *Bootstrap) String() string {
 func (*Bootstrap) ProtoMessage() {}
 
 func (x *Bootstrap) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[0]
+	mi := &file_conf_conf_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,7 +60,7 @@ func (x *Bootstrap) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Bootstrap.ProtoReflect.Descriptor instead.
 func (*Bootstrap) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{0}
+	return file_conf_conf_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Bootstrap) GetServer() *Server {
@@ -92,16 +91,9 @@ func (x *Bootstrap) GetAuth() *Auth {
 	return nil
 }
 
-func (x *Bootstrap) GetLogging() *Logging {
+func (x *Bootstrap) GetOtel() *OpenTelemetry {
 	if x != nil {
-		return x.Logging
-	}
-	return nil
-}
-
-func (x *Bootstrap) GetTracing() *Tracing {
-	if x != nil {
-		return x.Tracing
+		return x.Otel
 	}
 	return nil
 }
@@ -116,7 +108,7 @@ type Server struct {
 
 func (x *Server) Reset() {
 	*x = Server{}
-	mi := &file_conf_proto_msgTypes[1]
+	mi := &file_conf_conf_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -128,7 +120,7 @@ func (x *Server) String() string {
 func (*Server) ProtoMessage() {}
 
 func (x *Server) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[1]
+	mi := &file_conf_conf_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -141,7 +133,7 @@ func (x *Server) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server.ProtoReflect.Descriptor instead.
 func (*Server) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{1}
+	return file_conf_conf_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Server) GetHttp() *Server_HTTP {
@@ -170,7 +162,7 @@ type Data struct {
 
 func (x *Data) Reset() {
 	*x = Data{}
-	mi := &file_conf_proto_msgTypes[2]
+	mi := &file_conf_conf_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -182,7 +174,7 @@ func (x *Data) String() string {
 func (*Data) ProtoMessage() {}
 
 func (x *Data) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[2]
+	mi := &file_conf_conf_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -195,7 +187,7 @@ func (x *Data) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data.ProtoReflect.Descriptor instead.
 func (*Data) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{2}
+	return file_conf_conf_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Data) GetDatabase() *Data_Database {
@@ -232,23 +224,21 @@ type App struct {
 	Name           string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Version        string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
 	Env            string                 `protobuf:"bytes,4,opt,name=env,proto3" json:"env,omitempty"`
-	LogLevel       string                 `protobuf:"bytes,5,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`
-	LogOut         string                 `protobuf:"bytes,6,opt,name=log_out,json=logOut,proto3" json:"log_out,omitempty"`
-	AppPackage     string                 `protobuf:"bytes,7,opt,name=app_package,json=appPackage,proto3" json:"app_package,omitempty"`
-	AppId          string                 `protobuf:"bytes,8,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
-	AppSecret      string                 `protobuf:"bytes,9,opt,name=app_secret,json=appSecret,proto3" json:"app_secret,omitempty"`
-	ThirdCompanyId string                 `protobuf:"bytes,10,opt,name=third_company_id,json=thirdCompanyId,proto3" json:"third_company_id,omitempty"`
-	PlatformIds    string                 `protobuf:"bytes,11,opt,name=platform_ids,json=platformIds,proto3" json:"platform_ids,omitempty"`
-	CompanyId      string                 `protobuf:"bytes,12,opt,name=company_id,json=companyId,proto3" json:"company_id,omitempty"`
-	AccessKey      string                 `protobuf:"bytes,13,opt,name=access_key,json=accessKey,proto3" json:"access_key,omitempty"`
-	SecretKey      string                 `protobuf:"bytes,14,opt,name=secret_key,json=secretKey,proto3" json:"secret_key,omitempty"`
+	AppPackage     string                 `protobuf:"bytes,5,opt,name=app_package,json=appPackage,proto3" json:"app_package,omitempty"`
+	AppId          string                 `protobuf:"bytes,6,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	AppSecret      string                 `protobuf:"bytes,7,opt,name=app_secret,json=appSecret,proto3" json:"app_secret,omitempty"`
+	ThirdCompanyId string                 `protobuf:"bytes,8,opt,name=third_company_id,json=thirdCompanyId,proto3" json:"third_company_id,omitempty"`
+	PlatformIds    string                 `protobuf:"bytes,9,opt,name=platform_ids,json=platformIds,proto3" json:"platform_ids,omitempty"`
+	CompanyId      string                 `protobuf:"bytes,10,opt,name=company_id,json=companyId,proto3" json:"company_id,omitempty"`
+	AccessKey      string                 `protobuf:"bytes,11,opt,name=access_key,json=accessKey,proto3" json:"access_key,omitempty"`
+	SecretKey      string                 `protobuf:"bytes,12,opt,name=secret_key,json=secretKey,proto3" json:"secret_key,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
 func (x *App) Reset() {
 	*x = App{}
-	mi := &file_conf_proto_msgTypes[3]
+	mi := &file_conf_conf_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -260,7 +250,7 @@ func (x *App) String() string {
 func (*App) ProtoMessage() {}
 
 func (x *App) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[3]
+	mi := &file_conf_conf_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -273,7 +263,7 @@ func (x *App) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use App.ProtoReflect.Descriptor instead.
 func (*App) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{3}
+	return file_conf_conf_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *App) GetId() string {
@@ -300,20 +290,6 @@ func (x *App) GetVersion() string {
 func (x *App) GetEnv() string {
 	if x != nil {
 		return x.Env
-	}
-	return ""
-}
-
-func (x *App) GetLogLevel() string {
-	if x != nil {
-		return x.LogLevel
-	}
-	return ""
-}
-
-func (x *App) GetLogOut() string {
-	if x != nil {
-		return x.LogOut
 	}
 	return ""
 }
@@ -374,41 +350,38 @@ func (x *App) GetSecretKey() string {
 	return ""
 }
 
-type Logging struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	Level      string                 `protobuf:"bytes,1,opt,name=level,proto3" json:"level,omitempty"`
-	Format     string                 `protobuf:"bytes,2,opt,name=format,proto3" json:"format,omitempty"`
-	Output     string                 `protobuf:"bytes,3,opt,name=output,proto3" json:"output,omitempty"`
-	FilePath   string                 `protobuf:"bytes,4,opt,name=file_path,json=filePath,proto3" json:"file_path,omitempty"`
-	MaxSize    int32                  `protobuf:"varint,5,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
-	MaxBackups int32                  `protobuf:"varint,6,opt,name=max_backups,json=maxBackups,proto3" json:"max_backups,omitempty"`
-	MaxAge     int32                  `protobuf:"varint,7,opt,name=max_age,json=maxAge,proto3" json:"max_age,omitempty"`
-	Compress   bool                   `protobuf:"varint,8,opt,name=compress,proto3" json:"compress,omitempty"`
-	Caller     bool                   `protobuf:"varint,9,opt,name=caller,proto3" json:"caller,omitempty"`
-	Stacktrace bool                   `protobuf:"varint,10,opt,name=stacktrace,proto3" json:"stacktrace,omitempty"`
-	Gorm       *GormLog               `protobuf:"bytes,11,opt,name=gorm,proto3" json:"gorm,omitempty"`
-	Loki       *Loki                  `protobuf:"bytes,12,opt,name=loki,proto3" json:"loki,omitempty"`
-	// 追踪日志配置
-	VerboseTracing bool `protobuf:"varint,13,opt,name=verbose_tracing,json=verboseTracing,proto3" json:"verbose_tracing,omitempty"` // 是否启用详细追踪日志
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+// OpenTelemetry 统一配置
+type OpenTelemetry struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Enabled        bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	ServiceName    string                 `protobuf:"bytes,2,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
+	ServiceVersion string                 `protobuf:"bytes,3,opt,name=service_version,json=serviceVersion,proto3" json:"service_version,omitempty"`
+	Environment    string                 `protobuf:"bytes,4,opt,name=environment,proto3" json:"environment,omitempty"`
+	// 追踪配置
+	Traces *TracesConfig `protobuf:"bytes,5,opt,name=traces,proto3" json:"traces,omitempty"`
+	// 指标配置
+	Metrics *MetricsConfig `protobuf:"bytes,6,opt,name=metrics,proto3" json:"metrics,omitempty"`
+	// 日志配置
+	Logs          *LogsConfig `protobuf:"bytes,7,opt,name=logs,proto3" json:"logs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Logging) Reset() {
-	*x = Logging{}
-	mi := &file_conf_proto_msgTypes[4]
+func (x *OpenTelemetry) Reset() {
+	*x = OpenTelemetry{}
+	mi := &file_conf_conf_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Logging) String() string {
+func (x *OpenTelemetry) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Logging) ProtoMessage() {}
+func (*OpenTelemetry) ProtoMessage() {}
 
-func (x *Logging) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[4]
+func (x *OpenTelemetry) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -419,102 +392,263 @@ func (x *Logging) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Logging.ProtoReflect.Descriptor instead.
-func (*Logging) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{4}
+// Deprecated: Use OpenTelemetry.ProtoReflect.Descriptor instead.
+func (*OpenTelemetry) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *Logging) GetLevel() string {
+func (x *OpenTelemetry) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *OpenTelemetry) GetServiceName() string {
+	if x != nil {
+		return x.ServiceName
+	}
+	return ""
+}
+
+func (x *OpenTelemetry) GetServiceVersion() string {
+	if x != nil {
+		return x.ServiceVersion
+	}
+	return ""
+}
+
+func (x *OpenTelemetry) GetEnvironment() string {
+	if x != nil {
+		return x.Environment
+	}
+	return ""
+}
+
+func (x *OpenTelemetry) GetTraces() *TracesConfig {
+	if x != nil {
+		return x.Traces
+	}
+	return nil
+}
+
+func (x *OpenTelemetry) GetMetrics() *MetricsConfig {
+	if x != nil {
+		return x.Metrics
+	}
+	return nil
+}
+
+func (x *OpenTelemetry) GetLogs() *LogsConfig {
+	if x != nil {
+		return x.Logs
+	}
+	return nil
+}
+
+// 日志配置
+type LogsConfig struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Enabled        bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Level          string                 `protobuf:"bytes,2,opt,name=level,proto3" json:"level,omitempty"`
+	Format         string                 `protobuf:"bytes,3,opt,name=format,proto3" json:"format,omitempty"`
+	Output         string                 `protobuf:"bytes,4,opt,name=output,proto3" json:"output,omitempty"`
+	FilePath       string                 `protobuf:"bytes,5,opt,name=file_path,json=filePath,proto3" json:"file_path,omitempty"`
+	MaxSize        int32                  `protobuf:"varint,6,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
+	MaxBackups     int32                  `protobuf:"varint,7,opt,name=max_backups,json=maxBackups,proto3" json:"max_backups,omitempty"`
+	MaxAge         int32                  `protobuf:"varint,8,opt,name=max_age,json=maxAge,proto3" json:"max_age,omitempty"`
+	Compress       bool                   `protobuf:"varint,9,opt,name=compress,proto3" json:"compress,omitempty"`
+	Caller         bool                   `protobuf:"varint,10,opt,name=caller,proto3" json:"caller,omitempty"`
+	Stacktrace     bool                   `protobuf:"varint,11,opt,name=stacktrace,proto3" json:"stacktrace,omitempty"`
+	EscapeNewlines bool                   `protobuf:"varint,12,opt,name=escape_newlines,json=escapeNewlines,proto3" json:"escape_newlines,omitempty"`
+	Gorm           *GormLog               `protobuf:"bytes,13,opt,name=gorm,proto3" json:"gorm,omitempty"`
+	Loki           *LokiConfig            `protobuf:"bytes,14,opt,name=loki,proto3" json:"loki,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *LogsConfig) Reset() {
+	*x = LogsConfig{}
+	mi := &file_conf_conf_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LogsConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogsConfig) ProtoMessage() {}
+
+func (x *LogsConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LogsConfig.ProtoReflect.Descriptor instead.
+func (*LogsConfig) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *LogsConfig) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *LogsConfig) GetLevel() string {
 	if x != nil {
 		return x.Level
 	}
 	return ""
 }
 
-func (x *Logging) GetFormat() string {
+func (x *LogsConfig) GetFormat() string {
 	if x != nil {
 		return x.Format
 	}
 	return ""
 }
 
-func (x *Logging) GetOutput() string {
+func (x *LogsConfig) GetOutput() string {
 	if x != nil {
 		return x.Output
 	}
 	return ""
 }
 
-func (x *Logging) GetFilePath() string {
+func (x *LogsConfig) GetFilePath() string {
 	if x != nil {
 		return x.FilePath
 	}
 	return ""
 }
 
-func (x *Logging) GetMaxSize() int32 {
+func (x *LogsConfig) GetMaxSize() int32 {
 	if x != nil {
 		return x.MaxSize
 	}
 	return 0
 }
 
-func (x *Logging) GetMaxBackups() int32 {
+func (x *LogsConfig) GetMaxBackups() int32 {
 	if x != nil {
 		return x.MaxBackups
 	}
 	return 0
 }
 
-func (x *Logging) GetMaxAge() int32 {
+func (x *LogsConfig) GetMaxAge() int32 {
 	if x != nil {
 		return x.MaxAge
 	}
 	return 0
 }
 
-func (x *Logging) GetCompress() bool {
+func (x *LogsConfig) GetCompress() bool {
 	if x != nil {
 		return x.Compress
 	}
 	return false
 }
 
-func (x *Logging) GetCaller() bool {
+func (x *LogsConfig) GetCaller() bool {
 	if x != nil {
 		return x.Caller
 	}
 	return false
 }
 
-func (x *Logging) GetStacktrace() bool {
+func (x *LogsConfig) GetStacktrace() bool {
 	if x != nil {
 		return x.Stacktrace
 	}
 	return false
 }
 
-func (x *Logging) GetGorm() *GormLog {
+func (x *LogsConfig) GetEscapeNewlines() bool {
+	if x != nil {
+		return x.EscapeNewlines
+	}
+	return false
+}
+
+func (x *LogsConfig) GetGorm() *GormLog {
 	if x != nil {
 		return x.Gorm
 	}
 	return nil
 }
 
-func (x *Logging) GetLoki() *Loki {
+func (x *LogsConfig) GetLoki() *LokiConfig {
 	if x != nil {
 		return x.Loki
 	}
 	return nil
 }
 
-func (x *Logging) GetVerboseTracing() bool {
+// Loki配置
+type LokiConfig struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Enabled       bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Endpoint      string                 `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LokiConfig) Reset() {
+	*x = LokiConfig{}
+	mi := &file_conf_conf_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LokiConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LokiConfig) ProtoMessage() {}
+
+func (x *LokiConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[6]
 	if x != nil {
-		return x.VerboseTracing
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LokiConfig.ProtoReflect.Descriptor instead.
+func (*LokiConfig) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *LokiConfig) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
 	}
 	return false
 }
 
+func (x *LokiConfig) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
+	}
+	return ""
+}
+
+// GORM日志配置
 type GormLog struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SlowThreshold string                 `protobuf:"bytes,1,opt,name=slow_threshold,json=slowThreshold,proto3" json:"slow_threshold,omitempty"`
@@ -525,7 +659,7 @@ type GormLog struct {
 
 func (x *GormLog) Reset() {
 	*x = GormLog{}
-	mi := &file_conf_proto_msgTypes[5]
+	mi := &file_conf_conf_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -537,7 +671,7 @@ func (x *GormLog) String() string {
 func (*GormLog) ProtoMessage() {}
 
 func (x *GormLog) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[5]
+	mi := &file_conf_conf_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -550,7 +684,7 @@ func (x *GormLog) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GormLog.ProtoReflect.Descriptor instead.
 func (*GormLog) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{5}
+	return file_conf_conf_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GormLog) GetSlowThreshold() string {
@@ -567,36 +701,37 @@ func (x *GormLog) GetLogLevel() string {
 	return ""
 }
 
-type Loki struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
-	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
-	TenantId      string                 `protobuf:"bytes,4,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	Labels        map[string]string      `protobuf:"bytes,5,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Enable        bool                   `protobuf:"varint,6,opt,name=enable,proto3" json:"enable,omitempty"`
-	BatchSize     int32                  `protobuf:"varint,7,opt,name=batch_size,json=batchSize,proto3" json:"batch_size,omitempty"`
-	BatchWait     string                 `protobuf:"bytes,8,opt,name=batch_wait,json=batchWait,proto3" json:"batch_wait,omitempty"`
-	Timeout       string                 `protobuf:"bytes,9,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+// 追踪配置
+type TracesConfig struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Enabled         bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	VerboseLogging  bool                   `protobuf:"varint,2,opt,name=verbose_logging,json=verboseLogging,proto3" json:"verbose_logging,omitempty"`
+	LogRequestSize  bool                   `protobuf:"varint,3,opt,name=log_request_size,json=logRequestSize,proto3" json:"log_request_size,omitempty"`
+	LogResponseSize bool                   `protobuf:"varint,4,opt,name=log_response_size,json=logResponseSize,proto3" json:"log_response_size,omitempty"`
+	LogHeaders      bool                   `protobuf:"varint,5,opt,name=log_headers,json=logHeaders,proto3" json:"log_headers,omitempty"`
+	LogQueryParams  bool                   `protobuf:"varint,6,opt,name=log_query_params,json=logQueryParams,proto3" json:"log_query_params,omitempty"`
+	Jaeger          *JaegerConfig          `protobuf:"bytes,7,opt,name=jaeger,proto3" json:"jaeger,omitempty"`
+	Otlp            *OtlpConfig            `protobuf:"bytes,8,opt,name=otlp,proto3" json:"otlp,omitempty"`
+	Prometheus      *PrometheusConfig      `protobuf:"bytes,9,opt,name=prometheus,proto3" json:"prometheus,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
-func (x *Loki) Reset() {
-	*x = Loki{}
-	mi := &file_conf_proto_msgTypes[6]
+func (x *TracesConfig) Reset() {
+	*x = TracesConfig{}
+	mi := &file_conf_conf_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Loki) String() string {
+func (x *TracesConfig) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Loki) ProtoMessage() {}
+func (*TracesConfig) ProtoMessage() {}
 
-func (x *Loki) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[6]
+func (x *TracesConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -607,70 +742,298 @@ func (x *Loki) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Loki.ProtoReflect.Descriptor instead.
-func (*Loki) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{6}
+// Deprecated: Use TracesConfig.ProtoReflect.Descriptor instead.
+func (*TracesConfig) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *Loki) GetUrl() string {
+func (x *TracesConfig) GetEnabled() bool {
 	if x != nil {
-		return x.Url
-	}
-	return ""
-}
-
-func (x *Loki) GetUsername() string {
-	if x != nil {
-		return x.Username
-	}
-	return ""
-}
-
-func (x *Loki) GetPassword() string {
-	if x != nil {
-		return x.Password
-	}
-	return ""
-}
-
-func (x *Loki) GetTenantId() string {
-	if x != nil {
-		return x.TenantId
-	}
-	return ""
-}
-
-func (x *Loki) GetLabels() map[string]string {
-	if x != nil {
-		return x.Labels
-	}
-	return nil
-}
-
-func (x *Loki) GetEnable() bool {
-	if x != nil {
-		return x.Enable
+		return x.Enabled
 	}
 	return false
 }
 
-func (x *Loki) GetBatchSize() int32 {
+func (x *TracesConfig) GetVerboseLogging() bool {
 	if x != nil {
-		return x.BatchSize
+		return x.VerboseLogging
 	}
-	return 0
+	return false
 }
 
-func (x *Loki) GetBatchWait() string {
+func (x *TracesConfig) GetLogRequestSize() bool {
 	if x != nil {
-		return x.BatchWait
+		return x.LogRequestSize
+	}
+	return false
+}
+
+func (x *TracesConfig) GetLogResponseSize() bool {
+	if x != nil {
+		return x.LogResponseSize
+	}
+	return false
+}
+
+func (x *TracesConfig) GetLogHeaders() bool {
+	if x != nil {
+		return x.LogHeaders
+	}
+	return false
+}
+
+func (x *TracesConfig) GetLogQueryParams() bool {
+	if x != nil {
+		return x.LogQueryParams
+	}
+	return false
+}
+
+func (x *TracesConfig) GetJaeger() *JaegerConfig {
+	if x != nil {
+		return x.Jaeger
+	}
+	return nil
+}
+
+func (x *TracesConfig) GetOtlp() *OtlpConfig {
+	if x != nil {
+		return x.Otlp
+	}
+	return nil
+}
+
+func (x *TracesConfig) GetPrometheus() *PrometheusConfig {
+	if x != nil {
+		return x.Prometheus
+	}
+	return nil
+}
+
+// 指标配置
+type MetricsConfig struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Enabled       bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Prometheus    *PrometheusConfig      `protobuf:"bytes,2,opt,name=prometheus,proto3" json:"prometheus,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MetricsConfig) Reset() {
+	*x = MetricsConfig{}
+	mi := &file_conf_conf_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MetricsConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MetricsConfig) ProtoMessage() {}
+
+func (x *MetricsConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MetricsConfig.ProtoReflect.Descriptor instead.
+func (*MetricsConfig) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *MetricsConfig) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *MetricsConfig) GetPrometheus() *PrometheusConfig {
+	if x != nil {
+		return x.Prometheus
+	}
+	return nil
+}
+
+// Jaeger配置
+type JaegerConfig struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Enabled       bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Endpoint      string                 `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JaegerConfig) Reset() {
+	*x = JaegerConfig{}
+	mi := &file_conf_conf_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JaegerConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JaegerConfig) ProtoMessage() {}
+
+func (x *JaegerConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JaegerConfig.ProtoReflect.Descriptor instead.
+func (*JaegerConfig) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *JaegerConfig) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *JaegerConfig) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
 	}
 	return ""
 }
 
-func (x *Loki) GetTimeout() string {
+// OTLP配置
+type OtlpConfig struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Enabled       bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Endpoint      string                 `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	Timeout       int32                  `protobuf:"varint,3,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OtlpConfig) Reset() {
+	*x = OtlpConfig{}
+	mi := &file_conf_conf_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OtlpConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OtlpConfig) ProtoMessage() {}
+
+func (x *OtlpConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OtlpConfig.ProtoReflect.Descriptor instead.
+func (*OtlpConfig) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *OtlpConfig) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *OtlpConfig) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
+	}
+	return ""
+}
+
+func (x *OtlpConfig) GetTimeout() int32 {
 	if x != nil {
 		return x.Timeout
+	}
+	return 0
+}
+
+// Prometheus配置
+type PrometheusConfig struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Enabled       bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Endpoint      string                 `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	Interval      string                 `protobuf:"bytes,3,opt,name=interval,proto3" json:"interval,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PrometheusConfig) Reset() {
+	*x = PrometheusConfig{}
+	mi := &file_conf_conf_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PrometheusConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PrometheusConfig) ProtoMessage() {}
+
+func (x *PrometheusConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PrometheusConfig.ProtoReflect.Descriptor instead.
+func (*PrometheusConfig) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *PrometheusConfig) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *PrometheusConfig) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
+	}
+	return ""
+}
+
+func (x *PrometheusConfig) GetInterval() string {
+	if x != nil {
+		return x.Interval
 	}
 	return ""
 }
@@ -685,7 +1048,7 @@ type Auth struct {
 
 func (x *Auth) Reset() {
 	*x = Auth{}
-	mi := &file_conf_proto_msgTypes[7]
+	mi := &file_conf_conf_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -697,7 +1060,7 @@ func (x *Auth) String() string {
 func (*Auth) ProtoMessage() {}
 
 func (x *Auth) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[7]
+	mi := &file_conf_conf_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -710,7 +1073,7 @@ func (x *Auth) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Auth.ProtoReflect.Descriptor instead.
 func (*Auth) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{7}
+	return file_conf_conf_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Auth) GetWpsapp() *Auth_Wpsapp {
@@ -727,106 +1090,6 @@ func (x *Auth) GetDingtalk() *Auth_Dingtalk {
 	return nil
 }
 
-type Tracing struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Enable          bool                   `protobuf:"varint,1,opt,name=enable,proto3" json:"enable,omitempty"`                                            // 是否启用追踪
-	VerboseLogging  bool                   `protobuf:"varint,2,opt,name=verbose_logging,json=verboseLogging,proto3" json:"verbose_logging,omitempty"`      // 是否启用详细日志
-	LogRequestSize  bool                   `protobuf:"varint,3,opt,name=log_request_size,json=logRequestSize,proto3" json:"log_request_size,omitempty"`    // 是否记录请求体大小
-	LogResponseSize bool                   `protobuf:"varint,4,opt,name=log_response_size,json=logResponseSize,proto3" json:"log_response_size,omitempty"` // 是否记录响应体大小
-	LogHeaders      bool                   `protobuf:"varint,5,opt,name=log_headers,json=logHeaders,proto3" json:"log_headers,omitempty"`                  // 是否记录请求头
-	LogQueryParams  bool                   `protobuf:"varint,6,opt,name=log_query_params,json=logQueryParams,proto3" json:"log_query_params,omitempty"`    // 是否记录查询参数
-	ServiceName     string                 `protobuf:"bytes,7,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`                // 服务名称
-	Environment     string                 `protobuf:"bytes,8,opt,name=environment,proto3" json:"environment,omitempty"`                                   // 环境
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
-}
-
-func (x *Tracing) Reset() {
-	*x = Tracing{}
-	mi := &file_conf_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Tracing) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Tracing) ProtoMessage() {}
-
-func (x *Tracing) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Tracing.ProtoReflect.Descriptor instead.
-func (*Tracing) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *Tracing) GetEnable() bool {
-	if x != nil {
-		return x.Enable
-	}
-	return false
-}
-
-func (x *Tracing) GetVerboseLogging() bool {
-	if x != nil {
-		return x.VerboseLogging
-	}
-	return false
-}
-
-func (x *Tracing) GetLogRequestSize() bool {
-	if x != nil {
-		return x.LogRequestSize
-	}
-	return false
-}
-
-func (x *Tracing) GetLogResponseSize() bool {
-	if x != nil {
-		return x.LogResponseSize
-	}
-	return false
-}
-
-func (x *Tracing) GetLogHeaders() bool {
-	if x != nil {
-		return x.LogHeaders
-	}
-	return false
-}
-
-func (x *Tracing) GetLogQueryParams() bool {
-	if x != nil {
-		return x.LogQueryParams
-	}
-	return false
-}
-
-func (x *Tracing) GetServiceName() string {
-	if x != nil {
-		return x.ServiceName
-	}
-	return ""
-}
-
-func (x *Tracing) GetEnvironment() string {
-	if x != nil {
-		return x.Environment
-	}
-	return ""
-}
-
 type Server_HTTP struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Network       string                 `protobuf:"bytes,1,opt,name=network,proto3" json:"network,omitempty"`
@@ -838,7 +1101,7 @@ type Server_HTTP struct {
 
 func (x *Server_HTTP) Reset() {
 	*x = Server_HTTP{}
-	mi := &file_conf_proto_msgTypes[9]
+	mi := &file_conf_conf_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -850,7 +1113,7 @@ func (x *Server_HTTP) String() string {
 func (*Server_HTTP) ProtoMessage() {}
 
 func (x *Server_HTTP) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[9]
+	mi := &file_conf_conf_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -863,7 +1126,7 @@ func (x *Server_HTTP) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server_HTTP.ProtoReflect.Descriptor instead.
 func (*Server_HTTP) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{1, 0}
+	return file_conf_conf_proto_rawDescGZIP(), []int{1, 0}
 }
 
 func (x *Server_HTTP) GetNetwork() string {
@@ -898,7 +1161,7 @@ type Server_GRPC struct {
 
 func (x *Server_GRPC) Reset() {
 	*x = Server_GRPC{}
-	mi := &file_conf_proto_msgTypes[10]
+	mi := &file_conf_conf_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -910,7 +1173,7 @@ func (x *Server_GRPC) String() string {
 func (*Server_GRPC) ProtoMessage() {}
 
 func (x *Server_GRPC) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[10]
+	mi := &file_conf_conf_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -923,7 +1186,7 @@ func (x *Server_GRPC) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server_GRPC.ProtoReflect.Descriptor instead.
 func (*Server_GRPC) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{1, 1}
+	return file_conf_conf_proto_rawDescGZIP(), []int{1, 1}
 }
 
 func (x *Server_GRPC) GetNetwork() string {
@@ -964,7 +1227,7 @@ type Data_Database struct {
 
 func (x *Data_Database) Reset() {
 	*x = Data_Database{}
-	mi := &file_conf_proto_msgTypes[11]
+	mi := &file_conf_conf_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -976,7 +1239,7 @@ func (x *Data_Database) String() string {
 func (*Data_Database) ProtoMessage() {}
 
 func (x *Data_Database) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[11]
+	mi := &file_conf_conf_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -989,7 +1252,7 @@ func (x *Data_Database) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Database.ProtoReflect.Descriptor instead.
 func (*Data_Database) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{2, 0}
+	return file_conf_conf_proto_rawDescGZIP(), []int{2, 0}
 }
 
 func (x *Data_Database) GetDriver() string {
@@ -1071,7 +1334,7 @@ type Data_DatabaseSync struct {
 
 func (x *Data_DatabaseSync) Reset() {
 	*x = Data_DatabaseSync{}
-	mi := &file_conf_proto_msgTypes[12]
+	mi := &file_conf_conf_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1083,7 +1346,7 @@ func (x *Data_DatabaseSync) String() string {
 func (*Data_DatabaseSync) ProtoMessage() {}
 
 func (x *Data_DatabaseSync) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[12]
+	mi := &file_conf_conf_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1096,7 +1359,7 @@ func (x *Data_DatabaseSync) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_DatabaseSync.ProtoReflect.Descriptor instead.
 func (*Data_DatabaseSync) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{2, 1}
+	return file_conf_conf_proto_rawDescGZIP(), []int{2, 1}
 }
 
 func (x *Data_DatabaseSync) GetDriver() string {
@@ -1170,7 +1433,7 @@ type Data_Redis struct {
 
 func (x *Data_Redis) Reset() {
 	*x = Data_Redis{}
-	mi := &file_conf_proto_msgTypes[13]
+	mi := &file_conf_conf_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1182,7 +1445,7 @@ func (x *Data_Redis) String() string {
 func (*Data_Redis) ProtoMessage() {}
 
 func (x *Data_Redis) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[13]
+	mi := &file_conf_conf_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1195,7 +1458,7 @@ func (x *Data_Redis) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Redis.ProtoReflect.Descriptor instead.
 func (*Data_Redis) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{2, 2}
+	return file_conf_conf_proto_rawDescGZIP(), []int{2, 2}
 }
 
 func (x *Data_Redis) GetNetwork() string {
@@ -1260,7 +1523,7 @@ type Data_Etcd struct {
 
 func (x *Data_Etcd) Reset() {
 	*x = Data_Etcd{}
-	mi := &file_conf_proto_msgTypes[14]
+	mi := &file_conf_conf_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1272,7 +1535,7 @@ func (x *Data_Etcd) String() string {
 func (*Data_Etcd) ProtoMessage() {}
 
 func (x *Data_Etcd) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[14]
+	mi := &file_conf_conf_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1285,7 +1548,7 @@ func (x *Data_Etcd) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Data_Etcd.ProtoReflect.Descriptor instead.
 func (*Data_Etcd) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{2, 3}
+	return file_conf_conf_proto_rawDescGZIP(), []int{2, 3}
 }
 
 func (x *Data_Etcd) GetEndpoints() []string {
@@ -1336,7 +1599,7 @@ type Auth_Wpsapp struct {
 
 func (x *Auth_Wpsapp) Reset() {
 	*x = Auth_Wpsapp{}
-	mi := &file_conf_proto_msgTypes[16]
+	mi := &file_conf_conf_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1348,7 +1611,7 @@ func (x *Auth_Wpsapp) String() string {
 func (*Auth_Wpsapp) ProtoMessage() {}
 
 func (x *Auth_Wpsapp) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[16]
+	mi := &file_conf_conf_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1361,7 +1624,7 @@ func (x *Auth_Wpsapp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Auth_Wpsapp.ProtoReflect.Descriptor instead.
 func (*Auth_Wpsapp) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{7, 0}
+	return file_conf_conf_proto_rawDescGZIP(), []int{13, 0}
 }
 
 func (x *Auth_Wpsapp) GetClientId() string {
@@ -1412,7 +1675,7 @@ type Auth_Dingtalk struct {
 
 func (x *Auth_Dingtalk) Reset() {
 	*x = Auth_Dingtalk{}
-	mi := &file_conf_proto_msgTypes[17]
+	mi := &file_conf_conf_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1424,7 +1687,7 @@ func (x *Auth_Dingtalk) String() string {
 func (*Auth_Dingtalk) ProtoMessage() {}
 
 func (x *Auth_Dingtalk) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_proto_msgTypes[17]
+	mi := &file_conf_conf_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1437,7 +1700,7 @@ func (x *Auth_Dingtalk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Auth_Dingtalk.ProtoReflect.Descriptor instead.
 func (*Auth_Dingtalk) Descriptor() ([]byte, []int) {
-	return file_conf_proto_rawDescGZIP(), []int{7, 1}
+	return file_conf_conf_proto_rawDescGZIP(), []int{13, 1}
 }
 
 func (x *Auth_Dingtalk) GetEndpoint() string {
@@ -1475,20 +1738,18 @@ func (x *Auth_Dingtalk) GetMaxConcurrent() int64 {
 	return 0
 }
 
-var File_conf_proto protoreflect.FileDescriptor
+var File_conf_conf_proto protoreflect.FileDescriptor
 
-const file_conf_proto_rawDesc = "" +
+const file_conf_conf_proto_rawDesc = "" +
 	"\n" +
-	"\n" +
-	"conf.proto\x12\n" +
-	"kratos.api\x1a\x1egoogle/protobuf/duration.proto\"\x84\x02\n" +
+	"\x0fconf/conf.proto\x12\n" +
+	"kratos.api\x1a\x1egoogle/protobuf/duration.proto\"\xd5\x01\n" +
 	"\tBootstrap\x12*\n" +
 	"\x06server\x18\x01 \x01(\v2\x12.kratos.api.ServerR\x06server\x12$\n" +
 	"\x04data\x18\x02 \x01(\v2\x10.kratos.api.DataR\x04data\x12!\n" +
 	"\x03app\x18\x03 \x01(\v2\x0f.kratos.api.AppR\x03app\x12$\n" +
 	"\x04auth\x18\x04 \x01(\v2\x10.kratos.api.AuthR\x04auth\x12-\n" +
-	"\alogging\x18\x05 \x01(\v2\x13.kratos.api.LoggingR\alogging\x12-\n" +
-	"\atracing\x18\x06 \x01(\v2\x13.kratos.api.TracingR\atracing\"\xb8\x02\n" +
+	"\x04otel\x18\x05 \x01(\v2\x19.kratos.api.OpenTelemetryR\x04otel\"\xb8\x02\n" +
 	"\x06Server\x12+\n" +
 	"\x04http\x18\x01 \x01(\v2\x17.kratos.api.Server.HTTPR\x04http\x12+\n" +
 	"\x04grpc\x18\x02 \x01(\v2\x17.kratos.api.Server.GRPCR\x04grpc\x1ai\n" +
@@ -1539,64 +1800,91 @@ const file_conf_proto_rawDesc = "" +
 	"\fdial_timeout\x18\x02 \x01(\tR\vdialTimeout\x12#\n" +
 	"\rconfig_prefix\x18\x03 \x01(\tR\fconfigPrefix\x12.\n" +
 	"\x13enable_config_watch\x18\x04 \x01(\bR\x11enableConfigWatch\x12\x16\n" +
-	"\x06enable\x18\x05 \x01(\bR\x06enable\"\x8c\x03\n" +
+	"\x06enable\x18\x05 \x01(\bR\x06enable\"\xd6\x02\n" +
 	"\x03App\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
 	"\aversion\x18\x03 \x01(\tR\aversion\x12\x10\n" +
-	"\x03env\x18\x04 \x01(\tR\x03env\x12\x1b\n" +
-	"\tlog_level\x18\x05 \x01(\tR\blogLevel\x12\x17\n" +
-	"\alog_out\x18\x06 \x01(\tR\x06logOut\x12\x1f\n" +
-	"\vapp_package\x18\a \x01(\tR\n" +
+	"\x03env\x18\x04 \x01(\tR\x03env\x12\x1f\n" +
+	"\vapp_package\x18\x05 \x01(\tR\n" +
 	"appPackage\x12\x15\n" +
-	"\x06app_id\x18\b \x01(\tR\x05appId\x12\x1d\n" +
+	"\x06app_id\x18\x06 \x01(\tR\x05appId\x12\x1d\n" +
 	"\n" +
-	"app_secret\x18\t \x01(\tR\tappSecret\x12(\n" +
-	"\x10third_company_id\x18\n" +
-	" \x01(\tR\x0ethirdCompanyId\x12!\n" +
-	"\fplatform_ids\x18\v \x01(\tR\vplatformIds\x12\x1d\n" +
+	"app_secret\x18\a \x01(\tR\tappSecret\x12(\n" +
+	"\x10third_company_id\x18\b \x01(\tR\x0ethirdCompanyId\x12!\n" +
+	"\fplatform_ids\x18\t \x01(\tR\vplatformIds\x12\x1d\n" +
 	"\n" +
-	"company_id\x18\f \x01(\tR\tcompanyId\x12\x1d\n" +
+	"company_id\x18\n" +
+	" \x01(\tR\tcompanyId\x12\x1d\n" +
 	"\n" +
-	"access_key\x18\r \x01(\tR\taccessKey\x12\x1d\n" +
+	"access_key\x18\v \x01(\tR\taccessKey\x12\x1d\n" +
 	"\n" +
-	"secret_key\x18\x0e \x01(\tR\tsecretKey\"\x8d\x03\n" +
-	"\aLogging\x12\x14\n" +
-	"\x05level\x18\x01 \x01(\tR\x05level\x12\x16\n" +
-	"\x06format\x18\x02 \x01(\tR\x06format\x12\x16\n" +
-	"\x06output\x18\x03 \x01(\tR\x06output\x12\x1b\n" +
-	"\tfile_path\x18\x04 \x01(\tR\bfilePath\x12\x19\n" +
-	"\bmax_size\x18\x05 \x01(\x05R\amaxSize\x12\x1f\n" +
-	"\vmax_backups\x18\x06 \x01(\x05R\n" +
+	"secret_key\x18\f \x01(\tR\tsecretKey\"\xaa\x02\n" +
+	"\rOpenTelemetry\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12!\n" +
+	"\fservice_name\x18\x02 \x01(\tR\vserviceName\x12'\n" +
+	"\x0fservice_version\x18\x03 \x01(\tR\x0eserviceVersion\x12 \n" +
+	"\venvironment\x18\x04 \x01(\tR\venvironment\x120\n" +
+	"\x06traces\x18\x05 \x01(\v2\x18.kratos.api.TracesConfigR\x06traces\x123\n" +
+	"\ametrics\x18\x06 \x01(\v2\x19.kratos.api.MetricsConfigR\ametrics\x12*\n" +
+	"\x04logs\x18\a \x01(\v2\x16.kratos.api.LogsConfigR\x04logs\"\xb0\x03\n" +
+	"\n" +
+	"LogsConfig\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x14\n" +
+	"\x05level\x18\x02 \x01(\tR\x05level\x12\x16\n" +
+	"\x06format\x18\x03 \x01(\tR\x06format\x12\x16\n" +
+	"\x06output\x18\x04 \x01(\tR\x06output\x12\x1b\n" +
+	"\tfile_path\x18\x05 \x01(\tR\bfilePath\x12\x19\n" +
+	"\bmax_size\x18\x06 \x01(\x05R\amaxSize\x12\x1f\n" +
+	"\vmax_backups\x18\a \x01(\x05R\n" +
 	"maxBackups\x12\x17\n" +
-	"\amax_age\x18\a \x01(\x05R\x06maxAge\x12\x1a\n" +
-	"\bcompress\x18\b \x01(\bR\bcompress\x12\x16\n" +
-	"\x06caller\x18\t \x01(\bR\x06caller\x12\x1e\n" +
+	"\amax_age\x18\b \x01(\x05R\x06maxAge\x12\x1a\n" +
+	"\bcompress\x18\t \x01(\bR\bcompress\x12\x16\n" +
+	"\x06caller\x18\n" +
+	" \x01(\bR\x06caller\x12\x1e\n" +
 	"\n" +
-	"stacktrace\x18\n" +
-	" \x01(\bR\n" +
+	"stacktrace\x18\v \x01(\bR\n" +
 	"stacktrace\x12'\n" +
-	"\x04gorm\x18\v \x01(\v2\x13.kratos.api.GormLogR\x04gorm\x12$\n" +
-	"\x04loki\x18\f \x01(\v2\x10.kratos.api.LokiR\x04loki\x12'\n" +
-	"\x0fverbose_tracing\x18\r \x01(\bR\x0everboseTracing\"M\n" +
+	"\x0fescape_newlines\x18\f \x01(\bR\x0eescapeNewlines\x12'\n" +
+	"\x04gorm\x18\r \x01(\v2\x13.kratos.api.GormLogR\x04gorm\x12*\n" +
+	"\x04loki\x18\x0e \x01(\v2\x16.kratos.api.LokiConfigR\x04loki\"B\n" +
+	"\n" +
+	"LokiConfig\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1a\n" +
+	"\bendpoint\x18\x02 \x01(\tR\bendpoint\"M\n" +
 	"\aGormLog\x12%\n" +
 	"\x0eslow_threshold\x18\x01 \x01(\tR\rslowThreshold\x12\x1b\n" +
-	"\tlog_level\x18\x02 \x01(\tR\blogLevel\"\xce\x02\n" +
-	"\x04Loki\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x03 \x01(\tR\bpassword\x12\x1b\n" +
-	"\ttenant_id\x18\x04 \x01(\tR\btenantId\x124\n" +
-	"\x06labels\x18\x05 \x03(\v2\x1c.kratos.api.Loki.LabelsEntryR\x06labels\x12\x16\n" +
-	"\x06enable\x18\x06 \x01(\bR\x06enable\x12\x1d\n" +
+	"\tlog_level\x18\x02 \x01(\tR\blogLevel\"\x8e\x03\n" +
+	"\fTracesConfig\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12'\n" +
+	"\x0fverbose_logging\x18\x02 \x01(\bR\x0everboseLogging\x12(\n" +
+	"\x10log_request_size\x18\x03 \x01(\bR\x0elogRequestSize\x12*\n" +
+	"\x11log_response_size\x18\x04 \x01(\bR\x0flogResponseSize\x12\x1f\n" +
+	"\vlog_headers\x18\x05 \x01(\bR\n" +
+	"logHeaders\x12(\n" +
+	"\x10log_query_params\x18\x06 \x01(\bR\x0elogQueryParams\x120\n" +
+	"\x06jaeger\x18\a \x01(\v2\x18.kratos.api.JaegerConfigR\x06jaeger\x12*\n" +
+	"\x04otlp\x18\b \x01(\v2\x16.kratos.api.OtlpConfigR\x04otlp\x12<\n" +
 	"\n" +
-	"batch_size\x18\a \x01(\x05R\tbatchSize\x12\x1d\n" +
+	"prometheus\x18\t \x01(\v2\x1c.kratos.api.PrometheusConfigR\n" +
+	"prometheus\"g\n" +
+	"\rMetricsConfig\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12<\n" +
 	"\n" +
-	"batch_wait\x18\b \x01(\tR\tbatchWait\x12\x18\n" +
-	"\atimeout\x18\t \x01(\tR\atimeout\x1a9\n" +
-	"\vLabelsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb3\x03\n" +
+	"prometheus\x18\x02 \x01(\v2\x1c.kratos.api.PrometheusConfigR\n" +
+	"prometheus\"D\n" +
+	"\fJaegerConfig\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1a\n" +
+	"\bendpoint\x18\x02 \x01(\tR\bendpoint\"\\\n" +
+	"\n" +
+	"OtlpConfig\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1a\n" +
+	"\bendpoint\x18\x02 \x01(\tR\bendpoint\x12\x18\n" +
+	"\atimeout\x18\x03 \x01(\x05R\atimeout\"d\n" +
+	"\x10PrometheusConfig\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1a\n" +
+	"\bendpoint\x18\x02 \x01(\tR\bendpoint\x12\x1a\n" +
+	"\binterval\x18\x03 \x01(\tR\binterval\"\xb3\x03\n" +
 	"\x04Auth\x12/\n" +
 	"\x06wpsapp\x18\x01 \x01(\v2\x17.kratos.api.Auth.WpsappR\x06wpsapp\x125\n" +
 	"\bdingtalk\x18\x02 \x01(\v2\x19.kratos.api.Auth.DingtalkR\bdingtalk\x1a\xa1\x01\n" +
@@ -1613,101 +1901,100 @@ const file_conf_proto_rawDesc = "" +
 	"\n" +
 	"app_secret\x18\x03 \x01(\tR\tappSecret\x12\x18\n" +
 	"\atimeout\x18\x04 \x01(\tR\atimeout\x12$\n" +
-	"\rmaxConcurrent\x18\x05 \x01(\x03R\rmaxConcurrent\"\xb0\x02\n" +
-	"\aTracing\x12\x16\n" +
-	"\x06enable\x18\x01 \x01(\bR\x06enable\x12'\n" +
-	"\x0fverbose_logging\x18\x02 \x01(\bR\x0everboseLogging\x12(\n" +
-	"\x10log_request_size\x18\x03 \x01(\bR\x0elogRequestSize\x12*\n" +
-	"\x11log_response_size\x18\x04 \x01(\bR\x0flogResponseSize\x12\x1f\n" +
-	"\vlog_headers\x18\x05 \x01(\bR\n" +
-	"logHeaders\x12(\n" +
-	"\x10log_query_params\x18\x06 \x01(\bR\x0elogQueryParams\x12!\n" +
-	"\fservice_name\x18\a \x01(\tR\vserviceName\x12 \n" +
-	"\venvironment\x18\b \x01(\tR\venvironmentB\x1eZ\x1cnancalacc/internal/conf;confb\x06proto3"
+	"\rmaxConcurrent\x18\x05 \x01(\x03R\rmaxConcurrentB\x1eZ\x1cnancalacc/internal/conf;confb\x06proto3"
 
 var (
-	file_conf_proto_rawDescOnce sync.Once
-	file_conf_proto_rawDescData []byte
+	file_conf_conf_proto_rawDescOnce sync.Once
+	file_conf_conf_proto_rawDescData []byte
 )
 
-func file_conf_proto_rawDescGZIP() []byte {
-	file_conf_proto_rawDescOnce.Do(func() {
-		file_conf_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_conf_proto_rawDesc), len(file_conf_proto_rawDesc)))
+func file_conf_conf_proto_rawDescGZIP() []byte {
+	file_conf_conf_proto_rawDescOnce.Do(func() {
+		file_conf_conf_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_conf_conf_proto_rawDesc), len(file_conf_conf_proto_rawDesc)))
 	})
-	return file_conf_proto_rawDescData
+	return file_conf_conf_proto_rawDescData
 }
 
-var file_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
-var file_conf_proto_goTypes = []any{
+var file_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_conf_conf_proto_goTypes = []any{
 	(*Bootstrap)(nil),           // 0: kratos.api.Bootstrap
 	(*Server)(nil),              // 1: kratos.api.Server
 	(*Data)(nil),                // 2: kratos.api.Data
 	(*App)(nil),                 // 3: kratos.api.App
-	(*Logging)(nil),             // 4: kratos.api.Logging
-	(*GormLog)(nil),             // 5: kratos.api.GormLog
-	(*Loki)(nil),                // 6: kratos.api.Loki
-	(*Auth)(nil),                // 7: kratos.api.Auth
-	(*Tracing)(nil),             // 8: kratos.api.Tracing
-	(*Server_HTTP)(nil),         // 9: kratos.api.Server.HTTP
-	(*Server_GRPC)(nil),         // 10: kratos.api.Server.GRPC
-	(*Data_Database)(nil),       // 11: kratos.api.Data.Database
-	(*Data_DatabaseSync)(nil),   // 12: kratos.api.Data.DatabaseSync
-	(*Data_Redis)(nil),          // 13: kratos.api.Data.Redis
-	(*Data_Etcd)(nil),           // 14: kratos.api.Data.Etcd
-	nil,                         // 15: kratos.api.Loki.LabelsEntry
-	(*Auth_Wpsapp)(nil),         // 16: kratos.api.Auth.Wpsapp
-	(*Auth_Dingtalk)(nil),       // 17: kratos.api.Auth.Dingtalk
-	(*durationpb.Duration)(nil), // 18: google.protobuf.Duration
+	(*OpenTelemetry)(nil),       // 4: kratos.api.OpenTelemetry
+	(*LogsConfig)(nil),          // 5: kratos.api.LogsConfig
+	(*LokiConfig)(nil),          // 6: kratos.api.LokiConfig
+	(*GormLog)(nil),             // 7: kratos.api.GormLog
+	(*TracesConfig)(nil),        // 8: kratos.api.TracesConfig
+	(*MetricsConfig)(nil),       // 9: kratos.api.MetricsConfig
+	(*JaegerConfig)(nil),        // 10: kratos.api.JaegerConfig
+	(*OtlpConfig)(nil),          // 11: kratos.api.OtlpConfig
+	(*PrometheusConfig)(nil),    // 12: kratos.api.PrometheusConfig
+	(*Auth)(nil),                // 13: kratos.api.Auth
+	(*Server_HTTP)(nil),         // 14: kratos.api.Server.HTTP
+	(*Server_GRPC)(nil),         // 15: kratos.api.Server.GRPC
+	(*Data_Database)(nil),       // 16: kratos.api.Data.Database
+	(*Data_DatabaseSync)(nil),   // 17: kratos.api.Data.DatabaseSync
+	(*Data_Redis)(nil),          // 18: kratos.api.Data.Redis
+	(*Data_Etcd)(nil),           // 19: kratos.api.Data.Etcd
+	(*Auth_Wpsapp)(nil),         // 20: kratos.api.Auth.Wpsapp
+	(*Auth_Dingtalk)(nil),       // 21: kratos.api.Auth.Dingtalk
+	(*durationpb.Duration)(nil), // 22: google.protobuf.Duration
 }
-var file_conf_proto_depIdxs = []int32{
+var file_conf_conf_proto_depIdxs = []int32{
 	1,  // 0: kratos.api.Bootstrap.server:type_name -> kratos.api.Server
 	2,  // 1: kratos.api.Bootstrap.data:type_name -> kratos.api.Data
 	3,  // 2: kratos.api.Bootstrap.app:type_name -> kratos.api.App
-	7,  // 3: kratos.api.Bootstrap.auth:type_name -> kratos.api.Auth
-	4,  // 4: kratos.api.Bootstrap.logging:type_name -> kratos.api.Logging
-	8,  // 5: kratos.api.Bootstrap.tracing:type_name -> kratos.api.Tracing
-	9,  // 6: kratos.api.Server.http:type_name -> kratos.api.Server.HTTP
-	10, // 7: kratos.api.Server.grpc:type_name -> kratos.api.Server.GRPC
-	11, // 8: kratos.api.Data.database:type_name -> kratos.api.Data.Database
-	12, // 9: kratos.api.Data.database_sync:type_name -> kratos.api.Data.DatabaseSync
-	13, // 10: kratos.api.Data.redis:type_name -> kratos.api.Data.Redis
-	14, // 11: kratos.api.Data.etcd:type_name -> kratos.api.Data.Etcd
-	5,  // 12: kratos.api.Logging.gorm:type_name -> kratos.api.GormLog
-	6,  // 13: kratos.api.Logging.loki:type_name -> kratos.api.Loki
-	15, // 14: kratos.api.Loki.labels:type_name -> kratos.api.Loki.LabelsEntry
-	16, // 15: kratos.api.Auth.wpsapp:type_name -> kratos.api.Auth.Wpsapp
-	17, // 16: kratos.api.Auth.dingtalk:type_name -> kratos.api.Auth.Dingtalk
-	18, // 17: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
-	18, // 18: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
-	18, // 19: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
-	18, // 20: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
-	21, // [21:21] is the sub-list for method output_type
-	21, // [21:21] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	13, // 3: kratos.api.Bootstrap.auth:type_name -> kratos.api.Auth
+	4,  // 4: kratos.api.Bootstrap.otel:type_name -> kratos.api.OpenTelemetry
+	14, // 5: kratos.api.Server.http:type_name -> kratos.api.Server.HTTP
+	15, // 6: kratos.api.Server.grpc:type_name -> kratos.api.Server.GRPC
+	16, // 7: kratos.api.Data.database:type_name -> kratos.api.Data.Database
+	17, // 8: kratos.api.Data.database_sync:type_name -> kratos.api.Data.DatabaseSync
+	18, // 9: kratos.api.Data.redis:type_name -> kratos.api.Data.Redis
+	19, // 10: kratos.api.Data.etcd:type_name -> kratos.api.Data.Etcd
+	8,  // 11: kratos.api.OpenTelemetry.traces:type_name -> kratos.api.TracesConfig
+	9,  // 12: kratos.api.OpenTelemetry.metrics:type_name -> kratos.api.MetricsConfig
+	5,  // 13: kratos.api.OpenTelemetry.logs:type_name -> kratos.api.LogsConfig
+	7,  // 14: kratos.api.LogsConfig.gorm:type_name -> kratos.api.GormLog
+	6,  // 15: kratos.api.LogsConfig.loki:type_name -> kratos.api.LokiConfig
+	10, // 16: kratos.api.TracesConfig.jaeger:type_name -> kratos.api.JaegerConfig
+	11, // 17: kratos.api.TracesConfig.otlp:type_name -> kratos.api.OtlpConfig
+	12, // 18: kratos.api.TracesConfig.prometheus:type_name -> kratos.api.PrometheusConfig
+	12, // 19: kratos.api.MetricsConfig.prometheus:type_name -> kratos.api.PrometheusConfig
+	20, // 20: kratos.api.Auth.wpsapp:type_name -> kratos.api.Auth.Wpsapp
+	21, // 21: kratos.api.Auth.dingtalk:type_name -> kratos.api.Auth.Dingtalk
+	22, // 22: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
+	22, // 23: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
+	22, // 24: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
+	22, // 25: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
+	26, // [26:26] is the sub-list for method output_type
+	26, // [26:26] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
-func init() { file_conf_proto_init() }
-func file_conf_proto_init() {
-	if File_conf_proto != nil {
+func init() { file_conf_conf_proto_init() }
+func file_conf_conf_proto_init() {
+	if File_conf_conf_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_conf_proto_rawDesc), len(file_conf_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_conf_conf_proto_rawDesc), len(file_conf_conf_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   18,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_conf_proto_goTypes,
-		DependencyIndexes: file_conf_proto_depIdxs,
-		MessageInfos:      file_conf_proto_msgTypes,
+		GoTypes:           file_conf_conf_proto_goTypes,
+		DependencyIndexes: file_conf_conf_proto_depIdxs,
+		MessageInfos:      file_conf_conf_proto_msgTypes,
 	}.Build()
-	File_conf_proto = out.File
-	file_conf_proto_goTypes = nil
-	file_conf_proto_depIdxs = nil
+	File_conf_conf_proto = out.File
+	file_conf_conf_proto_goTypes = nil
+	file_conf_conf_proto_depIdxs = nil
 }

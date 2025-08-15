@@ -10,6 +10,7 @@ import (
 	"nancalacc/internal/conf"
 	"nancalacc/internal/data"
 	"nancalacc/internal/dingtalk"
+	"nancalacc/internal/otel"
 	"nancalacc/internal/server"
 	"nancalacc/internal/service"
 	"nancalacc/internal/task"
@@ -20,9 +21,15 @@ import (
 	"github.com/google/wire"
 )
 
-// wireApp init kratos application with database factory.
-func wireApp(*conf.Server, *conf.Data, *conf.Tracing, log.Logger) (*kratos.App, func(), error) {
+// provideLogger creates a logger from the integration
+func provideLogger(integration *otel.Integration) log.Logger {
+	return integration.CreateLogger()
+}
+
+// wireApp init kratos application with OpenTelemetry integration.
+func wireApp(*conf.Server, *conf.Data, *conf.OpenTelemetry, *otel.Integration) (*kratos.App, func(), error) {
 	panic(wire.Build(
+		provideLogger,
 		server.ProviderSet,
 		data.ProviderSet,
 		wps.WpsProviderSet,

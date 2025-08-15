@@ -68,20 +68,34 @@ logging:
 package main
 
 import (
-    "nancalacc/internal/log"
+    "context"
+    "nancalacc/internal/otel"
+    "github.com/go-kratos/kratos/v2/log"
 )
 
 func main() {
-    // 创建日志记录器
-    logger, err := log.NewLogger(config)
-    if err != nil {
+    // 创建 OpenTelemetry 集成器
+    config := &otel.Config{
+        Enabled: true,
+        Logs: otel.LogConfig{
+            Enabled: true,
+            Level:   "info",
+        },
+    }
+    
+    integration := otel.NewIntegration(config)
+    if err := integration.Init(context.Background()); err != nil {
         panic(err)
     }
+    defer integration.Shutdown(context.Background())
+
+    // 创建日志记录器
+    logger := integration.CreateLogger()
 
     // 记录不同级别的日志
-    logger.Info("应用启动成功")
-    logger.Warn("配置项缺失，使用默认值")
-    logger.Error("数据库连接失败", log.NewField("error", err.Error()))
+    logger.Log(log.LevelInfo, "msg", "应用启动成功")
+    logger.Log(log.LevelWarn, "msg", "配置项缺失，使用默认值")
+    logger.Log(log.LevelError, "msg", "数据库连接失败", "error", err.Error())
 }
 ```
 
@@ -91,28 +105,31 @@ func main() {
 package service
 
 import (
-    "nancalacc/internal/log"
+    "context"
+    "nancalacc/internal/otel"
+    "github.com/go-kratos/kratos/v2/log"
 )
 
 type UserService struct {
-    logger *log.Helper
+    logger log.Logger
 }
 
-func NewUserService(logger log.Logger) *UserService {
+func NewUserService(integration *otel.Integration) *UserService {
     return &UserService{
-        logger: log.NewLogHelper(logger),
+        logger: integration.CreateLogger(),
     }
 }
 
 func (s *UserService) CreateUser(user *User) error {
-    s.logger.Info("创建用户", 
-        log.NewField("user_id", user.ID),
-        log.NewField("email", user.Email),
+    s.logger.Log(log.LevelInfo, 
+        "msg", "创建用户",
+        "user_id", user.ID,
+        "email", user.Email,
     )
     
     // 业务逻辑...
     
-    s.logger.Info("用户创建成功", log.NewField("user_id", user.ID))
+    s.logger.Log(log.LevelInfo, "msg", "用户创建成功", "user_id", user.ID)
     return nil
 }
 ```
@@ -121,9 +138,11 @@ func (s *UserService) CreateUser(user *User) error {
 
 ```go
 func (s *UserService) GetUser(ctx context.Context, userID string) (*User, error) {
-    logger := s.logger.WithRequestID(ctx.Value("request_id").(string))
-    
-    logger.Info("获取用户信息", log.NewField("user_id", userID))
+    s.logger.Log(log.LevelInfo, 
+        "msg", "获取用户信息", 
+        "user_id", userID,
+        "request_id", ctx.Value("request_id"),
+    )
     
     // 业务逻辑...
     
@@ -137,11 +156,16 @@ func (s *UserService) GetUser(ctx context.Context, userID string) (*User, error)
 package middleware
 
 import (
-    "nancalacc/internal/log"
+    "context"
+    "time"
+    "nancalacc/internal/otel"
+    "github.com/go-kratos/kratos/v2/log"
     "github.com/go-kratos/kratos/v2/middleware"
 )
 
-func LogMiddleware(logger log.Logger) middleware.Middleware {
+func LogMiddleware(integration *otel.Integration) middleware.Middleware {
+    logger := integration.CreateLogger()
+    
     return func(handler middleware.Handler) middleware.Handler {
         return func(ctx context.Context, req interface{}) (reply interface{}, err error) {
             start := time.Now()
@@ -150,11 +174,12 @@ func LogMiddleware(logger log.Logger) middleware.Middleware {
             
             duration := time.Since(start)
             
-            logger.Info("HTTP请求",
-                log.NewField("method", "POST"),
-                log.NewField("path", "/api/users"),
-                log.NewField("duration", duration),
-                log.NewField("status", "200"),
+            logger.Log(log.LevelInfo, 
+                "msg", "HTTP请求",
+                "method", "POST",
+                "path", "/api/users",
+                "duration", duration,
+                "status", "200",
             )
             
             return reply, err

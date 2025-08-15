@@ -11,20 +11,21 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	gormlogger "gorm.io/gorm/logger"
 )
 
 // DatabaseFactory 数据库连接工厂
 type DatabaseFactory struct {
-	config *conf.Data
-	logger log.Logger
+	config     *conf.Data
+	logger     log.Logger
+	otelConfig *conf.OpenTelemetry // OpenTelemetry配置
 }
 
 // NewDatabaseFactory 创建数据库工厂
-func NewDatabaseFactory(config *conf.Data, logger log.Logger) *DatabaseFactory {
+func NewDatabaseFactory(config *conf.Data, logger log.Logger, otelConfig *conf.OpenTelemetry) *DatabaseFactory {
 	return &DatabaseFactory{
-		config: config,
-		logger: logger,
+		config:     config,
+		logger:     logger,
+		otelConfig: otelConfig,
 	}
 }
 
@@ -40,23 +41,19 @@ func (df *DatabaseFactory) CreateDatabase(dbType DatabaseType, config *DatabaseC
 		return nil, fmt.Errorf("failed to get DSN for %s: %w", dbType, err)
 	}
 
-	// 创建 GORM 配置
-	gormConfig := &gorm.Config{
-		Logger: gormlogger.Default.LogMode(gormlogger.Info),
+	// 确定GORM日志级别：OpenTelemetry配置优先，数据库配置作为默认值
+	var logLevel string
+	if df.otelConfig != nil && df.otelConfig.Logs != nil && df.otelConfig.Logs.Gorm != nil && df.otelConfig.Logs.Gorm.LogLevel != "" {
+		logLevel = df.otelConfig.Logs.Gorm.LogLevel
+	} else if config.LogLevel != "" {
+		logLevel = config.LogLevel
+	} else {
+		logLevel = "info" // 默认日志级别
 	}
 
-	// 如果配置了自定义日志级别
-	if config.LogLevel != "" {
-		switch strings.ToLower(config.LogLevel) {
-		case "silent":
-			gormConfig.Logger = gormlogger.Default.LogMode(gormlogger.Silent)
-		case "error":
-			gormConfig.Logger = gormlogger.Default.LogMode(gormlogger.Error)
-		case "warn":
-			gormConfig.Logger = gormlogger.Default.LogMode(gormlogger.Warn)
-		case "info":
-			gormConfig.Logger = gormlogger.Default.LogMode(gormlogger.Info)
-		}
+	// 创建使用OpenTelemetry logger的GORM配置
+	gormConfig := &gorm.Config{
+		Logger: NewGormLogger(df.logger, logLevel),
 	}
 
 	// 打开数据库连接

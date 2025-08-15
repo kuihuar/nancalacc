@@ -6,16 +6,14 @@ import (
 	"os"
 
 	"nancalacc/internal/conf"
+	"nancalacc/internal/otel"
 	"nancalacc/internal/service"
 	"nancalacc/internal/task"
-	"nancalacc/internal/tracer"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
-
-	nancalaccLog "nancalacc/internal/log"
 
 	_ "go.uber.org/automaxprocs"
 )
@@ -39,7 +37,10 @@ func init() {
 }
 
 // newApp 创建应用实例
-func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, cronService *task.CronService, eventService *service.DingTalkEventService) *kratos.App {
+func newApp(integration *otel.Integration, gs *grpc.Server, hs *http.Server, cronService *task.CronService, eventService *service.DingTalkEventService) *kratos.App {
+	// 从 integration 获取 Kratos 兼容的 logger
+	logger := integration.CreateLogger()
+
 	return kratos.New(
 		kratos.ID(id),
 		kratos.Name(Name),
@@ -51,12 +52,12 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, cronService *ta
 			hs,
 		),
 		kratos.BeforeStart(func(ctx context.Context) error {
-			logger.Log(log.LevelInfo, "msg", "starting application with database factory")
+			logger.Log(log.LevelInfo, "msg", "starting application with OpenTelemetry")
 			cronService.Start()
 			return nil
 		}),
 		kratos.AfterStop(func(ctx context.Context) error {
-			logger.Log(log.LevelInfo, "msg", "stopping application with database factory")
+			logger.Log(log.LevelInfo, "msg", "stopping application with OpenTelemetry")
 			cronService.Stop()
 			return nil
 		}),
@@ -73,39 +74,49 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, cronService *ta
 
 func main() {
 	flag.Parse()
-	var bc *conf.Bootstrap
-	bc, err := conf.Load(flagconf)
 
+	// 加载配置
+	bc, err := conf.Load(flagconf)
 	if err != nil {
 		panic("failed to load config: " + err.Error())
 	}
 
-	// 初始化OpenTelemetry追踪系统
-	tracerManager := tracer.NewTracerManager()
-	if err := tracerManager.Init(bc.GetApp().GetEnv(), bc.GetApp().GetName()); err != nil {
-		panic("failed to init tracer: " + err.Error())
-	}
-	defer tracerManager.Shutdown()
+	// 初始化OpenTelemetry
+	otelIntegration := initOpenTelemetry(bc)
+	defer otelIntegration.Shutdown(context.Background())
 
-	// 4. 创建Kratos日志适配器
-	kratosLogger, err := nancalaccLog.NewLoggerFromBootstrap(bc)
-	if err != nil {
-		panic(err)
-	}
-
-	kratosLogger.Log(log.LevelInfo,
+	// 创建日志器
+	otelIntegration.CreateLogger().Log(log.LevelInfo,
+		"msg", "app start",
 		"company:", bc.GetApp().GetCompanyId(),
 		"third company:", bc.GetApp().GetThirdCompanyId(),
 		"platform ids:", bc.GetApp().GetPlatformIds())
-
-	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Tracing, kratosLogger)
+	// 创建应用
+	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Otel, otelIntegration)
 	if err != nil {
 		panic(err)
 	}
 	defer cleanup()
 
-	// start and wait for stop signal
+	// 启动应用
 	if err := app.Run(); err != nil {
 		panic(err)
 	}
+}
+
+// initOpenTelemetry 初始化OpenTelemetry
+func initOpenTelemetry(bc *conf.Bootstrap) *otel.Integration {
+	// 创建配置适配器
+	adapter := otel.NewConfigAdapter()
+	config := adapter.FromBootstrap(bc)
+
+	// 创建集成器
+	integration := otel.NewIntegration(config)
+
+	// 初始化
+	if err := integration.Init(context.Background()); err != nil {
+		panic("failed to init OpenTelemetry: " + err.Error())
+	}
+
+	return integration
 }

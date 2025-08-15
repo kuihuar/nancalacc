@@ -8,13 +8,12 @@ import (
 	"nancalacc/internal/conf"
 	"nancalacc/internal/data/models"
 	"nancalacc/internal/dingtalk"
-	"nancalacc/internal/log"
 	"nancalacc/internal/wps"
 	"strconv"
 	"time"
 
 	//"github.com/go-kratos/kratos/v2/errors"
-	kratoslog "github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/log"
 	"github.com/xuri/excelize/v2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -33,19 +32,15 @@ type FullSyncUsecase struct {
 }
 
 // NewGreeterUsecase new a Greeter usecase.
-func NewFullSyncUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, wps wps.Wps, cache CacheService, logger kratoslog.Logger) *FullSyncUsecase {
+func NewFullSyncUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, wps wps.Wps, cache CacheService, logger log.Logger) *FullSyncUsecase {
 	appAuth := auth.NewWpsAppAuthenticator()
 	bizConf := conf.Get().GetApp()
-	return &FullSyncUsecase{repo: repo, dingTalkRepo: dingTalkRepo, appAuth: appAuth, wps: wps, localCache: cache, bizConf: bizConf, log: log.NewHelper(logger)}
+	return &FullSyncUsecase{repo: repo, dingTalkRepo: dingTalkRepo,
+		appAuth: appAuth, wps: wps, localCache: cache, bizConf: bizConf, log: log.NewHelper(logger)}
 }
 
 func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
-	// return &v1.CreateSyncAccountReply{
-	// 	TaskId:     "taskId",
-	// 	CreateTime: timestamppb.Now(),
-	// }, nil
-	log := uc.log.WithContext(ctx)
-	log.Infof("CreateSyncAccount: %v", req)
+	uc.log.WithContext(ctx).Infof("CreateSyncAccount req: %v", req)
 
 	taskId := req.GetTaskName()
 
@@ -58,24 +53,19 @@ func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.Create
 	if ok {
 		return nil, status.Error(codes.AlreadyExists, "task name "+taskId+" exists")
 	}
-	// num, err := uc.repo.CreateTask(ctx, taskId)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if num == 0 {
-	// 	return nil, status.Error(codes.AlreadyExists, "taskId  exists")
-	// }
 
-	uc.log.WithContext(ctx).Info("CreateSyncAccount.SaveCompanyCfg")
-	err = uc.repo.SaveCompanyCfg(ctx, &dingtalk.DingtalkCompanyCfg{})
-	log.Infof("CreateSyncAccount.SaveCompanyCfg: err: %v", err)
+	err = uc.repo.SaveCompanyCfg(ctx, &dingtalk.DingtalkCompanyCfg{
+		ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
+		PlatformIds:    uc.bizConf.GetPlatformIds(),
+		CompanyId:      uc.bizConf.GetCompanyId(),
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	// 1. 获取access_token
 	dingTalkAccessToken, err := uc.dingTalkRepo.GetAccessToken(ctx)
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount dingTalkAccessToken: %+v, err: %v", dingTalkAccessToken, err)
+	uc.log.Infof("GetAccessToken: %+v, err: %v", dingTalkAccessToken, err)
 	if err != nil {
 		return nil, err
 	}
@@ -83,23 +73,15 @@ func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.Create
 
 	// 1. 从第三方获取部门和用户数据
 
-	log.Infof("CreateSyncAccount FetchDepartments")
-
 	depts, err := uc.dingTalkRepo.FetchDepartments(ctx, accessToken)
-	log.Infof("CreateSyncAccount FetchDepartments depts: %+v, err: %v", depts, err)
+	uc.log.Infof("FetchDepartments depts: %+v, err: %v", depts, err)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Infof("CreateSyncAccount depts size: %d, taskId: %v", len(depts), taskId)
-
-	for _, dept := range depts {
-		uc.log.WithContext(ctx).Infof("CreateSyncAccount dept: %+v", dept)
-	}
-
 	// 2. 数据入库
 	deptCount, err := uc.repo.SaveDepartments(ctx, depts, taskId)
-	log.Infof("CreateSyncAccount SaveDepartments deptCount: %d, err: %v", deptCount, err)
+	uc.log.Infof("SaveDepartments deptCount: %d, err: %v", deptCount, err)
 	if err != nil {
 		return nil, err
 	}
@@ -108,13 +90,11 @@ func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.Create
 		deptIds = append(deptIds, dept.DeptID)
 	}
 
-	log.Infof("CreateSyncAccount FetchDepartmentUsers accessToken: %s deptIds: %v", accessToken, deptIds)
 	// 1. 从第三方获取用户数据
 	deptUsers, err := uc.dingTalkRepo.FetchDepartmentUsers(ctx, accessToken, deptIds)
 
-	log.Infof("CreateSyncAccount FetchDepartmentUsers deptUsers size: %v, err: %v", len(deptUsers), err)
 	for _, deptUser := range deptUsers {
-		uc.log.WithContext(ctx).Infof("biz.CreateSyncAccount deptUser: %+v", deptUser)
+		uc.log.Infof("FetchDepartmentUsers deptUser: %+v", deptUser)
 	}
 	if err != nil {
 		return nil, err
@@ -122,9 +102,8 @@ func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.Create
 
 	// 2. 数据入库
 	//这里可以 将deptUsers转为model.TbLasUser,
-	// SaveUsers(ctx, TbLasUser)
-	userCount, err := uc.repo.SaveUsers(ctx, deptUsers, taskId)
-	log.Infof("CreateSyncAccount SaveUsers userCount: %d, err: %v", userCount, err)
+	cnt, err := uc.repo.SaveUsers(ctx, deptUsers, taskId)
+	uc.log.Infof("SaveUsers cnt: %d, err: %v", cnt, err)
 	if err != nil {
 		return nil, err
 	}
@@ -151,33 +130,27 @@ func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.Create
 		}
 
 	}
-	log.Infof("CreateSyncAccount deptUserRelations size: %d, taskId: %s", len(deptUserRelations), taskId)
-
-	for _, deptUserRelation := range deptUserRelations {
-		uc.log.WithContext(ctx).Infof("CreateSyncAccount deptUserRelation: %+v", deptUserRelation)
-	}
 
 	// 3. 数据入库
-	relationCount, err := uc.repo.SaveDepartmentUserRelations(ctx, deptUserRelations, taskId)
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount relationCount: %d, err: %v", relationCount, err)
+	cnt, err = uc.repo.SaveDepartmentUserRelations(ctx, deptUserRelations, taskId)
+	uc.log.Infof("SaveDepartmentUserRelations cnt: %d, err: %v", cnt, err)
 	if err != nil {
 		return nil, err
 	}
-	//log.Infof("CreateSyncAccount CallEcisaccountsyncAll taskId: %v", taskId)
 
 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	uc.log.Infof("GetAccessToken appAccessToken: %+v, err: %v", appAccessToken, err)
+
 	if err != nil {
 		return nil, err
 	}
-	// log.Infof("appAccessToken", appAccessToken)
 
-	_, err = uc.wps.PostEcisaccountsyncAll(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncAllRequest{
+	resp, err := uc.wps.PostEcisaccountsyncAll(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncAllRequest{
 		TaskId:         taskId,
 		ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
 	})
+	uc.log.Infof("PostEcisaccountsyncAll resp: %+v, err: %v", resp, err)
 
-	uc.log.WithContext(ctx).WithField("task_id", taskId).Info("CreateSyncAccount.CallEcisaccountsyncAll")
-	uc.log.WithField("task_id_1", taskId).Info("CreateSyncAccount.CallEcisaccountsyncAll")
 	if err != nil {
 		return nil, err
 	}
@@ -229,13 +202,6 @@ func (uc *FullSyncUsecase) GetSyncAccount(ctx context.Context, req *v1.GetSyncAc
 
 func (uc *FullSyncUsecase) ParseExecell(ctx context.Context, taskId, filename string) (err error) {
 
-	// defer func() {
-	// 	if err != nil {
-	// 		uc.UpdateCacheTask(ctx, taskId, models.TaskStatusCancelled)
-	// 	} else {
-	// 		uc.UpdateCacheTask(ctx, taskId, models.TaskStatusCompleted)
-	// 	}
-	// }()
 	log := uc.log.WithContext(ctx)
 	log.Infof("ParseExecell taskId: %s,filename:%s", taskId, filename)
 
@@ -295,9 +261,7 @@ func (uc *FullSyncUsecase) ParseExecell(ctx context.Context, taskId, filename st
 }
 
 func (uc *FullSyncUsecase) transUser(ctx context.Context, taskId string, rows *excelize.Rows) (err error) {
-
-	log := uc.log.WithContext(ctx)
-	log.Infof("transUser taskId: %s", taskId)
+	uc.log.WithContext(ctx).Infof("transUser taskId: %s", taskId)
 
 	//uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
 	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
@@ -311,7 +275,7 @@ func (uc *FullSyncUsecase) transUser(ctx context.Context, taskId string, rows *e
 		}
 		// log.Info(row)
 		if len(row) < 3 {
-			log.Warnf("row len < 3: %v", row)
+			uc.log.Warnf("row len < 3: %v", row)
 			continue
 		}
 
@@ -348,8 +312,7 @@ func (uc *FullSyncUsecase) transUser(ctx context.Context, taskId string, rows *e
 	return nil
 }
 func (uc *FullSyncUsecase) transDept(ctx context.Context, taskId string, rows *excelize.Rows) (err error) {
-	log := uc.log.WithContext(ctx)
-	log.Infof("transDept taskId: %s", taskId)
+	uc.log.WithContext(ctx).Infof("transDept taskId: %s", taskId)
 
 	//uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
 	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
@@ -364,7 +327,7 @@ func (uc *FullSyncUsecase) transDept(ctx context.Context, taskId string, rows *e
 
 		// log.Info(row)
 		if len(row) < 3 {
-			log.Warnf("row len < 3: %v", row)
+			uc.log.Warnf("row len < 3: %v", row)
 			continue
 		}
 

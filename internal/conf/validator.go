@@ -274,13 +274,7 @@ func (v *ConfigValidator) validateApp(a *App) error {
 		return fmt.Errorf("app env is empty")
 	}
 
-	if a.LogLevel == "" {
-		return fmt.Errorf("app log_level is empty")
-	}
-
-	if a.LogOut == "" {
-		return fmt.Errorf("app log_out is empty")
-	}
+	// LogLevel and LogOut are now in OpenTelemetry.Logs
 
 	if a.AppPackage == "" {
 		return fmt.Errorf("app app_package is empty")

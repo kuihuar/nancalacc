@@ -10,8 +10,7 @@ message Bootstrap {
   Data data = 2;
   App app = 3;
   Auth auth = 4;
-  Logging logging = 5;
-  Tracing tracing = 6;
+  OpenTelemetry otel = 5;
 }
 
 message Server {
@@ -28,7 +27,6 @@ message Server {
   HTTP http = 1;
   GRPC grpc = 2;
 }
-
 
 message Data {
   message Database {
@@ -73,55 +71,106 @@ message Data {
   Redis redis = 3;
   Etcd etcd = 4;
 }
+
 message App {
   string id = 1;
   string name = 2;
   string version = 3;
   string env = 4;
-  string log_level =5;
-  string log_out = 6;
-  string app_package = 7;
-  string app_id = 8;
-  string app_secret = 9;
-  string third_company_id = 10;
-  string platform_ids = 11;
-  string company_id = 12;
-  string access_key = 13;
-  string secret_key = 14;
+  string app_package = 5;
+  string app_id = 6;
+  string app_secret = 7;
+  string third_company_id = 8;
+  string platform_ids = 9;
+  string company_id = 10;
+  string access_key = 11;
+  string secret_key = 12;
 }
 
-message Logging {
-  string level = 1;
-  string format = 2;
-  string output = 3;
-  string file_path = 4;
-  int32 max_size = 5;
-  int32 max_backups = 6;
-  int32 max_age = 7;
-  bool compress = 8;
-  bool caller = 9;
-  bool stacktrace = 10;
-  GormLog gorm = 11;
-  Loki loki = 12;
-  // 追踪日志配置
-  bool verbose_tracing = 13; // 是否启用详细追踪日志
+// OpenTelemetry 统一配置
+message OpenTelemetry {
+  bool enabled = 1;
+  string service_name = 2;
+  string service_version = 3;
+  string environment = 4;
+  
+  // 追踪配置
+  TracesConfig traces = 5;
+  
+  // 指标配置
+  MetricsConfig metrics = 6;
+  
+  // 日志配置
+  LogsConfig logs = 7;
 }
 
+// 日志配置
+message LogsConfig {
+  bool enabled = 1;
+  string level = 2;
+  string format = 3;
+  string output = 4;
+  string file_path = 5;
+  int32 max_size = 6;
+  int32 max_backups = 7;
+  int32 max_age = 8;
+  bool compress = 9;
+  bool caller = 10;
+  bool stacktrace = 11;
+  bool escape_newlines = 12;
+  GormLog gorm = 13;
+  LokiConfig loki = 14;
+}
+
+// Loki配置
+message LokiConfig {
+  bool enabled = 1;
+  string endpoint = 2;
+}
+
+// GORM日志配置
 message GormLog {
   string slow_threshold = 1;
   string log_level = 2;
 }
 
-message Loki {
-  string url = 1;
-  string username = 2;
-  string password = 3;
-  string tenant_id = 4;
-  map<string, string> labels = 5;
-  bool enable = 6;
-  int32 batch_size = 7;
-  string batch_wait = 8;
-  string timeout = 9;
+// 追踪配置
+message TracesConfig {
+  bool enabled = 1;
+  bool verbose_logging = 2;
+  bool log_request_size = 3;
+  bool log_response_size = 4;
+  bool log_headers = 5;
+  bool log_query_params = 6;
+  JaegerConfig jaeger = 7;
+  OtlpConfig otlp = 8;
+  PrometheusConfig prometheus = 9;
+}
+
+// 指标配置
+message MetricsConfig {
+  bool enabled = 1;
+  PrometheusConfig prometheus = 2;
+}
+
+// Jaeger配置
+message JaegerConfig {
+  bool enabled = 1;
+  string endpoint = 2;
+}
+
+// OTLP配置
+message OtlpConfig {
+  bool enabled = 1;
+  string endpoint = 2;
+  int32 timeout = 3;
+}
+
+// Prometheus配置
+message PrometheusConfig {
+  bool enabled = 1;
+  string endpoint = 2;
+  string interval = 3;
 }
 
 message Auth {
@@ -142,15 +191,4 @@ message Auth {
   }
   Wpsapp wpsapp = 1;
   Dingtalk dingtalk= 2;
-}
-
-message Tracing {
-  bool enable = 1; // 是否启用追踪
-  bool verbose_logging = 2; // 是否启用详细日志
-  bool log_request_size = 3; // 是否记录请求体大小
-  bool log_response_size = 4; // 是否记录响应体大小
-  bool log_headers = 5; // 是否记录请求头
-  bool log_query_params = 6; // 是否记录查询参数
-  string service_name = 7; // 服务名称
-  string environment = 8; // 环境
 }
