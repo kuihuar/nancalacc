@@ -7,7 +7,6 @@
 package main
 
 import (
-	"fmt"
 	"nancalacc/internal/biz"
 	"nancalacc/internal/conf"
 	"nancalacc/internal/data"
@@ -36,7 +35,6 @@ func wireApp(confServer *conf.Server, confData *conf.Data, openTelemetry *conf.O
 	}
 	dataData, cleanup, err := data.NewDataWithFactory(databaseFactory, client, logger)
 	if err != nil {
-		fmt.Println("NewDataWithFactory error", err)
 		return nil, nil, err
 	}
 	accounterRepo := data.NewAccounterRepo(dataData, logger)

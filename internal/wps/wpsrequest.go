@@ -205,11 +205,11 @@ func (r *WPSRequest) Do(ctx context.Context) ([]byte, error) {
 	req.Header.Set(KsoAuthHeader, sign.Authorization)
 	req.Header.Set(AuthorizationHeader, r.accessToken)
 
-	command, _ := http2curl.GetCurlCommand(req)
-	// fmt.Println()
-
-	//r.logger.Infof("request command: %s\n", command)
-	r.logger.Log(log.LevelInfo, "request command", command)
+	command, err := http2curl.GetCurlCommand(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get curl command: %w", err)
+	}
+	r.logger.Log(log.LevelWarn, "request command", command)
 
 	// Execute request
 	resp, err := r.client.Do(req.WithContext(ctx))

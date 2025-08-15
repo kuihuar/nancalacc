@@ -2,10 +2,12 @@ package otel
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 	otellog "go.opentelemetry.io/otel/log"
@@ -100,6 +102,11 @@ func (a *KratosLoggerAdapter) Log(level log.Level, keyvals ...any) error {
 	// 记录日志到OpenTelemetry
 	a.otellogger.Emit(context.Background(), record)
 
+	// 如果配置了stdout输出，输出到控制台
+	if a.config != nil && a.config.Logs.Output == "stdout" {
+		a.writeToStdout(level, message, keyvals)
+	}
+
 	// 如果配置了文件输出，同时写入文件
 	if a.writer != nil {
 		a.writeToFile(level, message, keyvals)
@@ -152,6 +159,17 @@ func (a *KratosLoggerAdapter) writeToFile(level log.Level, message string, keyva
 
 // formatLogLine 格式化日志行
 func (a *KratosLoggerAdapter) formatLogLine(level log.Level, message string, keyvals []any) string {
+	// 检查是否配置为JSON格式
+	if a.config != nil && a.config.Logs.Format == "json" {
+		return a.formatJSON(level, message, keyvals)
+	}
+
+	// 默认使用文本格式
+	return a.formatText(level, message, keyvals)
+}
+
+// formatText 格式化文本日志
+func (a *KratosLoggerAdapter) formatText(level log.Level, message string, keyvals []any) string {
 	// 简单的文本格式
 	levelStr := strings.ToUpper(level.String())
 
@@ -173,6 +191,36 @@ func (a *KratosLoggerAdapter) formatLogLine(level log.Level, message string, key
 	}
 
 	return fmt.Sprintf("[%s] %s%s", levelStr, message, kvStr)
+}
+
+// formatJSON 格式化JSON日志
+func (a *KratosLoggerAdapter) formatJSON(level log.Level, message string, keyvals []any) string {
+	// 构建JSON对象
+	logEntry := map[string]interface{}{
+		"level":   strings.ToUpper(level.String()),
+		"message": message,
+		"time":    time.Now().Format(time.RFC3339),
+	}
+
+	// 添加键值对
+	for i := 0; i < len(keyvals); i += 2 {
+		if i+1 < len(keyvals) {
+			key, ok := keyvals[i].(string)
+			if ok {
+				value := keyvals[i+1]
+				logEntry[key] = value
+			}
+		}
+	}
+
+	// 序列化为JSON
+	jsonBytes, err := json.Marshal(logEntry)
+	if err != nil {
+		// 如果JSON序列化失败，回退到文本格式
+		return a.formatText(level, message, keyvals)
+	}
+
+	return string(jsonBytes)
 }
 
 // convertLevel 转换Kratos日志级别到OpenTelemetry级别
@@ -240,4 +288,13 @@ func (a *KratosLoggerAdapter) Close() error {
 		return a.writer.Close()
 	}
 	return nil
+}
+
+// writeToStdout 将日志输出到控制台
+func (a *KratosLoggerAdapter) writeToStdout(level log.Level, message string, keyvals []any) {
+	// 构建日志行
+	logLine := a.formatLogLine(level, message, keyvals)
+
+	// 输出到标准输出
+	fmt.Println(logLine)
 }

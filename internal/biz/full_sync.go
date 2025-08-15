@@ -223,7 +223,6 @@ func (uc *FullSyncUsecase) ParseExecell(ctx context.Context, taskId, filename st
 	sheets := f.GetSheetList()
 	for _, sheet := range sheets {
 		if _, ok := processSheet[sheet]; !ok {
-			fmt.Printf("sheetname: %s\n", sheet)
 			continue
 		}
 		rows, err := f.Rows(sheet)

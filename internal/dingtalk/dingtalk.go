@@ -38,15 +38,11 @@ func NewDingTalkRepo(logger log.Logger) Dingtalk {
 	}
 	client, err := dingtalkoauth2_1_0.NewClient(config)
 	if err != nil {
-		fmt.Printf("NewClient err: %v", err)
-		//return nil, cleanup, err
 		logger.Log(log.LevelError, "NewClientErr", err)
 	}
 
 	clientContact, err := dingtalkcontact_1_0.NewClient(config)
 	if err != nil {
-		fmt.Printf("NewClient err: %v", err)
-		//return nil, cleanup, err
 		logger.Log(log.LevelError, "NewClientErr", err)
 	}
 	tokenAuth := auth.NewDingTalkAuthenticator()
@@ -63,49 +59,6 @@ func NewDingTalkRepo(logger log.Logger) Dingtalk {
 func (r *dingTalkRepo) GetAccessToken(ctx context.Context) (*auth.AccessTokenResp, error) {
 
 	return r.tokenAuth.GetAccessToken(ctx)
-	// 	log := r.log.WithContext(ctx)
-	// 	log.Info("GetAccessToken")
-
-	// 	request := &dingtalkoauth2_1_0.GetAccessTokenRequest{
-	// 		AppKey:    tea.String(r.data.AppKey),
-	// 		AppSecret: tea.String(r.data.AppSecret),
-	// 	}
-
-	// 	var accessToken dingtalkoauth2_1_0.GetAccessTokenResponseBody
-
-	// 	tryErr := func() error {
-	// 		defer func() {
-	// 			if r := tea.Recover(recover()); r != nil {
-	// 				err := r
-	// 				fmt.Printf("恢复的错误: %v\n", err)
-	// 			}
-	// 		}()
-
-	// 		response, err := r.dingtalkCli.GetAccessToken(request)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-
-	// 		accessToken = *response.Body
-	// 		return nil
-	// 	}()
-
-	// 	if tryErr != nil {
-	// 		// 处理错误
-	// 		var sdkErr = &tea.SDKError{}
-	// 		if _t, ok := tryErr.(*tea.SDKError); ok {
-	// 			sdkErr = _t
-	// 		} else {
-	// 			sdkErr.Message = tea.String(tryErr.Error())
-	// 		}
-
-	// 		if !tea.BoolValue(util.Empty(sdkErr.Code)) && !tea.BoolValue(util.Empty(sdkErr.Message)) {
-	// 			return accessToken, fmt.Errorf("获取access_token失败: [%s] %s", *sdkErr.Code, *sdkErr.Message)
-	// 		}
-	// 		return accessToken, fmt.Errorf("获取access_token失败: %s", *sdkErr.Message)
-	// 	}
-
-	// return accessToken, nil
 }
 func (r *dingTalkRepo) FetchDepartments(ctx context.Context, token string) ([]*DingtalkDept, error) {
 
@@ -405,16 +358,11 @@ func (r *dingTalkRepo) getUserListByDepId(ctx context.Context, token string, dep
 		return nil, 0, err
 	}
 
-	//log.Info("getUserListByDepId.uri: %v, input: %v, jsonData: %v", uri, input, string(jsonData))
-
 	bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
 	log.Infof("getUserListByDepId.body: %v, err: %v", string(bs), err)
 	if err != nil {
 		return nil, 0, err
 	}
-
-	// 打印响应体
-	//fmt.Println(string(bs))
 
 	var userResponse ListDeptUserResponse
 	if err = json.Unmarshal(bs, &userResponse); err != nil {

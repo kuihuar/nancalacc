@@ -39,8 +39,6 @@ func GetAppUID() string {
 }
 
 func DecryptByAes(content string, key string) (string, error) {
-	fmt.Printf("DecryptByAes.content: %s\n", content)
-	fmt.Printf("DecryptByAes.key: %s\n", key)
 
 	if len(content) < 24 {
 		return "", ErrEmptyPlaintext
@@ -79,8 +77,6 @@ func DecryptByAes(content string, key string) (string, error) {
 }
 
 func EncryptByAes(content string, key string) (string, error) {
-	fmt.Printf("EncryptByAes.content: %s\n", content)
-	fmt.Printf("EncryptByAes.key: %s\n", key)
 
 	if len(content) == 0 {
 		return "", ErrEmptyPlaintext
