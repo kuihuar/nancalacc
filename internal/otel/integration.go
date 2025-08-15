@@ -2,6 +2,7 @@ package otel
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
@@ -93,6 +94,7 @@ func (i *Integration) createLoggingMiddleware() middleware.Middleware {
 			var (
 				operation string
 				kind      string
+				start     = time.Now()
 			)
 			if tr, ok := transport.FromServerContext(ctx); ok {
 				operation = tr.Operation()
@@ -109,10 +111,33 @@ func (i *Integration) createLoggingMiddleware() middleware.Middleware {
 				attribute.String("transport.operation", operation),
 			)
 
+			// 记录请求开始日志
+			if i.config.Logs.Enabled {
+				logger := i.CreateLogger()
+				logger.Log(log.LevelInfo,
+					"msg", "request started",
+					"operation", operation,
+					"kind", kind,
+					"request", req,
+				)
+			}
+
 			// 执行请求
 			reply, err = handler(ctx, req)
 
-			// 记录错误
+			// 记录请求结束日志
+			if i.config.Logs.Enabled {
+				logger := i.CreateLogger()
+				logger.Log(log.LevelInfo,
+					"msg", "request finished",
+					"operation", operation,
+					"kind", kind,
+					"duration", time.Since(start).String(),
+					"error", err,
+				)
+			}
+
+			// 记录错误到span
 			if err != nil {
 				span.RecordError(err)
 			}

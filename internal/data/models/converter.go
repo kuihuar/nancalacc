@@ -18,7 +18,10 @@ func MakeLasUser(user *dingtalk.DingtalkDeptUser, thirdCompanyID, platformID, so
 	account := user.Mobile
 	now := time.Now()
 	mobile, err := cipherutil.EncryptUserInfo(user.Mobile, user.Userid)
-	fmt.Printf("EncryptUserInfo userid:%s, mobile: %s mobile: %s, err: %v\n", user.Userid, user.Mobile, mobile, err)
+	if err != nil {
+		fmt.Printf("[ERROR]EncryptUserInfo userid:%s, mobile: %s mobile: %s, err: %v\n", user.Userid, user.Mobile, mobile, err)
+	}
+
 	entity := &TbLasUser{
 		TaskID:         taskId,
 		ThirdCompanyID: thirdCompanyID,
@@ -107,7 +110,10 @@ func MakeLasUserIncrement(user *dingtalk.DingtalkDeptUser, thirdCompanyID, platf
 	now := time.Now()
 
 	mobile, err := cipherutil.EncryptUserInfo(user.Mobile, user.Userid)
-	fmt.Printf("EncryptUserInfo userid:%s, mobile: %s mobile: %s, err: %v\n", user.Userid, user.Mobile, mobile, err)
+
+	if err != nil {
+		fmt.Printf("[ERROR]EncryptUserInfo userid:%s, mobile: %s mobile: %s, err: %v\n", user.Userid, user.Mobile, mobile, err)
+	}
 
 	entity := &TbLasUserIncrement{
 		ThirdCompanyID: thirdCompanyID,
