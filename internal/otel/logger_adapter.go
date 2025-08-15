@@ -9,13 +9,14 @@ import (
 
 	"github.com/go-kratos/kratos/v2/log"
 	otellog "go.opentelemetry.io/otel/log"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // KratosLoggerAdapter 适配OpenTelemetry Logger到Kratos Logger
 type KratosLoggerAdapter struct {
 	otellogger otellog.Logger
 	config     *Config
-	writer     *os.File
+	writer     *lumberjack.Logger
 }
 
 // NewKratosLoggerAdapter 创建Kratos Logger适配器
@@ -30,9 +31,13 @@ func NewKratosLoggerAdapter(otellogger otellog.Logger, config *Config) log.Logge
 		// 确保日志目录存在
 		logDir := filepath.Dir(config.Logs.FilePath)
 		if err := os.MkdirAll(logDir, 0755); err == nil {
-			// 尝试打开文件进行写入
-			if file, err := os.OpenFile(config.Logs.FilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err == nil {
-				adapter.writer = file
+			// 创建lumberjack日志轮转器
+			adapter.writer = &lumberjack.Logger{
+				Filename:   config.Logs.FilePath,   // 日志文件路径
+				MaxSize:    config.Logs.MaxSize,    // 单个文件最大大小(MB)
+				MaxBackups: config.Logs.MaxBackups, // 最大备份文件数
+				MaxAge:     config.Logs.MaxAge,     // 最大保留天数
+				Compress:   config.Logs.Compress,   // 是否压缩
 			}
 		}
 	}
@@ -141,9 +146,8 @@ func (a *KratosLoggerAdapter) writeToFile(level log.Level, message string, keyva
 	// 构建日志行
 	logLine := a.formatLogLine(level, message, keyvals)
 
-	// 写入文件
-	a.writer.WriteString(logLine + "\n")
-	a.writer.Sync() // 确保立即写入磁盘
+	// 写入文件（lumberjack会自动处理轮转）
+	a.writer.Write([]byte(logLine + "\n"))
 }
 
 // formatLogLine 格式化日志行
@@ -228,4 +232,12 @@ func toStringBytes(v any) []byte {
 		// 对于其他类型，使用默认的字符串表示
 		return []byte("unknown type")
 	}
+}
+
+// Close 关闭日志文件
+func (a *KratosLoggerAdapter) Close() error {
+	if a.writer != nil {
+		return a.writer.Close()
+	}
+	return nil
 }

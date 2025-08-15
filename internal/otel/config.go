@@ -49,12 +49,20 @@ type PrometheusConfig struct {
 
 // LogsConfig 日志配置
 type LogsConfig struct {
-	Enabled  bool       `yaml:"enabled" json:"enabled"`
-	Level    string     `yaml:"level" json:"level"`
-	Format   string     `yaml:"format" json:"format"`
-	Output   string     `yaml:"output" json:"output"`
-	FilePath string     `yaml:"file_path" json:"file_path"`
-	Loki     LokiConfig `yaml:"loki" json:"loki"`
+	Enabled        bool       `yaml:"enabled" json:"enabled"`
+	Level          string     `yaml:"level" json:"level"`
+	Format         string     `yaml:"format" json:"format"`
+	Output         string     `yaml:"output" json:"output"`
+	FilePath       string     `yaml:"file_path" json:"file_path"`
+	MaxSize        int        `yaml:"max_size" json:"max_size"`
+	MaxBackups     int        `yaml:"max_backups" json:"max_backups"`
+	MaxAge         int        `yaml:"max_age" json:"max_age"`
+	Compress       bool       `yaml:"compress" json:"compress"`
+	Caller         bool       `yaml:"caller" json:"caller"`
+	Stacktrace     bool       `yaml:"stacktrace" json:"stacktrace"`
+	EscapeNewlines bool       `yaml:"escape_newlines" json:"escape_newlines"`
+	Gorm           GormLogs   `yaml:"gorm" json:"gorm"`
+	Loki           LokiConfig `yaml:"loki" json:"loki"`
 }
 
 // LokiConfig Loki 配置
