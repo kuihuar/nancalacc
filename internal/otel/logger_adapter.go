@@ -32,7 +32,7 @@ func NewKratosLoggerAdapter(otellogger otellog.Logger, config *Config) log.Logge
 	}
 
 	// 如果配置了文件输出，创建文件写入器
-	if config != nil && config.Logs.Enabled && config.Logs.Output == "file" && config.Logs.FilePath != "" {
+	if config != nil && config.Logs.Enabled && (config.Logs.Output == "file" || config.Logs.Output == "both") && config.Logs.FilePath != "" {
 		// 确保日志目录存在
 		logDir := filepath.Dir(config.Logs.FilePath)
 		if err := os.MkdirAll(logDir, 0755); err == nil {
