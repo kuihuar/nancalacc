@@ -463,8 +463,21 @@ type LogsConfig struct {
 	EscapeNewlines bool                   `protobuf:"varint,12,opt,name=escape_newlines,json=escapeNewlines,proto3" json:"escape_newlines,omitempty"`
 	Gorm           *GormLog               `protobuf:"bytes,13,opt,name=gorm,proto3" json:"gorm,omitempty"`
 	Loki           *LokiConfig            `protobuf:"bytes,14,opt,name=loki,proto3" json:"loki,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Zap配置
+	UseZap               bool   `protobuf:"varint,15,opt,name=use_zap,json=useZap,proto3" json:"use_zap,omitempty"`                                             // 是否使用zap logger
+	ZapDevelopment       bool   `protobuf:"varint,16,opt,name=zap_development,json=zapDevelopment,proto3" json:"zap_development,omitempty"`                     // 是否为开发模式
+	ZapDisableCaller     bool   `protobuf:"varint,17,opt,name=zap_disable_caller,json=zapDisableCaller,proto3" json:"zap_disable_caller,omitempty"`             // 是否禁用调用者信息
+	ZapDisableStacktrace bool   `protobuf:"varint,18,opt,name=zap_disable_stacktrace,json=zapDisableStacktrace,proto3" json:"zap_disable_stacktrace,omitempty"` // 是否禁用堆栈跟踪
+	ZapEncoding          string `protobuf:"bytes,19,opt,name=zap_encoding,json=zapEncoding,proto3" json:"zap_encoding,omitempty"`                               // 编码格式: json, console
+	ZapTimeKey           string `protobuf:"bytes,20,opt,name=zap_time_key,json=zapTimeKey,proto3" json:"zap_time_key,omitempty"`                                // 时间字段名
+	ZapLevelKey          string `protobuf:"bytes,21,opt,name=zap_level_key,json=zapLevelKey,proto3" json:"zap_level_key,omitempty"`                             // 级别字段名
+	ZapNameKey           string `protobuf:"bytes,22,opt,name=zap_name_key,json=zapNameKey,proto3" json:"zap_name_key,omitempty"`                                // 名称字段名
+	ZapCallerKey         string `protobuf:"bytes,23,opt,name=zap_caller_key,json=zapCallerKey,proto3" json:"zap_caller_key,omitempty"`                          // 调用者字段名
+	ZapFunctionKey       string `protobuf:"bytes,24,opt,name=zap_function_key,json=zapFunctionKey,proto3" json:"zap_function_key,omitempty"`                    // 函数字段名
+	ZapMessageKey        string `protobuf:"bytes,25,opt,name=zap_message_key,json=zapMessageKey,proto3" json:"zap_message_key,omitempty"`                       // 消息字段名
+	ZapStacktraceKey     string `protobuf:"bytes,26,opt,name=zap_stacktrace_key,json=zapStacktraceKey,proto3" json:"zap_stacktrace_key,omitempty"`              // 堆栈跟踪字段名
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *LogsConfig) Reset() {
@@ -593,6 +606,90 @@ func (x *LogsConfig) GetLoki() *LokiConfig {
 		return x.Loki
 	}
 	return nil
+}
+
+func (x *LogsConfig) GetUseZap() bool {
+	if x != nil {
+		return x.UseZap
+	}
+	return false
+}
+
+func (x *LogsConfig) GetZapDevelopment() bool {
+	if x != nil {
+		return x.ZapDevelopment
+	}
+	return false
+}
+
+func (x *LogsConfig) GetZapDisableCaller() bool {
+	if x != nil {
+		return x.ZapDisableCaller
+	}
+	return false
+}
+
+func (x *LogsConfig) GetZapDisableStacktrace() bool {
+	if x != nil {
+		return x.ZapDisableStacktrace
+	}
+	return false
+}
+
+func (x *LogsConfig) GetZapEncoding() string {
+	if x != nil {
+		return x.ZapEncoding
+	}
+	return ""
+}
+
+func (x *LogsConfig) GetZapTimeKey() string {
+	if x != nil {
+		return x.ZapTimeKey
+	}
+	return ""
+}
+
+func (x *LogsConfig) GetZapLevelKey() string {
+	if x != nil {
+		return x.ZapLevelKey
+	}
+	return ""
+}
+
+func (x *LogsConfig) GetZapNameKey() string {
+	if x != nil {
+		return x.ZapNameKey
+	}
+	return ""
+}
+
+func (x *LogsConfig) GetZapCallerKey() string {
+	if x != nil {
+		return x.ZapCallerKey
+	}
+	return ""
+}
+
+func (x *LogsConfig) GetZapFunctionKey() string {
+	if x != nil {
+		return x.ZapFunctionKey
+	}
+	return ""
+}
+
+func (x *LogsConfig) GetZapMessageKey() string {
+	if x != nil {
+		return x.ZapMessageKey
+	}
+	return ""
+}
+
+func (x *LogsConfig) GetZapStacktraceKey() string {
+	if x != nil {
+		return x.ZapStacktraceKey
+	}
+	return ""
 }
 
 // Loki配置
@@ -1827,7 +1924,7 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\venvironment\x18\x04 \x01(\tR\venvironment\x120\n" +
 	"\x06traces\x18\x05 \x01(\v2\x18.kratos.api.TracesConfigR\x06traces\x123\n" +
 	"\ametrics\x18\x06 \x01(\v2\x19.kratos.api.MetricsConfigR\ametrics\x12*\n" +
-	"\x04logs\x18\a \x01(\v2\x16.kratos.api.LogsConfigR\x04logs\"\xb0\x03\n" +
+	"\x04logs\x18\a \x01(\v2\x16.kratos.api.LogsConfigR\x04logs\"\x87\a\n" +
 	"\n" +
 	"LogsConfig\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x14\n" +
@@ -1847,7 +1944,21 @@ const file_conf_conf_proto_rawDesc = "" +
 	"stacktrace\x12'\n" +
 	"\x0fescape_newlines\x18\f \x01(\bR\x0eescapeNewlines\x12'\n" +
 	"\x04gorm\x18\r \x01(\v2\x13.kratos.api.GormLogR\x04gorm\x12*\n" +
-	"\x04loki\x18\x0e \x01(\v2\x16.kratos.api.LokiConfigR\x04loki\"B\n" +
+	"\x04loki\x18\x0e \x01(\v2\x16.kratos.api.LokiConfigR\x04loki\x12\x17\n" +
+	"\ause_zap\x18\x0f \x01(\bR\x06useZap\x12'\n" +
+	"\x0fzap_development\x18\x10 \x01(\bR\x0ezapDevelopment\x12,\n" +
+	"\x12zap_disable_caller\x18\x11 \x01(\bR\x10zapDisableCaller\x124\n" +
+	"\x16zap_disable_stacktrace\x18\x12 \x01(\bR\x14zapDisableStacktrace\x12!\n" +
+	"\fzap_encoding\x18\x13 \x01(\tR\vzapEncoding\x12 \n" +
+	"\fzap_time_key\x18\x14 \x01(\tR\n" +
+	"zapTimeKey\x12\"\n" +
+	"\rzap_level_key\x18\x15 \x01(\tR\vzapLevelKey\x12 \n" +
+	"\fzap_name_key\x18\x16 \x01(\tR\n" +
+	"zapNameKey\x12$\n" +
+	"\x0ezap_caller_key\x18\x17 \x01(\tR\fzapCallerKey\x12(\n" +
+	"\x10zap_function_key\x18\x18 \x01(\tR\x0ezapFunctionKey\x12&\n" +
+	"\x0fzap_message_key\x18\x19 \x01(\tR\rzapMessageKey\x12,\n" +
+	"\x12zap_stacktrace_key\x18\x1a \x01(\tR\x10zapStacktraceKey\"B\n" +
 	"\n" +
 	"LokiConfig\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1a\n" +

@@ -63,6 +63,19 @@ type LogsConfig struct {
 	EscapeNewlines bool       `yaml:"escape_newlines" json:"escape_newlines"`
 	Gorm           GormLogs   `yaml:"gorm" json:"gorm"`
 	Loki           LokiConfig `yaml:"loki" json:"loki"`
+	// Zap配置
+	UseZap               bool   `yaml:"use_zap" json:"use_zap"`
+	ZapDevelopment       bool   `yaml:"zap_development" json:"zap_development"`
+	ZapDisableCaller     bool   `yaml:"zap_disable_caller" json:"zap_disable_caller"`
+	ZapDisableStacktrace bool   `yaml:"zap_disable_stacktrace" json:"zap_disable_stacktrace"`
+	ZapEncoding          string `yaml:"zap_encoding" json:"zap_encoding"`
+	ZapTimeKey           string `yaml:"zap_time_key" json:"zap_time_key"`
+	ZapLevelKey          string `yaml:"zap_level_key" json:"zap_level_key"`
+	ZapNameKey           string `yaml:"zap_name_key" json:"zap_name_key"`
+	ZapCallerKey         string `yaml:"zap_caller_key" json:"zap_caller_key"`
+	ZapFunctionKey       string `yaml:"zap_function_key" json:"zap_function_key"`
+	ZapMessageKey        string `yaml:"zap_message_key" json:"zap_message_key"`
+	ZapStacktraceKey     string `yaml:"zap_stacktrace_key" json:"zap_stacktrace_key"`
 }
 
 // LokiConfig Loki 配置
@@ -131,6 +144,19 @@ func DefaultConfig() *Config {
 				Enabled:  true,
 				Endpoint: "http://localhost:3100/loki/api/v1/push",
 			},
+			// Zap默认配置
+			UseZap:               true,   // 默认启用zap
+			ZapDevelopment:       false,  // 默认生产模式
+			ZapDisableCaller:     false,  // 默认启用调用者信息
+			ZapDisableStacktrace: false,  // 默认启用堆栈跟踪
+			ZapEncoding:          "json", // 默认JSON编码
+			ZapTimeKey:           "timestamp",
+			ZapLevelKey:          "level",
+			ZapNameKey:           "logger",
+			ZapCallerKey:         "caller",
+			ZapFunctionKey:       "func",
+			ZapMessageKey:        "message",
+			ZapStacktraceKey:     "stacktrace",
 		},
 	}
 }
@@ -219,6 +245,19 @@ func (a *ConfigAdapter) FromBootstrap(bootstrap interface{}) *Config {
 					Enabled:  bc.Otel.Logs.Loki.Enabled,
 					Endpoint: bc.Otel.Logs.Loki.Endpoint,
 				},
+				// Zap配置
+				UseZap:               bc.Otel.Logs.UseZap,
+				ZapDevelopment:       bc.Otel.Logs.ZapDevelopment,
+				ZapDisableCaller:     bc.Otel.Logs.ZapDisableCaller,
+				ZapDisableStacktrace: bc.Otel.Logs.ZapDisableStacktrace,
+				ZapEncoding:          bc.Otel.Logs.ZapEncoding,
+				ZapTimeKey:           bc.Otel.Logs.ZapTimeKey,
+				ZapLevelKey:          bc.Otel.Logs.ZapLevelKey,
+				ZapNameKey:           bc.Otel.Logs.ZapNameKey,
+				ZapCallerKey:         bc.Otel.Logs.ZapCallerKey,
+				ZapFunctionKey:       bc.Otel.Logs.ZapFunctionKey,
+				ZapMessageKey:        bc.Otel.Logs.ZapMessageKey,
+				ZapStacktraceKey:     bc.Otel.Logs.ZapStacktraceKey,
 			},
 		}
 		return config

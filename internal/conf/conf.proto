@@ -120,7 +120,21 @@ message LogsConfig {
   bool escape_newlines = 12;
   GormLog gorm = 13;
   LokiConfig loki = 14;
+  // Zap配置
+  bool use_zap = 15;           // 是否使用zap logger
+  bool zap_development = 16;   // 是否为开发模式
+  bool zap_disable_caller = 17; // 是否禁用调用者信息
+  bool zap_disable_stacktrace = 18; // 是否禁用堆栈跟踪
+  string zap_encoding = 19;    // 编码格式: json, console
+  string zap_time_key = 20;    // 时间字段名
+  string zap_level_key = 21;   // 级别字段名
+  string zap_name_key = 22;    // 名称字段名
+  string zap_caller_key = 23;  // 调用者字段名
+  string zap_function_key = 24; // 函数字段名
+  string zap_message_key = 25; // 消息字段名
+  string zap_stacktrace_key = 26; // 堆栈跟踪字段名
 }
+
 
 // Loki配置
 message LokiConfig {

@@ -1,0 +1,88 @@
+server:
+  http:
+    network: tcp
+    addr: 0.0.0.0:8000
+    timeout: 1s
+  grpc:
+    network: tcp
+    addr: 0.0.0.0:9000
+    timeout: 1s
+
+data:
+  database:
+    driver: mysql
+    source: root:123456@tcp(127.0.0.1:3306)/nancalacc?charset=utf8mb4&parseTime=True&loc=Local
+  redis:
+    network: tcp
+    addr: 127.0.0.1:6379
+    read_timeout: 0.2s
+    write_timeout: 0.2s
+
+otel:
+  enabled: true
+  service_name: "nancalacc"
+  service_version: "1.0.0"
+  environment: "development"
+  
+  traces:
+    enabled: true
+    jaeger:
+      enabled: false
+      endpoint: "http://localhost:14268/api/traces"
+  
+  metrics:
+    enabled: true
+    prometheus:
+      enabled: fase
+      endpoint: "localhost:9090"
+      interval: "15s"
+  
+  logs:
+    enabled: true
+    level: "info"
+    format: "json"
+    output: "both"  # stdout, file, both
+    file_path: "logs/app.log"
+    max_size: 100    # MB
+    max_backups: 3
+    max_age: 28      # days
+    compress: true
+    caller: true
+    stacktrace: true
+    escape_newlines: false
+    
+    # Zap配置
+    use_zap: true                    # 启用zap logger
+    zap_development: false           # 生产模式
+    zap_disable_caller: false        # 启用调用者信息
+    zap_disable_stacktrace: false    # 启用堆栈跟踪
+    zap_encoding: "json"             # 编码格式: json, console
+    zap_time_key: "timestamp"        # 时间字段名
+    zap_level_key: "level"           # 级别字段名
+    zap_name_key: "logger"           # 名称字段名
+    zap_caller_key: "caller"         # 调用者字段名
+    zap_function_key: "func"         # 函数字段名
+    zap_message_key: "message"       # 消息字段名
+    zap_stacktrace_key: "stacktrace" # 堆栈跟踪字段名
+    
+    gorm:
+      slow_threshold: "1s"
+      log_level: "info"
+    
+    loki:
+      enabled: false
+      endpoint: "http://localhost:3100/loki/api/v1/push"
+
+auth:
+  wpsapp:
+    client_id: "your_client_id"
+    client_secret: "your_client_secret"
+    auth_url: "https://auth.wps.cn/oauth2/v1/authorize"
+    auth_path: "/oauth2/v1/token"
+    grant_type: "authorization_code"
+  dingtalk:
+    endpoint: "https://oapi.dingtalk.com"
+    app_key: "your_app_key"
+    app_secret: "your_app_secret"
+    timeout: "5s"
+    maxConcurrent: 10 

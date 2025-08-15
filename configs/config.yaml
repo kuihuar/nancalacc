@@ -92,7 +92,7 @@ otel:
     enabled: true                  # 是否启用日志收集
     level: "info"                  # 日志级别: debug, info, warn, error, fatal
     format: "json"                 # 日志格式: json, console
-    output: "stdout"               # 输出目标: stdout, stderr, file
+    output: "both"               # 输出目标: stdout, stderr, file
     file_path: "logs/app.log"                  # 文件路径（当output为file时）
     max_size: 100                  # 最大文件大小（MB）
     max_backups: 3                 # 最大备份文件数
@@ -101,6 +101,21 @@ otel:
     caller: true                   # 是否显示调用者信息
     stacktrace: true               # 是否显示堆栈跟踪
     escape_newlines: false         # 是否转义换行符
+
+    # Zap配置
+    use_zap: true                    # 启用zap logger
+    zap_development: false           # 生产模式
+    zap_disable_caller: false       # 启用调用者信息
+    zap_disable_stacktrace: false    # 启用堆栈跟踪
+    zap_encoding: "json"             # 编码格式: json, console
+    zap_time_key: "timestamp"        # 时间字段名
+    zap_level_key: "level"           # 级别字段名
+    zap_name_key: "logger"           # 名称字段名
+    zap_caller_key: "caller"         # 调用者字段名
+    zap_function_key: "func"         # 函数字段名
+    zap_message_key: "message"       # 消息字段名
+    zap_stacktrace_key: "stacktrace" # 堆栈跟踪字段名
+
     gorm:
       slow_threshold: "1s"         # 慢查询阈值
       log_level: "info"            # GORM日志级别
