@@ -2,6 +2,7 @@ package otel
 
 import (
 	"context"
+	stdlog "log"
 	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -22,11 +23,18 @@ type Integration struct {
 
 // NewIntegration 创建集成器
 func NewIntegration(config *Config) *Integration {
+	stdlog.Printf("🔍 [DEBUG] Creating new OpenTelemetry integration")
+	stdlog.Printf("🔍 [DEBUG] Config - Enabled: %v, Traces: %v, Logs: %v", config.Enabled, config.Traces.Enabled, config.Logs.Enabled)
+
+	// 创建真正的 OpenTelemetry 服务
 	service := NewService(
 		config.GetTracer(),
 		config.GetMeter(),
 		config.GetLogger(),
 	)
+
+	stdlog.Printf("🔍 [DEBUG] OpenTelemetry service created")
+
 	return &Integration{
 		service: service,
 		config:  config,
@@ -60,10 +68,14 @@ func (i *Integration) CreateLogger() log.Logger {
 
 // CreateHTTPMiddleware 创建HTTP中间件
 func (i *Integration) CreateHTTPMiddleware() []http.ServerOption {
+	stdlog.Printf("🔍 [DEBUG] CreateHTTPMiddleware called, enabled: %v, traces: %v", i.config.Enabled, i.config.Traces.Enabled)
+
 	if !i.config.Enabled || !i.config.Traces.Enabled {
+		stdlog.Printf("🔍 [DEBUG] HTTP middleware disabled, returning nil")
 		return nil
 	}
 
+	stdlog.Printf("🔍 [DEBUG] Creating HTTP middleware with tracing and logging")
 	return []http.ServerOption{
 		http.Middleware(
 			tracing.Server(),
@@ -74,10 +86,14 @@ func (i *Integration) CreateHTTPMiddleware() []http.ServerOption {
 
 // CreateGRPCMiddleware 创建gRPC中间件
 func (i *Integration) CreateGRPCMiddleware() []grpc.ServerOption {
+	stdlog.Printf("🔍 [DEBUG] CreateGRPCMiddleware called, enabled: %v, traces: %v", i.config.Enabled, i.config.Traces.Enabled)
+
 	if !i.config.Enabled || !i.config.Traces.Enabled {
+		stdlog.Printf("🔍 [DEBUG] gRPC middleware disabled, returning nil")
 		return nil
 	}
 
+	stdlog.Printf("🔍 [DEBUG] Creating gRPC middleware with tracing and logging")
 	return []grpc.ServerOption{
 		grpc.Middleware(
 			tracing.Server(),
@@ -101,6 +117,9 @@ func (i *Integration) createLoggingMiddleware() middleware.Middleware {
 				kind = tr.Kind().String()
 			}
 
+			// 添加调试日志
+			stdlog.Printf("🔍 [DEBUG] Creating span for operation: %s, kind: %s", operation, kind)
+
 			// 创建span
 			ctx, span := i.service.GetTracer().Start(ctx, operation)
 			defer span.End()
@@ -111,8 +130,11 @@ func (i *Integration) createLoggingMiddleware() middleware.Middleware {
 				attribute.String("transport.operation", operation),
 			)
 
+			stdlog.Printf("🔍 [DEBUG] Span created with attributes: transport.kind=%s, transport.operation=%s", kind, operation)
+
 			// 记录请求开始日志
 			if i.config.Logs.Enabled {
+				stdlog.Printf("🔍 [DEBUG] Logs enabled, creating logger for request start")
 				logger := i.CreateLogger()
 				logger.Log(log.LevelInfo,
 					"msg", "request started",
@@ -120,6 +142,9 @@ func (i *Integration) createLoggingMiddleware() middleware.Middleware {
 					"kind", kind,
 					"request", req,
 				)
+				stdlog.Printf("🔍 [DEBUG] Request start log recorded")
+			} else {
+				stdlog.Printf("🔍 [DEBUG] Logs disabled, skipping request start log")
 			}
 
 			// 执行请求
@@ -127,6 +152,7 @@ func (i *Integration) createLoggingMiddleware() middleware.Middleware {
 
 			// 记录请求结束日志
 			if i.config.Logs.Enabled {
+				stdlog.Printf("🔍 [DEBUG] Logs enabled, creating logger for request end")
 				logger := i.CreateLogger()
 				logger.Log(log.LevelInfo,
 					"msg", "request finished",
@@ -135,13 +161,18 @@ func (i *Integration) createLoggingMiddleware() middleware.Middleware {
 					"duration", time.Since(start).String(),
 					"error", err,
 				)
+				stdlog.Printf("🔍 [DEBUG] Request end log recorded, duration: %s", time.Since(start).String())
+			} else {
+				stdlog.Printf("🔍 [DEBUG] Logs disabled, skipping request end log")
 			}
 
 			// 记录错误到span
 			if err != nil {
+				stdlog.Printf("🔍 [DEBUG] Recording error to span: %v", err)
 				span.RecordError(err)
 			}
 
+			stdlog.Printf("🔍 [DEBUG] Span ending for operation: %s", operation)
 			return reply, err
 		}
 	}

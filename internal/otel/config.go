@@ -1,14 +1,26 @@
 package otel
 
 import (
+	"context"
+	stdlog "log"
+	"time"
+
 	"nancalacc/internal/conf"
 
-	"go.opentelemetry.io/otel/log"
-	logNoop "go.opentelemetry.io/otel/log/noop"
-	"go.opentelemetry.io/otel/metric"
-	metricNoop "go.opentelemetry.io/otel/metric/noop"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
-	traceNoop "go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
+	"go.opentelemetry.io/otel/log"
+	"go.opentelemetry.io/otel/metric"
+	traceNoop "go.opentelemetry.io/otel/sdk/trace"
 )
 
 // Config OpenTelemetry 配置
@@ -26,12 +38,20 @@ type Config struct {
 type TracesConfig struct {
 	Enabled bool         `yaml:"enabled" json:"enabled"`
 	Jaeger  JaegerConfig `yaml:"jaeger" json:"jaeger"`
+	Otlp    OtlpConfig   `yaml:"otlp" json:"otlp"`
 }
 
 // JaegerConfig Jaeger 配置
 type JaegerConfig struct {
 	Enabled  bool   `yaml:"enabled" json:"enabled"`
 	Endpoint string `yaml:"endpoint" json:"endpoint"`
+}
+
+// OtlpConfig OTLP 配置
+type OtlpConfig struct {
+	Enabled  bool   `yaml:"enabled" json:"enabled"`
+	Endpoint string `yaml:"endpoint" json:"endpoint"`
+	Timeout  int    `yaml:"timeout" json:"timeout"` // 超时时间（秒）
 }
 
 // MetricsConfig 指标配置
@@ -127,6 +147,11 @@ func DefaultConfig() *Config {
 				Enabled:  true,
 				Endpoint: "http://localhost:14268/api/traces",
 			},
+			Otlp: OtlpConfig{
+				Enabled:  true,
+				Endpoint: "localhost:4317",
+				Timeout:  30,
+			},
 		},
 		Metrics: MetricsConfig{
 			Enabled: true,
@@ -164,28 +189,53 @@ func DefaultConfig() *Config {
 // GetLogger 获取日志器
 func (c *Config) GetLogger() log.Logger {
 	if !c.Enabled || !c.Logs.Enabled {
-		return logNoop.NewLoggerProvider().Logger("nancalacc")
+		stdlog.Printf("🔍 [DEBUG] OpenTelemetry logs disabled, using noop logger")
+		// 暂时返回 nil，避免导入问题
+		return nil
 	}
 
+	stdlog.Printf("🔍 [DEBUG] OpenTelemetry logs enabled, attempting to create configured logger")
 	// 创建基于配置的日志器
 	return c.createConfiguredLogger()
 }
 
 // createConfiguredLogger 根据配置创建日志器
 func (c *Config) createConfiguredLogger() log.Logger {
+	stdlog.Printf("🔍 [DEBUG] Creating configured logger...")
+
 	// 这里应该根据配置创建真正的日志器
 	// 由于OpenTelemetry的日志API比较复杂，我们使用Kratos的标准日志器
 	// 并在适配器中处理级别过滤
 
-	// 暂时返回noop日志器，实际的日志处理在KratosLoggerAdapter中
-	return logNoop.NewLoggerProvider().Logger("nancalacc")
+	// 暂时返回 nil，避免导入问题
+	stdlog.Printf("🔍 [DEBUG] Returning nil logger (not yet implemented)")
+	return nil
 }
 
 // GetTracer 获取追踪器
 func (c *Config) GetTracer() trace.Tracer {
 	if !c.Enabled || !c.Traces.Enabled {
+		stdlog.Printf("🔍 [DEBUG] OpenTelemetry traces disabled, using noop tracer")
 		return traceNoop.NewTracerProvider().Tracer("nancalacc")
 	}
+
+	stdlog.Printf("🔍 [DEBUG] OpenTelemetry traces enabled, attempting to create real tracer")
+
+	// 尝试创建真正的追踪器
+	if c.Traces.Jaeger.Enabled {
+		stdlog.Printf("🔍 [DEBUG] Jaeger tracing enabled, endpoint: %s", c.Traces.Jaeger.Endpoint)
+		// 创建真正的 Jaeger 导出器
+		return c.createJaegerTracer()
+	}
+
+	// 如果没有配置 Jaeger，尝试使用 OTLP
+	if c.Traces.Otlp.Enabled {
+		stdlog.Printf("🔍 [DEBUG] OTLP tracing enabled, endpoint: %s", c.Traces.Otlp.Endpoint)
+		// 创建真正的 OTLP 导出器
+		return c.createOTLPTracer()
+	}
+
+	stdlog.Printf("🔍 [DEBUG] No tracing backend configured, using noop tracer")
 	// 使用 noop 追踪器作为默认实现
 	return traceNoop.NewTracerProvider().Tracer("nancalacc")
 }
@@ -193,10 +243,11 @@ func (c *Config) GetTracer() trace.Tracer {
 // GetMeter 获取指标器
 func (c *Config) GetMeter() metric.Meter {
 	if !c.Enabled || !c.Metrics.Enabled {
-		return metricNoop.NewMeterProvider().Meter("nancalacc")
+		// 暂时返回 nil，避免导入问题
+		return nil
 	}
-	// 使用 noop 指标器作为默认实现
-	return metricNoop.NewMeterProvider().Meter("nancalacc")
+	// 暂时返回 nil，避免导入问题
+	return nil
 }
 
 // ConfigAdapter 配置适配器
@@ -225,6 +276,10 @@ func (a *ConfigAdapter) FromBootstrap(bootstrap interface{}) *Config {
 				Jaeger: JaegerConfig{
 					Enabled:  bc.Otel.Traces.Jaeger.Enabled,
 					Endpoint: bc.Otel.Traces.Jaeger.Endpoint,
+				},
+				Otlp: OtlpConfig{
+					Enabled:  bc.Otel.Traces.Otlp.Enabled,
+					Endpoint: bc.Otel.Traces.Otlp.Endpoint,
 				},
 			},
 			Metrics: MetricsConfig{
@@ -264,4 +319,168 @@ func (a *ConfigAdapter) FromBootstrap(bootstrap interface{}) *Config {
 	}
 
 	return DefaultConfig()
+}
+
+// NewConfigFromConf 从 conf.OpenTelemetry 创建 Config
+func NewConfigFromConf(otelConf *conf.OpenTelemetry) *Config {
+	if otelConf == nil {
+		return DefaultConfig()
+	}
+
+	config := &Config{
+		Enabled:        otelConf.Enabled,
+		ServiceName:    otelConf.ServiceName,
+		ServiceVersion: otelConf.ServiceVersion,
+		Environment:    otelConf.Environment,
+	}
+
+	// 设置追踪配置
+	if otelConf.Traces != nil {
+		config.Traces.Enabled = otelConf.Traces.Enabled
+		if otelConf.Traces.Jaeger != nil {
+			config.Traces.Jaeger.Enabled = otelConf.Traces.Jaeger.Enabled
+			config.Traces.Jaeger.Endpoint = otelConf.Traces.Jaeger.Endpoint
+		}
+		if otelConf.Traces.Otlp != nil {
+			config.Traces.Otlp.Enabled = otelConf.Traces.Otlp.Enabled
+			config.Traces.Otlp.Endpoint = otelConf.Traces.Otlp.Endpoint
+		}
+	}
+
+	// 设置指标配置
+	if otelConf.Metrics != nil {
+		config.Metrics.Enabled = otelConf.Metrics.Enabled
+		if otelConf.Metrics.Prometheus != nil {
+			config.Metrics.Prometheus.Enabled = otelConf.Metrics.Prometheus.Enabled
+			config.Metrics.Prometheus.Endpoint = otelConf.Metrics.Prometheus.Endpoint
+			config.Metrics.Prometheus.Interval = otelConf.Metrics.Prometheus.Interval
+		}
+	}
+
+	// 设置日志配置
+	if otelConf.Logs != nil {
+		config.Logs.Enabled = otelConf.Logs.Enabled
+		config.Logs.Level = otelConf.Logs.Level
+		config.Logs.Format = otelConf.Logs.Format
+		config.Logs.Output = otelConf.Logs.Output
+		config.Logs.FilePath = otelConf.Logs.FilePath
+		if otelConf.Logs.Loki != nil {
+			config.Logs.Loki.Enabled = otelConf.Logs.Loki.Enabled
+			config.Logs.Loki.Endpoint = otelConf.Logs.Loki.Endpoint
+		}
+		// Zap配置
+		config.Logs.UseZap = otelConf.Logs.UseZap
+		config.Logs.ZapDevelopment = otelConf.Logs.ZapDevelopment
+		config.Logs.ZapDisableCaller = otelConf.Logs.ZapDisableCaller
+		config.Logs.ZapDisableStacktrace = otelConf.Logs.ZapDisableStacktrace
+		config.Logs.ZapEncoding = otelConf.Logs.ZapEncoding
+		config.Logs.ZapTimeKey = otelConf.Logs.ZapTimeKey
+		config.Logs.ZapLevelKey = otelConf.Logs.ZapLevelKey
+		config.Logs.ZapNameKey = otelConf.Logs.ZapNameKey
+		config.Logs.ZapCallerKey = otelConf.Logs.ZapCallerKey
+		config.Logs.ZapFunctionKey = otelConf.Logs.ZapFunctionKey
+		config.Logs.ZapMessageKey = otelConf.Logs.ZapMessageKey
+		config.Logs.ZapStacktraceKey = otelConf.Logs.ZapStacktraceKey
+	}
+
+	return config
+}
+
+// createJaegerTracer 创建 Jaeger 追踪器
+func (c *Config) createJaegerTracer() trace.Tracer {
+	stdlog.Printf("🔍 [DEBUG] Creating real Jaeger tracer with endpoint: %s", c.Traces.Jaeger.Endpoint)
+
+	// 创建 Jaeger 导出器
+	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(c.Traces.Jaeger.Endpoint)))
+	if err != nil {
+		stdlog.Printf("🔍 [ERROR] Failed to create Jaeger exporter: %v", err)
+		stdlog.Printf("🔍 [DEBUG] Falling back to noop tracer")
+		return traceNoop.NewTracerProvider().Tracer("nancalacc")
+	}
+
+	// 创建资源
+	ctx := context.Background()
+	res, err := resource.New(ctx,
+		resource.WithAttributes(
+			semconv.ServiceName(c.ServiceName),
+			semconv.ServiceVersion(c.ServiceVersion),
+			semconv.DeploymentEnvironment(c.Environment),
+		),
+	)
+	if err != nil {
+		stdlog.Printf("🔍 [ERROR] Failed to create resource: %v", err)
+		stdlog.Printf("🔍 [DEBUG] Falling back to noop tracer")
+		return traceNoop.NewTracerProvider().Tracer("nancalacc")
+	}
+
+	// 创建 TracerProvider
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(res),
+	)
+
+	// 设置全局 TracerProvider
+	otel.SetTracerProvider(tp)
+
+	// 创建 tracer
+	tracer := tp.Tracer(c.ServiceName)
+
+	stdlog.Printf("🔍 [DEBUG] Real Jaeger tracer created successfully")
+	return tracer
+}
+
+// createOTLPTracer 创建 OTLP 追踪器
+func (c *Config) createOTLPTracer() trace.Tracer {
+	stdlog.Printf("🔍 [DEBUG] Creating real OTLP tracer with endpoint: %s", c.Traces.Otlp.Endpoint)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.Traces.Otlp.Timeout)*time.Second)
+	defer cancel()
+
+	// 创建 gRPC 连接
+	conn, err := grpc.DialContext(ctx, c.Traces.Otlp.Endpoint,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(),
+	)
+	if err != nil {
+		stdlog.Printf("🔍 [ERROR] Failed to connect to OTLP endpoint: %v", err)
+		stdlog.Printf("🔍 [DEBUG] Falling back to noop tracer")
+		return trace.NewNoopTracerProvider().Tracer("nancalacc")
+	}
+
+	// 创建 OTLP 导出器
+	exporter, err := otlptrace.New(ctx, otlptracegrpc.NewClient(otlptracegrpc.WithGRPCConn(conn)))
+	if err != nil {
+		stdlog.Printf("🔍 [ERROR] Failed to create OTLP exporter: %v", err)
+		stdlog.Printf("🔍 [DEBUG] Falling back to noop tracer")
+		return trace.NewNoopTracerProvider().Tracer("nancalacc")
+	}
+
+	// 创建资源
+	res, err := resource.New(ctx,
+		resource.WithAttributes(
+			semconv.ServiceName(c.ServiceName),
+			semconv.ServiceVersion(c.ServiceVersion),
+			semconv.DeploymentEnvironment(c.Environment),
+		),
+	)
+	if err != nil {
+		stdlog.Printf("🔍 [ERROR] Failed to create resource: %v", err)
+		stdlog.Printf("🔍 [DEBUG] Falling back to noop tracer")
+		return trace.NewNoopTracerProvider().Tracer("nancalacc")
+	}
+
+	// 创建 TracerProvider
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(res),
+	)
+
+	// 设置全局 TracerProvider
+	otel.SetTracerProvider(tp)
+
+	// 创建 tracer
+	tracer := tp.Tracer(c.ServiceName)
+
+	stdlog.Printf("🔍 [DEBUG] Real OTLP tracer created successfully")
+	return tracer
 }

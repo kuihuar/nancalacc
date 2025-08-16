@@ -79,11 +79,6 @@ otel:
       enabled: false               # 禁用 Jaeger 导出器，使用 OTLP
       endpoint: "http://192.168.1.142:14268/api/traces"  # Jaeger收集器端点
     
-    # Prometheus 不用于追踪，仅用于指标
-    prometheus:
-      enabled: false               # 禁用 Prometheus 追踪（Prometheus 主要用于指标）
-      endpoint: "192.168.1.142:9090"   # Prometheus端点
-      interval: "15s"              # 收集间隔
   
   # 指标配置
   metrics:

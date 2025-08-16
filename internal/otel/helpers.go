@@ -100,6 +100,24 @@ func (h *Histogram) Record(ctx context.Context, value float64, attrs ...attribut
 	}
 }
 
+// Attribute 创建属性键值对
+func Attribute(key string, value interface{}) attribute.KeyValue {
+	switch v := value.(type) {
+	case string:
+		return attribute.String(key, v)
+	case int:
+		return attribute.Int(key, v)
+	case int64:
+		return attribute.Int64(key, v)
+	case float64:
+		return attribute.Float64(key, v)
+	case bool:
+		return attribute.Bool(key, v)
+	default:
+		return attribute.String(key, "unknown")
+	}
+}
+
 // Gauge 仪表盘
 type Gauge struct {
 	gauge metric.Float64ObservableGauge
