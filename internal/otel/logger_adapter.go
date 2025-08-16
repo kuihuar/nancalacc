@@ -18,10 +18,11 @@ import (
 
 // KratosLoggerAdapter 适配OpenTelemetry Logger到Kratos Logger
 type KratosLoggerAdapter struct {
-	otellogger otellog.Logger
-	config     *Config
-	writer     *lumberjack.Logger
-	zapLogger  *zap.Logger // 新增zap logger
+	otellogger   otellog.Logger
+	config       *Config
+	writer       *lumberjack.Logger
+	zapLogger    *zap.Logger   // 新增zap logger
+	lokiExporter *LokiExporter // 新增Loki导出器
 }
 
 // NewKratosLoggerAdapter 创建Kratos Logger适配器
@@ -47,10 +48,26 @@ func NewKratosLoggerAdapter(otellogger otellog.Logger, config *Config) log.Logge
 		}
 	}
 
+	// 初始化Loki导出器
+	adapter.initLokiExporter()
+
 	// 初始化zap logger
 	adapter.initZapLogger()
 
 	return adapter
+}
+
+// initLokiExporter 初始化Loki导出器
+func (a *KratosLoggerAdapter) initLokiExporter() {
+	if a.config == nil || !a.config.Logs.Enabled || !a.config.Logs.Loki.Enabled {
+		return
+	}
+
+	// 创建Loki导出器
+	a.lokiExporter = NewLokiExporter(a.config.Logs.Loki.Endpoint, a)
+
+	// 打印调试信息
+	fmt.Printf("🔧 Loki导出器已初始化，端点: %s\n", a.config.Logs.Loki.Endpoint)
 }
 
 // initZapLogger 初始化zap logger
@@ -266,6 +283,29 @@ func (a *KratosLoggerAdapter) Log(level log.Level, keyvals ...any) error {
 	// 如果没有消息，使用默认消息
 	if message == "" {
 		message = "log message"
+	}
+
+	// 推送日志到Loki（如果启用）
+	if a.lokiExporter != nil {
+		// 构建标签
+		labels := make(map[string]string)
+		labels["service"] = "nancalacc"
+		labels["level"] = level.String()
+		labels["component"] = "otel_logger"
+
+		// 添加调试日志
+		fmt.Printf("🚀 准备推送日志到Loki: level=%s, message=%s\n", level.String(), message)
+
+		// 异步推送日志到Loki
+		go func() {
+			ctx := context.Background()
+			err := a.lokiExporter.PushLog(ctx, level.String(), message, labels)
+			if err != nil {
+				fmt.Printf("❌ Loki推送失败: %v\n", err)
+			} else {
+				fmt.Printf("✅ Loki推送成功: %s\n", message)
+			}
+		}()
 	}
 
 	// 优先使用zap logger（如果可用）

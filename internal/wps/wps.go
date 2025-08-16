@@ -277,8 +277,6 @@ func (ws *wps) GetDepartmentRoot(ctx context.Context, accessToken string, input 
 	if err != nil {
 		return resp, err
 	}
-	//fmt.Printf("resp: %+v\n", resp)
-	//fmt.Println()
 	if resp.Code != 0 {
 		return resp, ErrCodeNot0
 	}
@@ -309,8 +307,6 @@ func (ws *wps) GetUserByUserId(ctx context.Context, accessToken string, input Ge
 	if err != nil {
 		return resp, err
 	}
-	//fmt.Printf("resp: %+v\n", resp)
-	//fmt.Println()
 	if resp.Code != 0 {
 		return resp, ErrCodeNot0
 	}
@@ -381,8 +377,6 @@ func (ws *wps) GetUserDeptsByUserId(ctx context.Context, accessToken string, inp
 		return nil, err
 	}
 	log.Infof("GetUserDeptsByUserId res %v", resp)
-	//fmt.Printf("resp: %+v\n", resp)
-	//fmt.Println()
 	if resp.Code != 0 {
 		return nil, ErrCodeNot0
 	}
@@ -426,8 +420,6 @@ func (ws *wps) GetDeptChildren(ctx context.Context, accessToken string, input Ge
 	if err != nil {
 		return nil, err
 	}
-	//fmt.Printf("resp: %+v\n", resp)
-	//fmt.Println()
 	if resp.Code != 0 {
 		return nil, ErrCodeNot0
 	}
@@ -475,8 +467,6 @@ func (ws *wps) GetCompAllUsers(ctx context.Context, accessToken string, input Ge
 	if err != nil {
 		return nil, err
 	}
-	//fmt.Printf("resp: %+v\n", resp)
-	//fmt.Println()
 	if resp.Code != 0 {
 		return nil, ErrCodeNot0
 	}

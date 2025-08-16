@@ -57,7 +57,7 @@ otel:
   enabled: true                    # 是否启用OpenTelemetry
   service_name: "nancalacc"        # 服务名称
   service_version: "v1.0.0"        # 服务版本
-  environment: "production"         # 环境
+  environment: "development"         # 环境
   
   # 追踪配置
   traces:
@@ -67,24 +67,30 @@ otel:
     log_response_size: true        # 记录响应大小
     log_headers: true              # 记录请求头
     log_query_params: true         # 记录查询参数
-    jaeger:
-      enabled: false                # 是否启用Jaeger
-      endpoint: "http://localhost:14268/api/traces"  # Jaeger收集器端点
+    
+    # 主要使用 OTLP 导出器（推荐用于 Jaeger 2.9）
     otlp:
-      enabled: false               # 是否启用OTLP
-      endpoint: "localhost:4317"   # OTLP端点
+      enabled: true               # 启用 OTLP
+      endpoint: "192.168.1.142:4317"   # OTLP端点（对应你的 Jaeger 2.9 配置）
       timeout: 10                  # 超时时间（秒）
+    
+    # 备用 Jaeger 导出器（兼容性）
+    jaeger:
+      enabled: false               # 禁用 Jaeger 导出器，使用 OTLP
+      endpoint: "http://192.168.1.142:14268/api/traces"  # Jaeger收集器端点
+    
+    # Prometheus 不用于追踪，仅用于指标
     prometheus:
-      enabled: false               # 是否启用Prometheus追踪
-      endpoint: "localhost:9090"   # Prometheus端点
+      enabled: false               # 禁用 Prometheus 追踪（Prometheus 主要用于指标）
+      endpoint: "192.168.1.142:9090"   # Prometheus端点
       interval: "15s"              # 收集间隔
   
   # 指标配置
   metrics:
-    enabled: false                  # 是否启用指标收集
+    enabled: true                  # 是否启用指标收集
     prometheus:
-      enabled: false                # 是否启用Prometheus
-      endpoint: "localhost:9090"   # Prometheus端点
+      enabled: true                # 是否启用Prometheus
+      endpoint: "192.168.1.142:9090"   # Prometheus端点
       interval: "15s"              # 指标收集间隔
   
   # 日志配置
