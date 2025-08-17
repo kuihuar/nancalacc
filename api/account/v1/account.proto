@@ -132,7 +132,9 @@ message GetSyncAccountReply {
 	int64 user_count = 2;
 	int64 department_count = 3;
 	int64 user_department_relation_count = 4;
-	google.protobuf.Timestamp latest_sync_time = 5;
+	int64 actual_time = 5;
+	google.protobuf.Timestamp start_time = 6;
+	google.protobuf.Timestamp latest_sync_time = 7;
 }
 
 message CancelSyncAccountRequest {
