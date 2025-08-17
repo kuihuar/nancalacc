@@ -52,6 +52,9 @@ app:
   company_id: "1" # 云文档租户公司ID nancal
   access_key: "NRSXWTPKNAIRUBMP"
   secret_key: "SKnwwvvngrhcrpgc"
+  # 批量处理配置
+  batch_size: 500      # 批量大小，可根据环境调整
+  max_workers: 3       # 最大并发工作数
 
 otel:
   enabled: true                    # 是否启用OpenTelemetry

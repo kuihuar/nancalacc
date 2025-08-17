@@ -85,6 +85,11 @@ message App {
   string company_id = 10;
   string access_key = 11;
   string secret_key = 12;
+  // 批量处理配置
+  int32 batch_size = 13;           // 批量大小，默认500
+  int32 max_workers = 14;          // 最大并发工作数，默认3
+  string log_level = 15;           // 日志级别
+  string logout = 16;              // 日志输出
 }
 
 // OpenTelemetry 统一配置

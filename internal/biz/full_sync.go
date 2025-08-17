@@ -23,7 +23,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// GreeterUsecase is a Greeter usecase.
+// FullSyncUsecase is a FullSync usecase.
 type FullSyncUsecase struct {
 	repo         AccounterRepo
 	dingTalkRepo dingtalk.Dingtalk
@@ -32,14 +32,38 @@ type FullSyncUsecase struct {
 	bizConf      *conf.App
 	localCache   CacheService
 	log          log.Logger
+	// 批量处理配置
+	batchSize  int
+	maxWorkers int
 }
 
-// NewGreeterUsecase new a Greeter usecase.
+// NewFullSyncUsecase new a FullSync usecase.
 func NewFullSyncUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, wps wps.Wps, cache CacheService, logger log.Logger) *FullSyncUsecase {
 	appAuth := auth.NewWpsAppAuthenticator()
 	bizConf := conf.Get().GetApp()
-	return &FullSyncUsecase{repo: repo, dingTalkRepo: dingTalkRepo,
-		appAuth: appAuth, wps: wps, localCache: cache, bizConf: bizConf, log: logger}
+
+	// 获取批量处理配置，设置默认值
+	batchSize := int(bizConf.GetBatchSize())
+	if batchSize <= 0 {
+		batchSize = 500 // 默认批量大小
+	}
+
+	maxWorkers := int(bizConf.GetMaxWorkers())
+	if maxWorkers <= 0 {
+		maxWorkers = 3 // 默认并发数
+	}
+
+	return &FullSyncUsecase{
+		repo:         repo,
+		dingTalkRepo: dingTalkRepo,
+		appAuth:      appAuth,
+		wps:          wps,
+		localCache:   cache,
+		bizConf:      bizConf,
+		log:          logger,
+		batchSize:    batchSize,
+		maxWorkers:   maxWorkers,
+	}
 }
 
 func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
@@ -68,7 +92,7 @@ func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.Create
 	if err != nil {
 		return nil, err
 	}
-	err = uc.createCacheTask(ctx, taskId, "in_progress")
+	err = uc.CreateCacheTask(ctx, taskId, "in_progress")
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +181,7 @@ func (uc *FullSyncUsecase) getFullData(ctx context.Context) (companyCfg *dingtal
 	return companyCft, users, depts, deptUsers, nil
 }
 func (uc *FullSyncUsecase) notifyFullSync(ctx context.Context, taskId string) (err error) {
+	ctx = context.Background()
 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
 	if err != nil {
 		return err
@@ -205,7 +230,7 @@ func (uc *FullSyncUsecase) ParseExecell(ctx context.Context, taskId, filename st
 	uc.log.Log(log.LevelInfo, "msg", "ParseExecell", "taskId", taskId, "filename", filename)
 
 	// 更新任务状态为处理中
-	if err := uc.updateTaskProgress(ctx, taskId, "in_progress", 10); err != nil {
+	if err := uc.UpdateCacheTask(ctx, taskId, "in_progress", 10); err != nil {
 		uc.log.Log(log.LevelError, "msg", "ParseExecell", "failed to update task progress", "err", err)
 	}
 
@@ -219,7 +244,7 @@ func (uc *FullSyncUsecase) ParseExecell(ctx context.Context, taskId, filename st
 	f, err := excelize.OpenFile(filename)
 	if err != nil {
 		uc.log.Log(log.LevelError, "msg", "ParseExecell", "failed to open excel file", "err", err)
-		if updateErr := uc.updateTaskProgress(ctx, taskId, "cancelled", 0); updateErr != nil {
+		if updateErr := uc.UpdateCacheTask(ctx, taskId, "cancelled", 0); updateErr != nil {
 			uc.log.Log(log.LevelError, "msg", "ParseExecell", "failed to update task status", "err", updateErr)
 		}
 		return fmt.Errorf("failed to open excel file: %w", err)
@@ -233,14 +258,14 @@ func (uc *FullSyncUsecase) ParseExecell(ctx context.Context, taskId, filename st
 	// 验证Excel文件格式
 	if err := uc.validateExcelFormat(f); err != nil {
 		uc.log.Log(log.LevelError, "msg", "ParseExecell", "invalid excel format", "err", err)
-		if updateErr := uc.updateTaskProgress(ctx, taskId, "cancelled", 0); updateErr != nil {
+		if updateErr := uc.UpdateCacheTask(ctx, taskId, "cancelled", 0); updateErr != nil {
 			uc.log.Log(log.LevelError, "msg", "ParseExecell", "failed to update task status", "err", updateErr)
 		}
 		return fmt.Errorf("invalid excel format: %w", err)
 	}
 
 	// 更新进度到20%
-	if err := uc.updateTaskProgress(ctx, taskId, "in_progress", 20); err != nil {
+	if err := uc.UpdateCacheTask(ctx, taskId, "in_progress", 20); err != nil {
 		uc.log.Log(log.LevelError, "msg", "ParseExecell", "failed to update task progress", "err", err)
 	}
 
@@ -265,7 +290,7 @@ func (uc *FullSyncUsecase) ParseExecell(ctx context.Context, taskId, filename st
 
 	if sheetCount == 0 {
 		uc.log.Log(log.LevelWarn, "msg", "ParseExecell", "no valid sheets found")
-		if updateErr := uc.updateTaskProgress(ctx, taskId, "cancelled", 0); updateErr != nil {
+		if updateErr := uc.UpdateCacheTask(ctx, taskId, "cancelled", 0); updateErr != nil {
 			uc.log.Log(log.LevelError, "msg", "ParseExecell", "failed to update task status", "err", updateErr)
 		}
 		return fmt.Errorf("no valid sheets found in excel file")
@@ -294,7 +319,7 @@ func (uc *FullSyncUsecase) ParseExecell(ctx context.Context, taskId, filename st
 	// 检查是否有错误
 	for err := range errChan {
 		if err != nil {
-			if updateErr := uc.updateTaskProgress(ctx, taskId, "cancelled", 0); updateErr != nil {
+			if updateErr := uc.UpdateCacheTask(ctx, taskId, "cancelled", 0); updateErr != nil {
 				uc.log.Log(log.LevelError, "msg", "ParseExecell", "failed to update task status", "err", updateErr)
 			}
 			return err
@@ -302,34 +327,20 @@ func (uc *FullSyncUsecase) ParseExecell(ctx context.Context, taskId, filename st
 	}
 
 	// 更新进度到80%
-	if err := uc.updateTaskProgress(ctx, taskId, "in_progress", 80); err != nil {
+	if err := uc.UpdateCacheTask(ctx, taskId, "in_progress", 80); err != nil {
 		uc.log.Log(log.LevelError, "msg", "ParseExecell", "failed to update task progress", "err", err)
 	}
-
 	// 通知下游服务
-	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
-	if err != nil {
-		uc.log.Log(log.LevelError, "msg", "ParseExecell", "failed to get access token", "err", err)
-		if updateErr := uc.updateTaskProgress(ctx, taskId, "cancelled", 0); updateErr != nil {
-			uc.log.Log(log.LevelError, "msg", "ParseExecell", "failed to update task status", "err", updateErr)
-		}
-		return fmt.Errorf("failed to get access token: %w", err)
-	}
-
-	_, err = uc.wps.PostEcisaccountsyncAll(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncAllRequest{
-		TaskId:         taskId,
-		ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
-	})
+	err = uc.notifyFullSync(ctx, taskId)
 	if err != nil {
 		uc.log.Log(log.LevelError, "msg", "ParseExecell", "failed to notify downstream service", "err", err)
-		if updateErr := uc.updateTaskProgress(ctx, taskId, "cancelled", 0); updateErr != nil {
+		if updateErr := uc.UpdateCacheTask(ctx, taskId, "cancelled", 0); updateErr != nil {
 			uc.log.Log(log.LevelError, "msg", "ParseExecell", "failed to update task status", "err", updateErr)
 		}
-		return fmt.Errorf("failed to notify downstream service: %w", err)
 	}
 
 	// 更新任务状态为完成
-	if err := uc.updateTaskProgress(ctx, taskId, "completed", 100); err != nil {
+	if err := uc.UpdateCacheTask(ctx, taskId, "completed", 100); err != nil {
 		uc.log.Log(log.LevelError, "msg", "ParseExecell", "failed to update task progress", "err", err)
 	}
 
@@ -386,21 +397,13 @@ func (uc *FullSyncUsecase) processSheet(ctx context.Context, taskId string, f *e
 	}
 }
 
-// updateTaskProgress 更新任务进度
-func (uc *FullSyncUsecase) updateTaskProgress(ctx context.Context, taskId, status string, progress int) error {
-	// 这里可以更新缓存中的任务状态和进度
-	// 暂时使用日志记录，实际实现可以根据需要更新缓存或数据库
-	uc.log.Log(log.LevelInfo, "msg", "updateTaskProgress", "taskId", taskId, "status", status, "progress", progress)
-	return nil
-}
-
 func (uc *FullSyncUsecase) transUser(ctx context.Context, taskId string, rows *excelize.Rows) (err error) {
 	uc.log.Log(log.LevelInfo, "msg", "transUser", "taskId", taskId)
 
 	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
 	platformIds := uc.bizConf.GetPlatformIds()
-	// 增加批量大小以提高性能
-	users := make([]*models.TbLasUser, 0, 500)
+	// 使用配置的批量大小
+	users := make([]*models.TbLasUser, 0, uc.batchSize)
 	now := time.Now()
 	processedCount := 0
 	errorCount := 0
@@ -444,7 +447,7 @@ func (uc *FullSyncUsecase) transUser(ctx context.Context, taskId string, rows *e
 		processedCount++
 
 		// 批量保存
-		if len(users) >= 500 {
+		if len(users) >= uc.batchSize {
 			if _, err := uc.repo.BatchSaveUsers(ctx, users); err != nil {
 				uc.log.Log(log.LevelError, "msg", "transUser", "failed to batch save users", "err", err)
 				return fmt.Errorf("failed to batch save users: %w", err)
@@ -476,8 +479,8 @@ func (uc *FullSyncUsecase) transDept(ctx context.Context, taskId string, rows *e
 
 	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
 	platformIds := uc.bizConf.GetPlatformIds()
-	// 增加批量大小以提高性能
-	depts := make([]*models.TbLasDepartment, 0, 500)
+	// 使用配置的批量大小
+	depts := make([]*models.TbLasDepartment, 0, uc.batchSize)
 	now := time.Now()
 	processedCount := 0
 	errorCount := 0
@@ -520,7 +523,7 @@ func (uc *FullSyncUsecase) transDept(ctx context.Context, taskId string, rows *e
 		processedCount++
 
 		// 批量保存
-		if len(depts) >= 500 {
+		if len(depts) >= uc.batchSize {
 			if _, err := uc.repo.BatchSaveDepts(ctx, depts); err != nil {
 				uc.log.Log(log.LevelError, "msg", "transDept", "failed to batch save departments", "err", err)
 				return fmt.Errorf("failed to batch save departments: %w", err)
@@ -552,8 +555,8 @@ func (uc *FullSyncUsecase) transUserDept(ctx context.Context, taskId string, row
 
 	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
 	platformIds := uc.bizConf.GetPlatformIds()
-	// 增加批量大小以提高性能
-	deptusers := make([]*models.TbLasDepartmentUser, 0, 500)
+	// 使用配置的批量大小
+	deptusers := make([]*models.TbLasDepartmentUser, 0, uc.batchSize)
 	now := time.Now()
 	processedCount := 0
 	errorCount := 0
@@ -593,7 +596,7 @@ func (uc *FullSyncUsecase) transUserDept(ctx context.Context, taskId string, row
 		processedCount++
 
 		// 批量保存
-		if len(deptusers) >= 500 {
+		if len(deptusers) >= uc.batchSize {
 			if _, err := uc.repo.BatchSaveDeptUsers(ctx, deptusers); err != nil {
 				uc.log.Log(log.LevelError, "msg", "transUserDept", "failed to batch save department users", "err", err)
 				return fmt.Errorf("failed to batch save department users: %w", err)
@@ -619,83 +622,6 @@ func (uc *FullSyncUsecase) transUserDept(ctx context.Context, taskId string, row
 
 	uc.log.Log(log.LevelInfo, "msg", "transUserDept", "completed", "processed", processedCount, "errors", errorCount)
 	return nil
-}
-
-func (uc *FullSyncUsecase) createCacheTask(ctx context.Context, taskName, status string) error {
-
-	now := time.Now()
-	taskInfo := &models.Task{
-		ID:          1,
-		Title:       taskName,
-		Description: taskName,
-		Status:      status,
-		CreatorID:   1,
-		CreatedAt:   now,
-		UpdatedAt:   now,
-		DueDate:     now,
-		StartDate:   now,
-		Progress:    30,
-		ActualTime:  0,
-	}
-	return uc.localCache.Set(ctx, taskName, taskInfo, 300*time.Minute)
-}
-
-// func (uc *AccounterUsecase) UpdateCacheTask(ctx context.Context, taskName, status string) error {
-
-// 	cacheKey := prefix + taskName
-// 	oldTask, ok, err := uc.localCache.Get(ctx, cacheKey)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	var task *models.Task
-// 	var startDate time.Time
-// 	now := time.Now()
-// 	if ok {
-// 		task, ok1 := oldTask.(*models.Task)
-// 		if ok1 {
-// 			startDate = task.StartDate
-// 			task.ActualTime = int(now.Sub(startDate).Seconds()) + 20
-// 			task.Status = status
-// 			task.Progress = 100
-// 			task.CompletedAt = now
-// 			task.UpdatedAt = now
-// 		}
-// 	}
-
-// 	if task == nil {
-// 		task = &models.Task{
-// 			Title:         taskName,
-// 			Description:   taskName,
-// 			Status:        status,
-// 			Progress:      100,
-// 			StartDate:     time.Now(),
-// 			DueDate:       time.Now().Add(time.Minute * 30),
-// 			CompletedAt:   time.Now(),
-// 			CreatorID:     99,
-// 			EstimatedTime: 10,
-// 			ActualTime:    0,
-// 		}
-// 	}
-// 	return uc.localCache.Set(ctx, cacheKey, task, 300*time.Minute)
-// }
-
-func (uc *FullSyncUsecase) GetCacheTask(ctx context.Context, taskName string) (*models.Task, bool, error) {
-
-	cacheKey := prefix + taskName
-	var task *models.Task
-	taskInfo, ok, err := uc.localCache.Get(ctx, cacheKey)
-	if err != nil {
-		return nil, false, err
-	}
-	if !ok {
-		return nil, false, nil
-	}
-	task, ok1 := taskInfo.(*models.Task)
-	if !ok1 {
-		return nil, false, errors.New("type error")
-	}
-	return task, true, nil
-
 }
 
 func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string, tags []string) error {
@@ -847,4 +773,64 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 
 	return nil
 
+}
+
+func (uc *FullSyncUsecase) GetCacheTask(ctx context.Context, taskName string) (*models.Task, bool, error) {
+
+	var task *models.Task
+	taskInfo, ok, err := uc.localCache.Get(ctx, taskName)
+	if err != nil {
+		return nil, false, err
+	}
+	if !ok {
+		return nil, false, nil
+	}
+	task, ok1 := taskInfo.(*models.Task)
+	if !ok1 {
+		return nil, false, errors.New("type error")
+	}
+	return task, true, nil
+
+}
+
+func (uc *FullSyncUsecase) CreateCacheTask(ctx context.Context, taskName, status string) error {
+
+	now := time.Now()
+	taskInfo := &models.Task{
+		ID:          1,
+		Title:       taskName,
+		Description: taskName,
+		Status:      status,
+		CreatorID:   1,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		DueDate:     now,
+		StartDate:   now,
+		Progress:    30,
+		ActualTime:  0,
+	}
+	return uc.localCache.Set(ctx, taskName, taskInfo, 300*time.Minute)
+}
+
+// updateTaskProgress 更新任务进度
+func (uc *FullSyncUsecase) UpdateCacheTask(ctx context.Context, taskId, status string, progress int) error {
+	// 暂时使用日志记录，实际实现可以根据需要更新缓存或数据库
+	uc.log.Log(log.LevelInfo, "msg", "updateCacheTask", "taskId", taskId, "status", status, "progress", progress)
+
+	var task *models.Task
+	taskInfo, ok, err := uc.localCache.Get(ctx, taskId)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errors.New("task not found")
+	}
+	task, ok1 := taskInfo.(*models.Task)
+	if !ok1 {
+		return errors.New("type error")
+	}
+	task.Status = status
+	task.Progress = int8(progress)
+	task.UpdatedAt = time.Now()
+	return uc.localCache.Set(ctx, taskId, task, 300*time.Minute)
 }

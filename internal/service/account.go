@@ -24,17 +24,16 @@ type AccountService struct {
 	oauth2Usecase    *biz.Oauth2Usecase
 	fullSyncUsecase  *biz.FullSyncUsecase
 	limiter          *limiter.RateLimiter
-	log              *log.Helper
+	log              log.Logger
 }
 
 func NewAccountService(accounterUsecase *biz.AccounterUsecase, oauth2Usecase *biz.Oauth2Usecase, fullSyncUsecase *biz.FullSyncUsecase, logger log.Logger) *AccountService {
 	limiter := limiter.NewRateLimiter()
-	return &AccountService{accounterUsecase: accounterUsecase, oauth2Usecase: oauth2Usecase, fullSyncUsecase: fullSyncUsecase, limiter: limiter, log: log.NewHelper(logger)}
+	return &AccountService{accounterUsecase: accounterUsecase, oauth2Usecase: oauth2Usecase, fullSyncUsecase: fullSyncUsecase, limiter: limiter, log: logger}
 }
 
 func (s *AccountService) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
-	log := s.log.WithContext(ctx)
-	log.Infof("CreateSyncAccount req: %v", req)
+	s.log.Log(log.LevelInfo, "msg", "CreateSyncAccount", "req", req)
 	if req.GetTaskName() != "" && len(req.GetTaskName()) != 14 {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid taskname: %s", req.GetTaskName())
 	}
@@ -57,8 +56,7 @@ func (s *AccountService) GetSyncAccount(ctx context.Context, req *v1.GetSyncAcco
 	return s.fullSyncUsecase.GetSyncAccount(ctx, req)
 }
 func (s *AccountService) CancelSyncTask(ctx context.Context, req *v1.CancelSyncAccountRequest) (*emptypb.Empty, error) {
-	log := s.log.WithContext(ctx)
-	log.Infof("CancelSyncTask req: %v", req)
+	s.log.Log(log.LevelInfo, "msg", "CancelSyncTask", "req", req)
 	if req.TaskId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "task_id is empty")
 	}
@@ -71,8 +69,7 @@ func (s *AccountService) CancelSyncTask(ctx context.Context, req *v1.CancelSyncA
 }
 func (s *AccountService) GetUserInfo(ctx context.Context, req *v1.GetUserInfoRequest) (*v1.GetUserInfoResponse, error) {
 
-	log := s.log.WithContext(ctx)
-	log.Infof("GetUserInfo req: %v", req)
+	s.log.Log(log.LevelInfo, "msg", "GetUserInfo", "req", req)
 
 	accessToken := req.GetAccessToken()
 	if accessToken == "" {
@@ -88,8 +85,7 @@ func (s *AccountService) GetUserInfo(ctx context.Context, req *v1.GetUserInfoReq
 }
 func (s *AccountService) GetAccessToken(ctx context.Context, req *v1.GetAccessTokenRequest) (*v1.GetAccessTokenResponse, error) {
 
-	log := s.log.WithContext(ctx)
-	log.Infof("GetAccessToken req: %v", req)
+	s.log.Log(log.LevelInfo, "msg", "GetAccessToken", "req", req)
 
 	code := req.GetCode()
 	if code == "" {
@@ -105,15 +101,7 @@ func (s *AccountService) GetAccessToken(ctx context.Context, req *v1.GetAccessTo
 }
 
 func (s *AccountService) Callback(ctx context.Context, req *v1.CallbackRequest) (*v1.CallbackResponse, error) {
-	log := s.log.WithContext(ctx)
-	log.Infof("Callback req: %v", req)
-
-	globalConf := conf.Get()
-	log.Infof("globalConf: %v", globalConf)
-	return &v1.CallbackResponse{
-		Status:  "success",
-		Message: "success",
-	}, nil
+	return nil, status.Errorf(codes.Unimplemented, "method Callback not implemented")
 }
 
 //	curl -X POST "http://your-server/v1/upload/excel" \
@@ -122,8 +110,7 @@ func (s *AccountService) Callback(ctx context.Context, req *v1.CallbackRequest) 
 
 func (s *AccountService) UploadFile(ctx context.Context, req *v1.UploadRequest) (*v1.UploadReply, error) {
 
-	log := s.log.WithContext(ctx)
-	log.Infof("UploadFile req: %v", req)
+	s.log.Log(log.LevelInfo, "msg", "UploadFile", "req", req.GetFilename())
 
 	taskId := time.Now().Add(time.Duration(1) * time.Second).Format("20060102150405")
 
@@ -143,6 +130,7 @@ func (s *AccountService) UploadFile(ctx context.Context, req *v1.UploadRequest) 
 
 	// 创建临时文件
 	tempDir := os.TempDir()
+	tempDir = "/tmp"
 	filename := filepath.Join(tempDir, taskId+".xlsx")
 
 	// 写入文件
@@ -151,32 +139,56 @@ func (s *AccountService) UploadFile(ctx context.Context, req *v1.UploadRequest) 
 		return nil, status.Errorf(codes.Internal, "failed to write file: %v", err)
 	}
 
-	// 解析Excel文件 - 使用带超时的context
-	parseCtx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+	// 创建缓存任务
+	err = s.fullSyncUsecase.CreateCacheTask(ctx, taskId, "pending")
+	if err != nil {
+		// 清理临时文件
+		os.Remove(filename)
+		return nil, status.Errorf(codes.Internal, "failed to create cache task: %v", err)
+	}
+
+	// 解析Excel文件 - 使用传入的context并设置超时
+	parseCtx, cancel := context.WithTimeout(ctx, 300*time.Minute)
 	defer cancel()
 
+	// 使用带错误处理的异步执行
 	go func() {
 		defer func() {
-			if r := recover(); r != nil {
-				log.Errorf("ParseExecell panic: %v", r)
+			// 清理临时文件
+			if err := os.Remove(filename); err != nil {
+				s.log.Log(log.LevelWarn, "msg", "failed to remove temp file", "filename", filename, "err", err)
 			}
 		}()
-		s.fullSyncUsecase.ParseExecell(parseCtx, taskId, filename)
+
+		// 更新任务状态为进行中
+		if err := s.fullSyncUsecase.UpdateCacheTask(parseCtx, taskId, "in_progress", 20); err != nil {
+			s.log.Log(log.LevelError, "msg", "failed to update task status to in_progress", "err", err)
+		}
+
+		// 执行解析
+		if err := s.fullSyncUsecase.ParseExecell(parseCtx, taskId, filename); err != nil {
+			s.log.Log(log.LevelError, "msg", "failed to parse excel", "err", err)
+			// 更新任务状态为失败
+			s.fullSyncUsecase.UpdateCacheTask(parseCtx, taskId, "completed", 0)
+			return
+		}
+
+		// 更新任务状态为完成
+		if err := s.fullSyncUsecase.UpdateCacheTask(parseCtx, taskId, "completed", 100); err != nil {
+			s.log.Log(log.LevelError, "msg", "failed to update task status to completed", "err", err)
+		}
+
+		s.log.Log(log.LevelInfo, "msg", "Excel parsing completed for task", "taskId", taskId)
 	}()
-	// if err != nil {
-	// 	return nil, status.Errorf(codes.Internal, "failed to parse excel: %v", err)
-	// }
-	s.accounterUsecase.CreateCacheTask(ctx, taskId, "")
+
 	return &v1.UploadReply{
-		//Message: "Upload success",
 		Task: taskId,
 	}, nil
 }
 
 func (s *AccountService) GetTask(ctx context.Context, in *v1.GetTaskRequest) (*v1.GetTaskReply, error) {
 
-	log := s.log.WithContext(ctx)
-	log.Infof("GetAccessToken req: %v", in)
+	s.log.Log(log.LevelInfo, "msg", "GetTask", "req", in)
 
 	taskName := in.GetTaskName()
 	if taskName == "" {

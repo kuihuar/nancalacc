@@ -232,8 +232,13 @@ type App struct {
 	CompanyId      string                 `protobuf:"bytes,10,opt,name=company_id,json=companyId,proto3" json:"company_id,omitempty"`
 	AccessKey      string                 `protobuf:"bytes,11,opt,name=access_key,json=accessKey,proto3" json:"access_key,omitempty"`
 	SecretKey      string                 `protobuf:"bytes,12,opt,name=secret_key,json=secretKey,proto3" json:"secret_key,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// 批量处理配置
+	BatchSize     int32  `protobuf:"varint,13,opt,name=batch_size,json=batchSize,proto3" json:"batch_size,omitempty"`    // 批量大小，默认500
+	MaxWorkers    int32  `protobuf:"varint,14,opt,name=max_workers,json=maxWorkers,proto3" json:"max_workers,omitempty"` // 最大并发工作数，默认3
+	LogLevel      string `protobuf:"bytes,15,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`        // 日志级别
+	Logout        string `protobuf:"bytes,16,opt,name=logout,proto3" json:"logout,omitempty"`                            // 日志输出
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *App) Reset() {
@@ -346,6 +351,34 @@ func (x *App) GetAccessKey() string {
 func (x *App) GetSecretKey() string {
 	if x != nil {
 		return x.SecretKey
+	}
+	return ""
+}
+
+func (x *App) GetBatchSize() int32 {
+	if x != nil {
+		return x.BatchSize
+	}
+	return 0
+}
+
+func (x *App) GetMaxWorkers() int32 {
+	if x != nil {
+		return x.MaxWorkers
+	}
+	return 0
+}
+
+func (x *App) GetLogLevel() string {
+	if x != nil {
+		return x.LogLevel
+	}
+	return ""
+}
+
+func (x *App) GetLogout() string {
+	if x != nil {
+		return x.Logout
 	}
 	return ""
 }
@@ -1897,7 +1930,7 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\fdial_timeout\x18\x02 \x01(\tR\vdialTimeout\x12#\n" +
 	"\rconfig_prefix\x18\x03 \x01(\tR\fconfigPrefix\x12.\n" +
 	"\x13enable_config_watch\x18\x04 \x01(\bR\x11enableConfigWatch\x12\x16\n" +
-	"\x06enable\x18\x05 \x01(\bR\x06enable\"\xd6\x02\n" +
+	"\x06enable\x18\x05 \x01(\bR\x06enable\"\xcb\x03\n" +
 	"\x03App\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
@@ -1916,7 +1949,13 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\n" +
 	"access_key\x18\v \x01(\tR\taccessKey\x12\x1d\n" +
 	"\n" +
-	"secret_key\x18\f \x01(\tR\tsecretKey\"\xaa\x02\n" +
+	"secret_key\x18\f \x01(\tR\tsecretKey\x12\x1d\n" +
+	"\n" +
+	"batch_size\x18\r \x01(\x05R\tbatchSize\x12\x1f\n" +
+	"\vmax_workers\x18\x0e \x01(\x05R\n" +
+	"maxWorkers\x12\x1b\n" +
+	"\tlog_level\x18\x0f \x01(\tR\blogLevel\x12\x16\n" +
+	"\x06logout\x18\x10 \x01(\tR\x06logout\"\xaa\x02\n" +
 	"\rOpenTelemetry\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12!\n" +
 	"\fservice_name\x18\x02 \x01(\tR\vserviceName\x12'\n" +
