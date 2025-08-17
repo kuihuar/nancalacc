@@ -2,6 +2,8 @@ package wps
 
 import (
 	"context"
+
+	"github.com/go-kratos/kratos/v2/log"
 )
 
 var (
@@ -23,7 +25,7 @@ func (ws *wps) PostEcisaccountsyncAll(ctx context.Context, accessToken string, i
 	// 执行请求
 	bs, err := wpsReq.PostJSON(ctx, ECISACCOUNTSYNC_PATH_INCREMENT, accessToken, input)
 	if err != nil {
-		ws.log.WithContext(ctx).Errorf("PostEcisaccountsyncAll request failed: %v", err)
+		ws.log.Log(log.LevelError, "msg", "PostEcisaccountsyncAll request failed", "err", err)
 		return resp, err
 	}
 
@@ -47,7 +49,7 @@ func (ws *wps) PostEcisaccountsyncIncrement(ctx context.Context, accessToken str
 	// 执行请求
 	bs, err := wpsReq.PostJSON(ctx, ECISACCOUNTSYNC_PATH_INCREMENT, accessToken, input)
 	if err != nil {
-		ws.log.WithContext(ctx).Errorf("PostEcisaccountsyncIncrement request failed: %v", err)
+		ws.log.Log(log.LevelError, "msg", "PostEcisaccountsyncIncrement request failed", "err", err)
 		return resp, err
 	}
 

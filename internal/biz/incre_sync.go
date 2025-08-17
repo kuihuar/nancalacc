@@ -24,7 +24,7 @@ type IncrementalSyncUsecase struct {
 	bizConf      *conf.App
 	wpsAppAuth   auth.Authenticator
 	wps          wps.Wps
-	log          *log.Helper
+	log          log.Logger
 }
 
 // NewGreeterUsecase new a Greeter usecase.
@@ -35,15 +35,14 @@ func NewIncrementalSyncUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtal
 		repo: repo, dingTalkRepo: dingTalkRepo, bizConf: bizConf,
 		wpsAppAuth: wpsAppAuth,
 		wps:        wps,
-		log:        log.NewHelper(logger)}
+		log:        logger}
 }
 
 // OrgDeptAdd 部门新增
 func (uc *IncrementalSyncUsecase) OrgDeptCreate(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
 	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
-	log := uc.log.WithContext(ctx)
-	log.Infof("OrgDeptCreate data: %v", event.Data)
+	uc.log.Log(log.LevelInfo, "msg", "OrgDeptCreate", "data", event.Data)
 
 	if event.Data == nil {
 		return nil
@@ -65,16 +64,16 @@ func (uc *IncrementalSyncUsecase) OrgDeptCreate(ctx context.Context, event *clie
 	}
 	accessToken := dingTalkAccessToken.AccessToken
 
-	uc.log.WithContext(ctx).Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v", accessToken, depIds)
+	uc.log.Log(log.LevelInfo, "msg", "FetchDeptDetails", "accessToken", accessToken, "depIds", depIds)
 	depts, err := uc.dingTalkRepo.FetchDeptDetails(ctx, accessToken, depIds)
-	log.Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v, err:%v", accessToken, depIds, err)
+	uc.log.Log(log.LevelInfo, "msg", "FetchDeptDetails", "accessToken", accessToken, "depIds", depIds, "err", err)
 	if err != nil {
 		return err
 	}
 
 	err = uc.repo.SaveIncrementDepartments(ctx, depts, nil, nil)
 	if err != nil {
-		log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
+		uc.log.Log(log.LevelError, "msg", "SaveIncrementDepartments", "err", err)
 		return err
 	}
 
@@ -90,7 +89,7 @@ func (uc *IncrementalSyncUsecase) OrgDeptCreate(ctx context.Context, event *clie
 		return err
 	}
 	if res.Code != "200" {
-		log.Errorf("code %v, not '200'", res.Code)
+		uc.log.Log(log.LevelError, "msg", "PostEcisaccountsyncIncrement", "res", res, "err", err)
 		return fmt.Errorf("code %s not 200", res.Code)
 	}
 	return nil
@@ -99,8 +98,7 @@ func (uc *IncrementalSyncUsecase) OrgDeptCreate(ctx context.Context, event *clie
 
 // OrgDeptRemove 部门删除
 func (uc *IncrementalSyncUsecase) OrgDeptRemove(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
-	log := uc.log.WithContext(ctx)
-	log.Infof("OrgDeptRemove data: %v", event.Data)
+	uc.log.Log(log.LevelInfo, "msg", "OrgDeptRemove", "data", event.Data)
 
 	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
 	if event.Data == nil {
@@ -114,7 +112,7 @@ func (uc *IncrementalSyncUsecase) OrgDeptRemove(ctx context.Context, event *clie
 	}
 
 	if len(depIds) == 0 {
-		uc.log.Info("OrgDeptCreate len(depIds) eq 0")
+		uc.log.Log(log.LevelWarn, "msg", "OrgDeptRemove", "len(depIds) eq 0")
 		return nil
 	}
 
@@ -125,7 +123,7 @@ func (uc *IncrementalSyncUsecase) OrgDeptRemove(ctx context.Context, event *clie
 	}
 
 	if len(depIdstr) == 0 {
-		log.Info("OrgDeptRemove len(depIdstr) eq 0")
+		uc.log.Log(log.LevelWarn, "msg", "OrgDeptRemove", "len(depIdstr) eq 0")
 		return errors.New("OrgDeptRemove len(depIdstr) eq 0")
 	}
 
@@ -141,7 +139,7 @@ func (uc *IncrementalSyncUsecase) OrgDeptRemove(ctx context.Context, event *clie
 	})
 
 	if err != nil {
-		log.Errorf("OrgDeptRemove.PostBatchDepartmentsByExDepIds err: %v", err)
+		uc.log.Log(log.LevelError, "msg", "PostBatchDepartmentsByExDepIds", "err", err)
 		return err
 	}
 	var deptIDs []string
@@ -150,24 +148,24 @@ func (uc *IncrementalSyncUsecase) OrgDeptRemove(ctx context.Context, event *clie
 		deptIDs = append(deptIDs, depInfo.ParentID)
 	}
 
-	log.Infof("OrgDeptRemove deptIDs: %v", deptIDs)
+	uc.log.Log(log.LevelInfo, "msg", "OrgDeptRemove", "deptIDs", deptIDs)
 
 	if len(deptIDs) == 0 {
-		log.Info("OrgDeptRemove len(deptIDs) eq 0")
+		uc.log.Log(log.LevelWarn, "msg", "OrgDeptRemove", "len(deptIDs) eq 0")
 		return errors.New("OrgDeptRemove len(deptIDs) eq 0")
 	}
 	parentDeptInfos, err := uc.wps.BatchPostDepartments(ctx, token, wps.BatchPostDepartmentsRequest{
 		DeptIDs: deptIDs,
 	})
 	if err != nil {
-		log.Errorf("OrgDeptRemove.BatchPostDepartments err: %v", err)
+		uc.log.Log(log.LevelError, "msg", "BatchPostDepartments", "err", err)
 		return err
 	}
 
 	for _, pdis := range parentDeptInfos.Data.Items {
 		extpareId, err := strconv.ParseInt(pdis.ExDeptID, 10, 64)
 		if err != nil {
-			log.Errorf("OrgDeptRemove.ParseInt pdis.ExDeptID:%s, err: %v", pdis.ExDeptID, err)
+			uc.log.Log(log.LevelError, "msg", "ParseInt", "pdis.ExDeptID", pdis.ExDeptID, "err", err)
 		}
 		tempDeptIDs[pdis.ID] = extpareId
 	}
@@ -182,7 +180,7 @@ func (uc *IncrementalSyncUsecase) OrgDeptRemove(ctx context.Context, event *clie
 		}
 		parentID, ok := tempDeptIDs[depInfo.ParentID]
 		if !ok {
-			uc.log.Errorf("OrgDeptRemove not found parentID for DeptID: %s", dingtalkID)
+			uc.log.Log(log.LevelError, "msg", "OrgDeptRemove", "not found parentID for DeptID", dingtalkID)
 			continue
 		}
 		detp := &dingtalk.DingtalkDept{
@@ -198,7 +196,7 @@ func (uc *IncrementalSyncUsecase) OrgDeptRemove(ctx context.Context, event *clie
 
 	err = uc.repo.SaveIncrementDepartments(ctx, nil, depts, nil)
 	if err != nil {
-		log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
+		uc.log.Log(log.LevelError, "msg", "SaveIncrementDepartments", "err", err)
 		return err
 	}
 
@@ -209,7 +207,7 @@ func (uc *IncrementalSyncUsecase) OrgDeptRemove(ctx context.Context, event *clie
 		return err
 	}
 	if res.Code != "200" {
-		log.Errorf("code %v, not '200'", res.Code)
+		uc.log.Log(log.LevelError, "msg", "PostEcisaccountsyncIncrement", "res", res, "err", err)
 		return fmt.Errorf("code %s not 200", res.Code)
 	}
 	return nil
@@ -218,8 +216,7 @@ func (uc *IncrementalSyncUsecase) OrgDeptRemove(ctx context.Context, event *clie
 // OrgDeptModify 部门修改
 func (uc *IncrementalSyncUsecase) OrgDeptModify(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
-	log := uc.log.WithContext(ctx)
-	log.Infof("OrgDeptModify data: %v", event.Data)
+	uc.log.Log(log.LevelInfo, "msg", "OrgDeptModify", "data", event.Data)
 
 	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
 	if event.Data == nil {
@@ -237,16 +234,16 @@ func (uc *IncrementalSyncUsecase) OrgDeptModify(ctx context.Context, event *clie
 	}
 	accessToken := dingTalkAccessToken.AccessToken
 
-	uc.log.WithContext(ctx).Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v", accessToken, depIds)
+	uc.log.Log(log.LevelInfo, "msg", "FetchDeptDetails", "accessToken", accessToken, "depIds", depIds)
 	depts, err := uc.dingTalkRepo.FetchDeptDetails(ctx, accessToken, depIds)
-	log.Infof("OrgDeptCreate.FetchDeptDetails accessToken: %v, depIds: %v, err:%v", accessToken, depIds, err)
+	uc.log.Log(log.LevelInfo, "msg", "FetchDeptDetails", "accessToken", accessToken, "depIds", depIds, "err", err)
 	if err != nil {
 		return err
 	}
 
 	err = uc.repo.SaveIncrementDepartments(ctx, nil, nil, depts)
 	if err != nil {
-		log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
+		uc.log.Log(log.LevelError, "msg", "SaveIncrementDepartments", "err", err)
 		return err
 	}
 
@@ -262,7 +259,7 @@ func (uc *IncrementalSyncUsecase) OrgDeptModify(ctx context.Context, event *clie
 		return err
 	}
 	if res.Code != "200" {
-		log.Errorf("code %v, not '200'", res.Code)
+		uc.log.Log(log.LevelError, "msg", "PostEcisaccountsyncIncrement", "res", res, "err", err)
 		return fmt.Errorf("code %s not 200", res.Code)
 	}
 	return nil
@@ -274,8 +271,7 @@ func (uc *IncrementalSyncUsecase) OrgDeptModify(ctx context.Context, event *clie
 // 2. 加关系
 func (uc *IncrementalSyncUsecase) UserAddOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
-	log := uc.log.WithContext(ctx)
-	log.Infof("UserAddOrg data: %v", event.Data)
+	uc.log.Log(log.LevelInfo, "msg", "UserAddOrg", "data", event.Data)
 
 	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
 	if event.Data == nil {
@@ -288,13 +284,13 @@ func (uc *IncrementalSyncUsecase) UserAddOrg(ctx context.Context, event *clientV
 	}
 
 	dingTalkAccessToken, err := uc.dingTalkRepo.GetAccessToken(ctx)
-	log.Infof("UserAddOrg.GetAccessToken dingTalkAccessToken: %v,userIds:%v err: %v", dingTalkAccessToken, userIds, err)
+	uc.log.Log(log.LevelInfo, "msg", "GetAccessToken", "dingTalkAccessToken", dingTalkAccessToken, "userIds", userIds, "err", err)
 	if err != nil {
 		return err
 	}
 	accessToken := dingTalkAccessToken.AccessToken
 
-	uc.log.WithContext(ctx).Infof("UserAddOrg.GetUserDetail userIds: %v", userIds)
+	uc.log.Log(log.LevelInfo, "msg", "GetUserDetail", "userIds", userIds)
 	users, err := uc.dingTalkRepo.FetchUserDetail(ctx, accessToken, userIds)
 	if err != nil {
 		return err
@@ -340,8 +336,7 @@ func (uc *IncrementalSyncUsecase) UserAddOrg(ctx context.Context, event *clientV
 func (uc *IncrementalSyncUsecase) UserLeaveOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
 	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
-	log := uc.log.WithContext(ctx)
-	log.Infof("UserLeaveOrg data: %v", event.Data)
+	uc.log.Log(log.LevelInfo, "msg", "UserLeaveOrg", "data", event.Data)
 	if event.Data == nil {
 		return nil
 	}
@@ -363,7 +358,7 @@ func (uc *IncrementalSyncUsecase) UserLeaveOrg(ctx context.Context, event *clien
 	}
 
 	if len(wpsUsers) == 0 {
-		log.Warnf("wpsUsers is empty, userIds: %v", userIds)
+		uc.log.Log(log.LevelWarn, "msg", "UserLeaveOrg", "wpsUsers is empty, userIds", userIds)
 		return fmt.Errorf("wpsUsers is empty")
 	}
 	err = uc.repo.SaveIncrementUsers(ctx, nil, wpsUsers, nil)
@@ -382,19 +377,19 @@ func (uc *IncrementalSyncUsecase) UserLeaveOrg(ctx context.Context, event *clien
 		ThirdCompanyId: thirdCompanyId,
 	})
 
-	log.Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+	uc.log.Log(log.LevelInfo, "msg", "CallEcisaccountsyncIncrement", "res", res, "err", err)
 
 	if err != nil {
 		return err
 	}
 	if res.Code != "200" {
-		log.Errorf("code %v, not '200'", res.Code)
+		uc.log.Log(log.LevelError, "msg", "CallEcisaccountsyncIncrement", "res", res, "err", err)
 		return fmt.Errorf("code %s not 200", res.Code)
 	}
 	return nil
 }
 func (uc *IncrementalSyncUsecase) FindWpsUser(ctx context.Context, userids []string) ([]*dingtalk.DingtalkDeptUser, error) {
-	uc.log.WithContext(ctx).Infof("FindWpsUser req userids: %v", userids)
+	uc.log.Log(log.LevelInfo, "msg", "FindWpsUser", "req", "userids", userids)
 	var users []*dingtalk.DingtalkDeptUser
 	appAccessToken, err := uc.wpsAppAuth.GetAccessToken(ctx)
 	if err != nil {
@@ -409,7 +404,7 @@ func (uc *IncrementalSyncUsecase) FindWpsUser(ctx context.Context, userids []str
 			return nil, err
 		}
 		if len(wpsUserInfo.Data.Items) == 0 {
-			uc.log.Warnf("wpsUserInfo.Data.Items is empty, userId: %v", userId)
+			uc.log.Log(log.LevelWarn, "msg", "FindWpsUser", "wpsUserInfo.Data.Items is empty, userId", userId)
 			continue
 		}
 
@@ -423,7 +418,7 @@ func (uc *IncrementalSyncUsecase) FindWpsUser(ctx context.Context, userids []str
 			return nil, err
 		}
 		if len(wpsDeptInfo.Data.Items) == 0 {
-			uc.log.Warnf("wpsDeptInfo.Data.Items is empty, userId: %v", userId)
+			uc.log.Log(log.LevelWarn, "msg", "FindWpsUser", "wpsDeptInfo.Data.Items is empty, userId", userId)
 			continue
 		}
 		user := &dingtalk.DingtalkDeptUser{
@@ -441,17 +436,17 @@ func (uc *IncrementalSyncUsecase) FindWpsUser(ctx context.Context, userids []str
 		}
 		users = append(users, user)
 	}
-	uc.log.WithContext(ctx).Infof("FindWpsUser res users: %v", users)
+	uc.log.Log(log.LevelInfo, "msg", "FindWpsUser", "res", "users", users)
 	if len(users) == 0 {
 		return nil, fmt.Errorf("wpsUsers is empty")
 	}
 	for _, user := range users {
-		uc.log.WithContext(ctx).Infof("FindWpsUser res user: %+v", user)
+		uc.log.Log(log.LevelInfo, "msg", "FindWpsUser", "res", "user", user)
 	}
 	return users, nil
 }
 func (uc *IncrementalSyncUsecase) FindDingTalkUser(ctx context.Context, userids []string) ([]*dingtalk.DingtalkDeptUser, error) {
-	uc.log.WithContext(ctx).Infof("FindDingTalkUser req: %v", userids)
+	uc.log.Log(log.LevelInfo, "msg", "FindDingTalkUser", "req", "userids", userids)
 
 	dingTalkAccessToken, err := uc.dingTalkRepo.GetAccessToken(ctx)
 	if err != nil {
@@ -460,7 +455,7 @@ func (uc *IncrementalSyncUsecase) FindDingTalkUser(ctx context.Context, userids 
 	accessToken := dingTalkAccessToken.AccessToken
 
 	users, err := uc.dingTalkRepo.FetchUserDetail(ctx, accessToken, userids)
-	uc.log.WithContext(ctx).Infof("FindDingTalkUser res: %+v, err:%v", users, err)
+	uc.log.Log(log.LevelInfo, "msg", "FindDingTalkUser", "res", "users", users, "err", err)
 
 	if err != nil {
 		return nil, err
@@ -473,17 +468,14 @@ func (uc *IncrementalSyncUsecase) FindDingTalkUser(ctx context.Context, userids 
 func (uc *IncrementalSyncUsecase) UserModifyOrg(ctx context.Context, event *clientV2.GenericOpenDingTalkEvent) error {
 
 	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
-	log := uc.log.WithContext(ctx)
-	log.Infof("UserModifyOrg data: %v", event.Data)
+	uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "data", event.Data)
 	diffUserInfo, _ := uc.getUseInfoFromDingTalkEvent(event)
 	diffUserMap := make(map[string]*dingtalk.DingtalkDeptUser, len(diffUserInfo))
 	if len(diffUserInfo) > 0 {
 		for _, diffUser := range diffUserInfo {
 			diffUserMap[diffUser.Userid] = diffUser
-			//uc.log.Infof("UserModifyOrg[基础信息变更] user: %v", user)
+			uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "diffUser", diffUser)
 		}
-		//uc.log.Info("UserModifyOrg[基础信息变更] modfiyUserBaseInfo:")
-		//modfiyUserBaseInfo = append(modfiyUserBaseInfo, diffUserInfo...)
 	}
 
 	userIds, err := uc.getUseridsFromDingTalkEvent(event)
@@ -516,9 +508,9 @@ func (uc *IncrementalSyncUsecase) UserModifyOrg(ctx context.Context, event *clie
 	if err != nil {
 		return err
 	}
-	log.Infof("UserModifyOrg userIds.size: %v", len(userIds))
-	log.Infof("UserModifyOrg wpsUsers.size: %v", len(wpsUsers))
-	log.Infof("UserModifyOrg dingtalkUsers.size: %v", len(dingtalkUsers))
+	uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "userIds.size", len(userIds))
+	uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "wpsUsers.size", len(wpsUsers))
+	uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "dingtalkUsers.size", len(dingtalkUsers))
 	var modfiyUserBaseInfo []*dingtalk.DingtalkDeptUser
 	var delRelation []*dingtalk.DingtalkDeptUserRelation
 	var addRelation []*dingtalk.DingtalkDeptUserRelation
@@ -542,11 +534,11 @@ func (uc *IncrementalSyncUsecase) UserModifyOrg(ctx context.Context, event *clie
 				if _, ok := dingtalkUseridDeptidMap[key1]; ok {
 					//部门修改
 					updDepts = append(updDepts, deptId)
-					uc.log.Infof("UserModifyOrg[部门关系修改] user.Userid#deptId: %v", key1)
+					uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "部门关系修改", "user.Userid#deptId", key1)
 					delete(dingtalkUseridDeptidMap, key1)
 				} else {
 					//部门删除
-					uc.log.Infof("UserModifyOrg[部门关系删除] user.Userid#deptId: %v", key1)
+					uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "部门关系删除", "user.Userid#deptId", key1)
 					delDepts = append(delDepts, deptId)
 
 				}
@@ -555,7 +547,7 @@ func (uc *IncrementalSyncUsecase) UserModifyOrg(ctx context.Context, event *clie
 		}
 		if len(dingtalkUseridDeptidMap) > 0 {
 			for k, deptId := range dingtalkUseridDeptidMap {
-				uc.log.Infof("UserModifyOrg[部门关系增加] user.Userid#deptId: %v", k)
+				uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "部门关系增加", "user.Userid#deptId", k)
 				addDepts = append(addDepts, deptId)
 			}
 
@@ -582,23 +574,23 @@ func (uc *IncrementalSyncUsecase) UserModifyOrg(ctx context.Context, event *clie
 			modfiyUserBaseInfo = append(modfiyUserBaseInfo, finalUser)
 		}
 	}
-	uc.log.Info("UserModifyOrg[部门关系新增] addRelation:")
+	uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "部门关系新增", "addRelation", addRelation)
 	for i, item := range addRelation {
-		uc.log.Infof("UserModifyOrg[部门关系新增] i: %d, item: %+v", i, item)
+		uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "部门关系新增", "i", i, "item", item)
 	}
-	uc.log.Info("UserModifyOrg[部门关系删除] delRelation:")
+	uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "部门关系删除", "delRelation", delRelation)
 	for i, item := range delRelation {
-		uc.log.Infof("UserModifyOrg[部门关系删除] i: %d, item: %+v", i, item)
+		uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "部门关系删除", "i", i, "item", item)
 	}
 
-	uc.log.Info("UserModifyOrg[部门关系修改] updRelation:")
+	uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "部门关系修改", "updRelation", updRelation)
 	for i, item := range updRelation {
-		uc.log.Infof("UserModifyOrg[部门关系修改] i: %d, iitem: %+v", i, item)
+		uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "部门关系修改", "i", i, "item", item)
 	}
 
-	uc.log.Info("UserModifyOrg[基础信息变更] modfiyUserBaseInfo:")
+	uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "基础信息变更", "modfiyUserBaseInfo", modfiyUserBaseInfo)
 	for i, item := range modfiyUserBaseInfo {
-		uc.log.Infof("UserModifyOrg[基础信息变更] i: %d, item: %+v", i, item)
+		uc.log.Log(log.LevelInfo, "msg", "UserModifyOrg", "基础信息变更", "i", i, "item", item)
 	}
 	if len(modfiyUserBaseInfo) > 0 {
 		err = uc.repo.SaveIncrementUsers(ctx, nil, nil, modfiyUserBaseInfo)
@@ -663,7 +655,7 @@ func generateUserDeptRelations(deptUsers []*dingtalk.DingtalkDeptUser) []*dingta
 }
 
 func (uc *IncrementalSyncUsecase) getDeptidsFromDingTalkEvent(event *clientV2.GenericOpenDingTalkEvent) ([]int64, error) {
-	uc.log.Infof("getDeptidsFromDingTalkEvent: %v", event.Data)
+	uc.log.Log(log.LevelInfo, "msg", "getDeptidsFromDingTalkEvent", "event.Data", event.Data)
 
 	if event.Data == nil {
 		return nil, errors.New("getDeptidsFromDingTalkEvent event.Data is nil")
@@ -674,14 +666,14 @@ func (uc *IncrementalSyncUsecase) getDeptidsFromDingTalkEvent(event *clientV2.Ge
 	deptId, exists := datamap["deptId"]
 
 	if !exists {
-		uc.log.Errorf("getDeptidsFromDingTalkEvent not deptId: %v, exists: %v", deptId, exists)
+		uc.log.Log(log.LevelError, "msg", "getDeptidsFromDingTalkEvent", "not deptId", deptId, "exists", exists)
 		return nil, errors.New("getDeptidsFromDingTalkEvent not deptId")
 	}
 
 	deptIdSlice, ok := deptId.([]interface{})
 
 	if !ok {
-		uc.log.Errorf("deptId not []interface{}: %v, ok: %v", deptId, ok)
+		uc.log.Log(log.LevelError, "msg", "getDeptidsFromDingTalkEvent", "deptId not []interface{}", deptId, "ok", ok)
 		return nil, errors.New("deptId not []interface{}")
 	}
 
@@ -689,7 +681,7 @@ func (uc *IncrementalSyncUsecase) getDeptidsFromDingTalkEvent(event *clientV2.Ge
 		if f, ok := item.(float64); ok {
 			depIds = append(depIds, int64(f))
 		} else {
-			uc.log.Errorf("deptId not float64: %T", item)
+			uc.log.Log(log.LevelError, "msg", "getDeptidsFromDingTalkEvent", "deptId not float64", item)
 			return nil, errors.New("deptId not float64")
 		}
 	}
@@ -697,7 +689,7 @@ func (uc *IncrementalSyncUsecase) getDeptidsFromDingTalkEvent(event *clientV2.Ge
 }
 
 func (uc *IncrementalSyncUsecase) getUseridsFromDingTalkEvent(event *clientV2.GenericOpenDingTalkEvent) ([]string, error) {
-	uc.log.Infof("getUseridsFromDingTalkEvent: %v", event.Data)
+	uc.log.Log(log.LevelInfo, "msg", "getUseridsFromDingTalkEvent", "event.Data", event.Data)
 	if event.Data == nil {
 		return nil, errors.New("getUseridsFromDingTalkEvent event.Data is nil")
 	}
@@ -707,14 +699,14 @@ func (uc *IncrementalSyncUsecase) getUseridsFromDingTalkEvent(event *clientV2.Ge
 	userId, exists := datamap["userId"]
 
 	if !exists {
-		uc.log.Errorf("getUseridsFromDingTalkEvent not userId: %v, exists: %v", userId, exists)
+		uc.log.Log(log.LevelError, "msg", "getUseridsFromDingTalkEvent", "not userId", userId, "exists", exists)
 		return nil, errors.New("getUseridsFromDingTalkEvent not userId")
 	}
 
 	userIdSlice, ok := userId.([]interface{})
 
 	if !ok {
-		uc.log.Errorf("userId not []interface{}: %v, ok: %v", userId, ok)
+		uc.log.Log(log.LevelError, "msg", "getUseridsFromDingTalkEvent", "userId not []interface{}", userId, "ok", ok)
 		return nil, errors.New("userId not []interface{}")
 	}
 
@@ -722,7 +714,7 @@ func (uc *IncrementalSyncUsecase) getUseridsFromDingTalkEvent(event *clientV2.Ge
 		if f, ok := item.(string); ok {
 			userIds = append(userIds, f)
 		} else {
-			uc.log.Errorf("userId not string: %T", item)
+			uc.log.Log(log.LevelError, "msg", "getUseridsFromDingTalkEvent", "userId not string", item)
 			return nil, errors.New("userId not string")
 		}
 	}
@@ -745,19 +737,19 @@ func (uc *IncrementalSyncUsecase) getUseridsFromDingTalkEvent(event *clientV2.Ge
 //
 // ]
 func (uc *IncrementalSyncUsecase) getUseInfoFromDingTalkEvent(event *clientV2.GenericOpenDingTalkEvent) ([]*dingtalk.DingtalkDeptUser, error) {
-	uc.log.Infof("getUseInfoFromDingTalkEvent: %v", event.Data)
+	uc.log.Log(log.LevelInfo, "msg", "getUseInfoFromDingTalkEvent", "event.Data", event.Data)
 	data := event.Data
 
 	var userInfos []*dingtalk.DingtalkDeptUser
 	jsonData, err := json.Marshal(data)
-	uc.log.Infof("getUseInfoFromDingTalkEvent Marshal: %v, err:%v", jsonData, err)
+	uc.log.Log(log.LevelInfo, "msg", "getUseInfoFromDingTalkEvent", "Marshal", "jsonData", jsonData, "err", err)
 	if err != nil {
 		return nil, fmt.Errorf("marshal error: %v", err)
 	}
 
 	var modifyInfo dingtalk.UserModifyOrgEventData
 	err = json.Unmarshal(jsonData, &modifyInfo)
-	uc.log.Infof("getUseInfoFromDingTalkEvent Unmarshal err: %v, modifyInfo: %v", err, modifyInfo)
+	uc.log.Log(log.LevelInfo, "msg", "getUseInfoFromDingTalkEvent", "Unmarshal", "err", err, "modifyInfo", modifyInfo)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal error: %v", err)
 	}

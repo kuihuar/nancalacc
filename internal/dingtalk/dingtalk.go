@@ -22,7 +22,7 @@ import (
 
 type dingTalkRepo struct {
 	data      *conf.Auth_Dingtalk
-	log       *log.Helper
+	log       log.Logger
 	tokenAuth auth.Authenticator
 	// unifiedAuthService auth.UnifiedAuthService
 	dingtalkCli *dingtalkoauth2_1_0.Client
@@ -52,7 +52,7 @@ func NewDingTalkRepo(logger log.Logger) Dingtalk {
 		tokenAuth:          tokenAuth,
 		dingtalkCliContact: clientContact,
 		data:               conf.Get().GetAuth().GetDingtalk(),
-		log:                log.NewHelper(log.With(logger, "module", "data/dingtalk")),
+		log:                logger,
 	}
 }
 
@@ -62,7 +62,7 @@ func (r *dingTalkRepo) GetAccessToken(ctx context.Context) (*auth.AccessTokenRes
 }
 func (r *dingTalkRepo) FetchDepartments(ctx context.Context, token string) ([]*DingtalkDept, error) {
 
-	r.log.WithContext(ctx).Infof("FetchDepartments input token:%s", token)
+	r.log.Log(log.LevelInfo, "msg", "FetchDepartments", "input", token)
 
 	var deptList []*DingtalkDept
 
@@ -70,33 +70,33 @@ func (r *dingTalkRepo) FetchDepartments(ctx context.Context, token string) ([]*D
 	var baseDeptId int64 = 1
 	// 1. 获取子部门ID列表（所有）
 	deptIdsLevelOne, err := r.getDeptIds(ctx, token, baseDeptId)
-	log.Infof("FetchDepartments deptIdsLevelOne: %v, err: %v", deptIdsLevelOne, err)
+	r.log.Log(log.LevelInfo, "msg", "FetchDepartments", "deptIdsLevelOne", deptIdsLevelOne, "err", err)
 	if err != nil {
 		return nil, err
 	}
 
 	deptIdlist = append(deptIdlist, baseDeptId)
 
-	log.Infof("FetchDepartments deptIdlist: %v", deptIdlist)
+	r.log.Log(log.LevelInfo, "msg", "FetchDepartments", "deptIdlist", deptIdlist)
 	if len(deptIdsLevelOne) > 0 {
-		log.Info("len(deptIdsLevelOne) > 0")
+		r.log.Log(log.LevelInfo, "msg", "FetchDepartments", "len(deptIdsLevelOne) > 0")
 		deptIdlist = append(deptIdlist, deptIdsLevelOne...)
 		deptIdsLeveltwo, err := r.getDeptIdsConcurrent(ctx, token, deptIdsLevelOne)
 
-		log.Infof("FetchDepartments deptIdsLeveltwo: %v, err: %v", deptIdsLeveltwo, err)
+		r.log.Log(log.LevelInfo, "msg", "FetchDepartments", "deptIdsLeveltwo", deptIdsLeveltwo, "err", err)
 
 		if err != nil {
-			log.Error("getDeptIdsConcurrent failed, err: %v", err)
+			r.log.Log(log.LevelError, "msg", "FetchDepartments", "getDeptIdsConcurrent failed", "err", err)
 		}
 		if len(deptIdsLeveltwo) > 0 {
 			deptIdlist = append(deptIdlist, deptIdsLeveltwo...)
 		}
 	}
 
-	log.Info("FetchDepartments.deptIdlist: %v", deptIdlist)
+	r.log.Log(log.LevelInfo, "msg", "FetchDepartments", "deptIdlist", deptIdlist)
 	// 2. 获取子部门详情
 	deptList, err = r.FetchDeptDetails(ctx, token, deptIdlist)
-	log.Infof("FetchDepartments deptList: %v, err: %v", deptList, err)
+	r.log.Log(log.LevelInfo, "msg", "FetchDepartments", "deptList", deptList, "err", err)
 	if err != nil {
 		return nil, err
 	}
@@ -104,8 +104,7 @@ func (r *dingTalkRepo) FetchDepartments(ctx context.Context, token string) ([]*D
 }
 func (r *dingTalkRepo) getDeptIds(ctx context.Context, token string, deptId int64) ([]int64, error) {
 
-	log := r.log.WithContext(ctx)
-	log.Infof("getDeptIds token:%s deptId: %v", token, deptId)
+	r.log.Log(log.LevelInfo, "msg", "getDeptIds", "token", token, "deptId", deptId)
 
 	uri := fmt.Sprintf("%s/topapi/v2/department/listsubid?access_token=%s", r.data.Endpoint, token)
 	input := &ListDeptIDRequest{
@@ -140,7 +139,7 @@ func (r *dingTalkRepo) getDeptIdsConcurrent(ctx context.Context, token string, d
 
 	uri := fmt.Sprintf("%s/topapi/v2/department/listsubid?access_token=%s", r.data.Endpoint, token)
 
-	r.log.Info("getDeptIdsConcurrent deptIds: %v, uri: %v", deptIds, uri)
+	r.log.Log(log.LevelInfo, "msg", "getDeptIdsConcurrent", "deptIds", deptIds, "uri", uri)
 	sem := make(chan struct{}, r.data.MaxConcurrent)
 	deptList := make([]int64, 0)
 	var mu sync.Mutex
@@ -169,26 +168,26 @@ func (r *dingTalkRepo) getDeptIdsConcurrent(ctx context.Context, token string, d
 			}
 			jsonData, err := json.Marshal(input)
 			if err != nil {
-				r.log.Errorf("getDeptIdsConcurrent.jsonData: %s, err: %v", string(jsonData), err)
+				r.log.Log(log.LevelError, "msg", "getDeptIdsConcurrent", "jsonData", string(jsonData), "err", err)
 				return
 			}
 
 			bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
 			if err != nil {
-				r.log.Errorf("getDeptIdsConcurrent.PostJSON: %s, err: %v", string(jsonData), err)
+				r.log.Log(log.LevelError, "msg", "getDeptIdsConcurrent", "PostJSON", string(jsonData), "err", err)
 				return
 			}
 			var deptIDResponse *ListDeptIDResponse
 			if err = json.Unmarshal(bs, &deptIDResponse); err != nil {
-				r.log.Errorf("getDeptIdsConcurrent.Unmarshal: %s, err: %v", string(bs), err)
+				r.log.Log(log.LevelError, "msg", "getDeptIdsConcurrent", "Unmarshal", string(bs), "err", err)
 				return
 			}
 			if deptIDResponse.Errcode != 0 {
-				r.log.Errorf("钉钉API返回错误: %s, errcode: %d", deptIDResponse.Errmsg, deptIDResponse.Errcode)
+				r.log.Log(log.LevelError, "msg", "getDeptIdsConcurrent", "钉钉API返回错误", "Errmsg", deptIDResponse.Errmsg, "Errcode", deptIDResponse.Errcode)
 				return
 			}
 			if deptIDResponse.Result.DeptIDList == nil {
-				r.log.Errorf("钉钉API返回错误: %s, errcode: %d", deptIDResponse.Errmsg, deptIDResponse.Errcode)
+				r.log.Log(log.LevelError, "msg", "getDeptIdsConcurrent", "钉钉API返回错误", "Errmsg", deptIDResponse.Errmsg, "Errcode", deptIDResponse.Errcode)
 				return
 			}
 			deptIdlist := deptIDResponse.Result.DeptIDList
@@ -204,8 +203,7 @@ func (r *dingTalkRepo) getDeptIdsConcurrent(ctx context.Context, token string, d
 }
 
 func (r *dingTalkRepo) FetchDeptDetails(ctx context.Context, token string, deptIds []int64) ([]*DingtalkDept, error) {
-	log := r.log.WithContext(ctx)
-	log.Infof("FetchDeptDetails token:%s depIds: %v", token, deptIds)
+	r.log.Log(log.LevelInfo, "msg", "FetchDeptDetails", "token", token, "depIds", deptIds)
 
 	uriDetail := fmt.Sprintf("%s/topapi/v2/department/get?access_token=%s", r.data.Endpoint, token)
 
@@ -237,7 +235,7 @@ func (r *dingTalkRepo) FetchDeptDetails(ctx context.Context, token string, deptI
 			}
 			jsonData, err := json.Marshal(input)
 			if err != nil {
-				r.log.Errorf("FetchDeptDetails.jsonData: %v, err: %v", string(jsonData), err)
+				r.log.Log(log.LevelError, "msg", "FetchDeptDetails", "jsonData", string(jsonData), "err", err)
 				//errChan <- err
 				return
 			}
@@ -245,18 +243,18 @@ func (r *dingTalkRepo) FetchDeptDetails(ctx context.Context, token string, deptI
 			bs, err := httputil.PostJSON(uriDetail, jsonData, time.Second*10)
 			//r.log.Infof(">>>>FetchDeptDetails.bs: %s, err: %v\n", string(bs), err)
 			if err != nil {
-				r.log.Errorf("FetchDeptDetails.PostJSON: %v, err: %v", string(jsonData), err)
+				r.log.Log(log.LevelError, "msg", "FetchDeptDetails", "PostJSON", string(jsonData), "err", err)
 				//errChan <- err
 				return
 			}
 			var deptResponse *DingtalkDeptResponse
 			if err = json.Unmarshal(bs, &deptResponse); err != nil {
-				r.log.Errorf("FetchDeptDetails.Unmarshal: %v, err: %v", string(bs), err)
+				r.log.Log(log.LevelError, "msg", "FetchDeptDetails", "Unmarshal", string(bs), "err", err)
 				//errChan <- err
 				return
 			}
 			if deptResponse.Errcode != 0 {
-				r.log.Errorf("FetchDeptDetails.Errcode: %v, err: %v", deptResponse.Errcode, deptResponse.Errmsg)
+				r.log.Log(log.LevelError, "msg", "FetchDeptDetails", "Errcode", deptResponse.Errcode, "Errmsg", deptResponse.Errmsg)
 				//errChan <- err
 				return
 			}
@@ -276,7 +274,7 @@ func (r *dingTalkRepo) FetchDeptDetails(ctx context.Context, token string, deptI
 
 }
 func (r *dingTalkRepo) FetchDepartmentUsers(ctx context.Context, token string, deptIds []int64) ([]*DingtalkDeptUser, error) {
-	r.log.WithContext(ctx).Infof("FetchDepartmentUsers input token: %v, deptIds: %v", token, deptIds)
+	r.log.Log(log.LevelInfo, "msg", "FetchDepartmentUsers", "input", "token", token, "deptIds", deptIds)
 
 	// 服务端API.通讯录管理.用户管理.获取部门用户详情
 	//maxConcurrent := 10
@@ -306,7 +304,7 @@ func (r *dingTalkRepo) FetchDepartmentUsers(ctx context.Context, token string, d
 			for {
 				userList, cursor, err := r.getUserListByDepId(ctx, token, id)
 				if err != nil {
-					r.log.Errorf("FetchDepartmentUsers.getUserListByDepId: %v, err: %v", id, err)
+					r.log.Log(log.LevelError, "msg", "FetchDepartmentUsers", "getUserListByDepId", id, "err", err)
 					//errChan <- err
 					return
 				}
@@ -343,8 +341,7 @@ func (r *dingTalkRepo) FetchDepartmentUsers(ctx context.Context, token string, d
 	return userList, nil
 }
 func (r *dingTalkRepo) getUserListByDepId(ctx context.Context, token string, deptId int64) ([]*DingtalkDeptUser, int64, error) {
-	log := r.log.WithContext(ctx)
-	log.Infof("getUserListByDepId token: %v,deptId: %v", token, deptId)
+	r.log.Log(log.LevelInfo, "msg", "getUserListByDepId", "token", token, "deptId", deptId)
 	// 发送post请求
 	var cursor int64 = 0
 	uri := fmt.Sprintf("%s/topapi/v2/user/list?access_token=%s", r.data.Endpoint, token)
@@ -359,7 +356,7 @@ func (r *dingTalkRepo) getUserListByDepId(ctx context.Context, token string, dep
 	}
 
 	bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
-	log.Infof("getUserListByDepId.body: %v, err: %v", string(bs), err)
+	r.log.Log(log.LevelInfo, "msg", "getUserListByDepId", "body", string(bs), "err", err)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -386,8 +383,7 @@ func (r *dingTalkRepo) getUserListByDepId(ctx context.Context, token string, dep
 }
 func (r *dingTalkRepo) GetUserAccessToken(ctx context.Context, code string) (*AuthResponse, error) {
 
-	log := r.log.WithContext(ctx)
-	log.Infof("GetUserAccessToken code: %v", code)
+	r.log.Log(log.LevelInfo, "msg", "GetUserAccessToken", "code", code)
 
 	getUserTokenRequest := &dingtalkoauth2_1_0.GetUserTokenRequest{
 
@@ -445,8 +441,7 @@ func (r *dingTalkRepo) GetUserAccessToken(ctx context.Context, code string) (*Au
 }
 func (r *dingTalkRepo) GetUserInfo(ctx context.Context, token, unionId string) (*DingTalkUserInfo, error) {
 
-	log := r.log.WithContext(ctx)
-	log.Infof("GetUserInfo token: %v, unionId %s", token, unionId)
+	r.log.Log(log.LevelInfo, "msg", "GetUserInfo", "token", token, "unionId", unionId)
 
 	getUserHeaders := &dingtalkcontact_1_0.GetUserHeaders{}
 	getUserHeaders.XAcsDingtalkAccessToken = tea.String(token)
@@ -460,7 +455,7 @@ func (r *dingTalkRepo) GetUserInfo(ctx context.Context, token, unionId string) (
 		}()
 		response, err = r.dingtalkCliContact.GetUserWithOptions(tea.String(unionId), getUserHeaders, &util.RuntimeOptions{})
 
-		r.log.WithContext(ctx).Info("response: %v, error: %v", response, err)
+		r.log.Log(log.LevelInfo, "msg", "GetUserInfo", "response", response, "err", err)
 
 		if err != nil {
 			return err
@@ -480,13 +475,13 @@ func (r *dingTalkRepo) GetUserInfo(ctx context.Context, token, unionId string) (
 			err.Message = tea.String(tryErr.Error())
 		}
 		if !tea.BoolValue(util.Empty(err.Code)) && !tea.BoolValue(util.Empty(err.Message)) {
-			log.Errorf("GetUserInfo error: %v", err)
+			r.log.Log(log.LevelError, "msg", "GetUserInfo", "error", err)
 			// err 中含有 code 和 message 属性，可帮助开发定位问题
 		}
 
 	}
 
-	log.Infof("GetUserInfo response: %v", response)
+	r.log.Log(log.LevelInfo, "msg", "GetUserInfo", "response", response)
 
 	return &DingTalkUserInfo{
 		UnionId: *response.Body.UnionId,
@@ -496,9 +491,7 @@ func (r *dingTalkRepo) GetUserInfo(ctx context.Context, token, unionId string) (
 
 func (r *dingTalkRepo) GetUseridByUnionid(ctx context.Context, token, unionid string) (string, error) {
 
-	log := r.log.WithContext(ctx)
-
-	log.Info("GetUseridByUnionid token: %v,unionid %v", token, unionid)
+	r.log.Log(log.LevelInfo, "msg", "GetUseridByUnionid", "token", token, "unionid", unionid)
 	uri := fmt.Sprintf("%s/topapi/user/getbyunionid?access_token=%s", r.data.Endpoint, token)
 	input := &DingTalkUseridByUnionidRequest{
 		Unionid: unionid,
@@ -513,7 +506,7 @@ func (r *dingTalkRepo) GetUseridByUnionid(ctx context.Context, token, unionid st
 		return "", err
 	}
 
-	r.log.Info("GetUseridByUnionid: %v, err: %v", string(bs), err)
+	r.log.Log(log.LevelInfo, "msg", "GetUseridByUnionid", "body", string(bs), "err", err)
 
 	var getUseridByUnionidResponse *DingTalkUseridByUnionidResponse
 	if err = json.Unmarshal(bs, &getUseridByUnionidResponse); err != nil {
@@ -529,12 +522,11 @@ func (r *dingTalkRepo) GetUseridByUnionid(ctx context.Context, token, unionid st
 }
 
 func (r *dingTalkRepo) FetchUserDetail(ctx context.Context, token string, userIds []string) ([]*DingtalkDeptUser, error) {
-	log := r.log.WithContext(ctx)
+	r.log.Log(log.LevelInfo, "msg", "FetchUserDetail", "token", token, "userIds", userIds)
 
-	log.Infof("FetchUserDetail token: %s, userIds: %v", token, userIds)
 	uri := fmt.Sprintf("%s/topapi/v2/user/get?access_token=%s", r.data.Endpoint, token)
 
-	log.Info("FetchUserDetail deptIds: %v, uri: %v", userIds, uri)
+	r.log.Log(log.LevelInfo, "msg", "FetchUserDetail", "deptIds", userIds, "uri", uri)
 	sem := make(chan struct{}, r.data.MaxConcurrent)
 	userList := make([]*DingtalkDeptUser, 0)
 	var mu sync.Mutex
@@ -563,23 +555,23 @@ func (r *dingTalkRepo) FetchUserDetail(ctx context.Context, token string, userId
 			}
 			jsonData, err := json.Marshal(input)
 			if err != nil {
-				r.log.Errorf("GetUserDetail.jsonData: %v, err: %v", string(jsonData), err)
+				r.log.Log(log.LevelError, "msg", "FetchUserDetail", "jsonData", string(jsonData), "err", err)
 				return
 			}
 
 			bs, err := httputil.PostJSON(uri, jsonData, time.Second*10)
-			r.log.Infof(">>>>>>>>>GetUserDetail.PostJSON: %v, err: %v\n", string(bs), err)
+			r.log.Log(log.LevelInfo, "msg", "FetchUserDetail", "PostJSON", string(bs), "err", err)
 			if err != nil {
-				r.log.Errorf("GetUserDetail.PostJSON: %v, err: %v", string(bs), err)
+				r.log.Log(log.LevelError, "msg", "FetchUserDetail", "PostJSON", string(bs), "err", err)
 				return
 			}
 			var userDetail *DingTalkUserDetailResponse
 			if err = json.Unmarshal(bs, &userDetail); err != nil {
-				r.log.Errorf("GetUserDetail.Unmarshal: %v, err: %v", string(bs), err)
+				r.log.Log(log.LevelError, "msg", "FetchUserDetail", "Unmarshal", string(bs), "err", err)
 				return
 			}
 			if userDetail.Errcode != 0 {
-				r.log.Errorf("钉钉API返回错误: %s, errcode: %d", userDetail.Errmsg, userDetail.Errcode)
+				r.log.Log(log.LevelError, "msg", "FetchUserDetail", "钉钉API返回错误", "Errmsg", userDetail.Errmsg, "Errcode", userDetail.Errcode)
 				return
 			}
 			user := userDetail.Result

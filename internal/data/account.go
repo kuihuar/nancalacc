@@ -10,6 +10,8 @@ import (
 	"nancalacc/internal/data/models"
 	"nancalacc/internal/dingtalk"
 
+	//nancalaccLog "nancalacc/internal/log"
+
 	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -18,7 +20,7 @@ import (
 type accounterRepo struct {
 	bizConf *conf.App
 	data    *Data
-	log     *log.Helper
+	log     log.Logger
 }
 
 // getSyncDB 获取同步数据库连接
@@ -36,19 +38,18 @@ func NewAccounterRepo(data *Data, logger log.Logger) biz.AccounterRepo {
 	return &accounterRepo{
 		bizConf: conf.Get().GetApp(),
 		data:    data,
-		log:     log.NewHelper(logger),
+		log:     logger,
 	}
 }
 
 func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.DingtalkDeptUser, taskId string) (int, error) {
 
-	r.log.WithContext(ctx).Infof("SaveUsers users: %v, taskId :%s", users, taskId)
+	r.log.Log(log.LevelInfo, "msg", "SaveUsers", "users", users, "taskId", taskId)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	r.log.Infof("SaveUsers: %v", users)
 	if len(users) == 0 {
-		r.log.Warn("users is empty")
+		r.log.Log(log.LevelWarn, "msg", "SaveUsers", "users is empty")
 		return 0, nil
 	}
 	thirdCompanyID := r.bizConf.ThirdCompanyId
@@ -57,7 +58,7 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.Dingtal
 	for _, user := range users {
 		err := dingtalk.ValidateDingTalkUser(ctx, user)
 		if err != nil {
-			r.log.Errorf("ValidateDingTalkUser error: %v", err)
+			r.log.Log(log.LevelError, "msg", "ValidateDingTalkUser", "err", err)
 			continue
 		}
 		entity := models.MakeLasUser(user, thirdCompanyID, platformID, Source, taskId)
@@ -86,7 +87,7 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.Dingtal
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Error("user already exists")
+			r.log.Log(log.LevelError, "msg", "SaveUsers", "user already exists")
 		} else {
 			return 0, result.Error
 		}
@@ -98,7 +99,7 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.Dingtal
 
 func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*dingtalk.DingtalkDept, taskId string) (int, error) {
 
-	r.log.WithContext(ctx).Infof("SaveDepartments depts: %v, taskId :%s", depts, taskId)
+	r.log.Log(log.LevelInfo, "msg", "SaveDepartments", "depts", depts, "taskId", taskId)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -124,7 +125,7 @@ func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*dingtalk.D
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Error("department already exists")
+			r.log.Log(log.LevelError, "msg", "SaveDepartments", "department already exists")
 		} else {
 			return 0, result.Error
 		}
@@ -135,10 +136,10 @@ func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*dingtalk.D
 }
 
 func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relations []*dingtalk.DingtalkDeptUserRelation, taskId string) (int, error) {
-	r.log.WithContext(ctx).Infof("SaveDepartmentUserRelations relations.size: %d, taskId :%s", len(relations), taskId)
+	r.log.Log(log.LevelInfo, "msg", "SaveDepartmentUserRelations", "relations.size", len(relations), "taskId", taskId)
 
 	for _, relation := range relations {
-		r.log.Infof("relation: %+v", relation)
+		r.log.Log(log.LevelInfo, "msg", "SaveDepartmentUserRelations", "relation", relation)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -171,7 +172,7 @@ func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relatio
 }
 
 func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, input *dingtalk.DingtalkCompanyCfg) error {
-	r.log.WithContext(ctx).Infof("SaveCompanyCfg input: %+v", input)
+	r.log.Log(log.LevelInfo, "msg", "SaveCompanyCfg", "input", input)
 
 	now := time.Now()
 	entity := &models.TbCompanyCfg{
@@ -194,7 +195,7 @@ func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, input *dingtalk.Ding
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			r.log.Error("company config already exists")
+			r.log.Log(log.LevelError, "msg", "SaveCompanyCfg", "company config already exists")
 		} else {
 			return err
 		}
@@ -205,7 +206,7 @@ func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, input *dingtalk.Ding
 }
 
 // func (r *accounterRepo) CallEcisaccountsyncAll(ctx context.Context, taskId string) (biz.EcisaccountsyncAllResponse, error) {
-// 	r.log.Infof("CallEcisaccountsyncAll: %v", taskId)
+// 	r.log.Log(log.LevelInfo, "msg", "CallEcisaccountsyncAll", "taskId", taskId)
 
 // 	path := r.serviceConf.Business.EcisaccountsyncUrl
 
@@ -217,9 +218,9 @@ func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, input *dingtalk.Ding
 // 	collectCost := "1100000"
 // 	uri := fmt.Sprintf("%s?taskId=%s&thirdCompanyId=%s&collectCost=%s", path, taskId, thirdCompanyID, collectCost)
 
-// 	r.log.Infof("CallEcisaccountsyncAll uri: %s", uri)
+// 	r.log.Log(log.LevelInfo, "msg", "CallEcisaccountsyncAll", "uri", uri)
 // 	bs, err := httputil.PostJSON(uri, nil, time.Second*10)
-// 	r.log.Infof("CallEcisaccountsyncAll.Post output: bs:%s, err:%w", string(bs), err)
+// 	r.log.Log(log.LevelInfo, "msg", "CallEcisaccountsyncAll.Post", "output", "bs", string(bs), "err", err)
 
 // 	if err != nil {
 // 		return resp, err
@@ -262,8 +263,7 @@ func (r *accounterRepo) ClearAll(ctx context.Context) error {
 
 // user_del/user_update/user_add(update_type). . auto/manual(sync_type)
 func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersDel, usersUpd []*dingtalk.DingtalkDeptUser) error {
-	log := r.log.WithContext(ctx)
-	log.Info("SaveIncrementUsers")
+	r.log.Log(log.LevelInfo, "msg", "SaveIncrementUsers")
 	inputlen := len(usersAdd) + len(usersDel) + len(usersUpd)
 	if inputlen == 0 {
 		return errors.New("empty input")
@@ -281,7 +281,7 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 	for _, add := range usersAdd {
 		err := dingtalk.ValidateDingTalkUser(ctx, add)
 		if err != nil {
-			r.log.Errorf("ValidateDingTalkUser error: %v", err)
+			r.log.Log(log.LevelError, "msg", "ValidateDingTalkUser", "err", err)
 			continue
 		}
 		entity := models.MakeLasUserIncrement(add, thirdCompanyID, platformID, companyID, Source, "user_add")
@@ -290,7 +290,7 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 	for _, del := range usersDel {
 		err := dingtalk.ValidateDingTalkUser(ctx, del)
 		if err != nil {
-			r.log.Errorf("ValidateDingTalkUser error: %v", err)
+			r.log.Log(log.LevelError, "msg", "ValidateDingTalkUser", "err", err)
 			continue
 		}
 		entity := models.MakeLasUserIncrement(del, thirdCompanyID, platformID, companyID, Source, "user_del")
@@ -300,7 +300,7 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 	for _, upd := range usersUpd {
 		err := dingtalk.ValidateDingTalkUser(ctx, upd)
 		if err != nil {
-			r.log.Errorf("ValidateDingTalkUser error: %v", err)
+			r.log.Log(log.LevelError, "msg", "ValidateDingTalkUser", "err", err)
 			continue
 		}
 		// entity := r.makeLasUserIncrement(user, "user_update")
@@ -308,10 +308,10 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 		entities = append(entities, entity)
 	}
 
-	log.Info("SaveIncrementUsers entities:")
+	r.log.Log(log.LevelInfo, "msg", "SaveIncrementUsers", "entities", entities)
 
 	for i, item := range entities {
-		log.Info("entities i: %d, item: %v", i, item)
+		r.log.Log(log.LevelInfo, "msg", "SaveIncrementUsers", "entities", "i", i, "item", item)
 	}
 
 	db, err := r.data.GetSyncDB()
@@ -322,7 +322,7 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Error("user already exists")
+			r.log.Log(log.LevelError, "msg", "SaveIncrementUsers", "user already exists")
 		} else {
 			return result.Error
 		}
@@ -332,8 +332,7 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 
 // dept_del/dept_update/dept_add/dept_move(update_type)
 func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel, deptsUpd []*dingtalk.DingtalkDept) error {
-	log := r.log.WithContext(ctx)
-	log.Info("SaveIncrementDepartments")
+	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartments")
 	inputlen := len(deptsAdd) + len(deptsDel) + len(deptsUpd)
 	if inputlen == 0 {
 		return errors.New("empty input")
@@ -362,10 +361,10 @@ func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, 
 		entities = append(entities, entity)
 	}
 
-	log.Info("SaveIncrementDepartments entities:")
+	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartments", "entities", entities)
 
 	for i, item := range entities {
-		log.Info("entities i: %d, item: %v", i, item)
+		r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartments", "entities", "i", i, "item", item)
 	}
 
 	db, err := r.data.GetSyncDB()
@@ -376,7 +375,7 @@ func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, 
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Error("user already exists")
+			r.log.Log(log.LevelError, "msg", "SaveIncrementDepartments", "user already exists")
 		} else {
 			return result.Error
 		}
@@ -387,8 +386,7 @@ func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, 
 }
 
 func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel, relationsUpd []*dingtalk.DingtalkDeptUserRelation) error {
-	log := r.log.WithContext(ctx)
-	log.Info("SaveIncrementDepartmentUserRelations")
+	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations")
 
 	inputlen := len(relationsAdd) + len(relationsDel) + len(relationsUpd)
 	if inputlen == 0 {
@@ -398,16 +396,16 @@ func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	log.Info("SaveIncrementDepartmentUserRelations input:")
+	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations", "input", "relationsAdd", "relationsDel", relationsDel, "relationsUpd", relationsUpd)
 
 	for i, item := range relationsAdd {
-		log.Info("relationsAdd input i: %d, item: %v", i, item)
+		r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations", "input", "relationsAdd", "i", i, "item", item)
 	}
 	for i, item := range relationsDel {
-		log.Info("relationsDel input i: %d, item: %v", i, item)
+		r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations", "input", "relationsDel", "i", i, "item", item)
 	}
 	for i, item := range relationsUpd {
-		log.Info("relationsUpd input i: %d, item: %v", i, item)
+		r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations", "input", "relationsUpd", "i", i, "item", item)
 	}
 
 	entities := make([]*models.TbLasDepartmentUserIncrement, 0, inputlen)
@@ -431,10 +429,10 @@ func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context
 		entities = append(entities, entity)
 	}
 
-	log.Info("SaveIncrementDepartmentUserRelations entities:")
+	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations", "entities", entities)
 
 	for i, item := range entities {
-		log.Info("entities i: %d, item: %v", i, item)
+		r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations", "entities", "i", i, "item", item)
 	}
 
 	db, err := r.data.GetSyncDB()
@@ -445,7 +443,7 @@ func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Infof("relation already exists: %v")
+			r.log.Log(log.LevelError, "msg", "SaveIncrementDepartmentUserRelations", "relation already exists")
 		} else {
 			return result.Error
 		}
@@ -456,12 +454,12 @@ func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context
 }
 func (r *accounterRepo) BatchSaveUsers(ctx context.Context, users []*models.TbLasUser) (int, error) {
 
-	r.log.WithContext(ctx).Infof("BatchSaveUsers users: %v", users)
+	r.log.Log(log.LevelInfo, "msg", "BatchSaveUsers", "users", users)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	if len(users) == 0 {
-		r.log.Infof("users is empty")
+		r.log.Log(log.LevelWarn, "msg", "BatchSaveUsers", "users is empty")
 		return 0, nil
 	}
 
@@ -477,7 +475,7 @@ func (r *accounterRepo) BatchSaveUsers(ctx context.Context, users []*models.TbLa
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Error("user already exists")
+			r.log.Log(log.LevelError, "msg", "BatchSaveUsers", "user already exists")
 		} else {
 			return 0, result.Error
 		}
@@ -487,12 +485,12 @@ func (r *accounterRepo) BatchSaveUsers(ctx context.Context, users []*models.TbLa
 }
 func (r *accounterRepo) BatchSaveDepts(ctx context.Context, depts []*models.TbLasDepartment) (int, error) {
 
-	r.log.WithContext(ctx).Infof("BatchSaveDepts depts: %v", depts)
+	r.log.Log(log.LevelInfo, "msg", "BatchSaveDepts", "depts", depts)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	if len(depts) == 0 {
-		r.log.Warn("users is empty")
+		r.log.Log(log.LevelWarn, "msg", "BatchSaveDepts", "depts is empty")
 		return 0, nil
 	}
 	// for _, dept := range depts {
@@ -507,7 +505,7 @@ func (r *accounterRepo) BatchSaveDepts(ctx context.Context, depts []*models.TbLa
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Error("dept already exists")
+			r.log.Log(log.LevelError, "msg", "BatchSaveDepts", "dept already exists")
 		} else {
 			return 0, result.Error
 		}
@@ -517,12 +515,12 @@ func (r *accounterRepo) BatchSaveDepts(ctx context.Context, depts []*models.TbLa
 }
 func (r *accounterRepo) BatchSaveDeptUsers(ctx context.Context, usersdepts []*models.TbLasDepartmentUser) (int, error) {
 
-	r.log.WithContext(ctx).Infof("BatchSaveDeptUsers usersdepts: %v", usersdepts)
+	r.log.Log(log.LevelInfo, "msg", "BatchSaveDeptUsers", "usersdepts", usersdepts)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	if len(usersdepts) == 0 {
-		r.log.Warn("users is empty")
+		r.log.Log(log.LevelWarn, "msg", "BatchSaveDeptUsers", "usersdepts is empty")
 		return 0, nil
 	}
 	// for _, userdept := range usersdepts {
@@ -535,7 +533,7 @@ func (r *accounterRepo) BatchSaveDeptUsers(ctx context.Context, usersdepts []*mo
 	result := db.WithContext(ctx).Create(usersdepts)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Error("deptuser already exists")
+			r.log.Log(log.LevelError, "msg", "BatchSaveDeptUsers", "deptuser already exists")
 		} else {
 			return 0, result.Error
 		}
@@ -545,8 +543,7 @@ func (r *accounterRepo) BatchSaveDeptUsers(ctx context.Context, usersdepts []*mo
 }
 
 func (r *accounterRepo) CreateTask(ctx context.Context, taskName string) (int, error) {
-	log := r.log.WithContext(ctx)
-	log.Infof("CreateTask name: %s", taskName)
+	r.log.Log(log.LevelInfo, "msg", "CreateTask", "name", taskName)
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -584,8 +581,7 @@ func (r *accounterRepo) CreateTask(ctx context.Context, taskName string) (int, e
 
 func (r *accounterRepo) UpdateTask(ctx context.Context, taskName, status string) error {
 
-	log := r.log.WithContext(ctx)
-	log.Infof("UpdateTask taskName: %s, status: %s", taskName, status)
+	r.log.Log(log.LevelInfo, "msg", "UpdateTask", "taskName", taskName, "status", status)
 	// pending/in_progress/completed/cancelled
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -598,7 +594,7 @@ func (r *accounterRepo) UpdateTask(ctx context.Context, taskName, status string)
 	}
 	if err := db.Model(&models.Task{}).WithContext(ctx).Where("title=?", taskName).Find(&task).Error; err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
-			log.Error("查询超时")
+			r.log.Log(log.LevelError, "msg", "UpdateTask", "查询超时")
 		}
 		return err
 	}
@@ -614,7 +610,7 @@ func (r *accounterRepo) UpdateTask(ctx context.Context, taskName, status string)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			log.Infof("task already exists")
+			r.log.Log(log.LevelError, "msg", "UpdateTask", "task already exists")
 		} else {
 			return result.Error
 		}
@@ -626,7 +622,7 @@ func (r *accounterRepo) UpdateTask(ctx context.Context, taskName, status string)
 
 func (r *accounterRepo) GetTask(ctx context.Context, taskName string) (*models.Task, error) {
 
-	r.log.WithContext(ctx).Infof("CreateTask name: %s", taskName)
+	r.log.Log(log.LevelInfo, "msg", "CreateTask", "name", taskName)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	task := &models.Task{}

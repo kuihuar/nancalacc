@@ -2,6 +2,7 @@ package biz
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	v1 "nancalacc/api/account/v1"
 	"nancalacc/internal/auth"
@@ -10,6 +11,7 @@ import (
 	"nancalacc/internal/dingtalk"
 	"nancalacc/internal/wps"
 	"strconv"
+	"sync"
 	"time"
 
 	//"github.com/go-kratos/kratos/v2/errors"
@@ -28,7 +30,7 @@ type FullSyncUsecase struct {
 	wps          wps.Wps
 	bizConf      *conf.App
 	localCache   CacheService
-	log          *log.Helper
+	log          log.Logger
 }
 
 // NewGreeterUsecase new a Greeter usecase.
@@ -36,28 +38,15 @@ func NewFullSyncUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, wps 
 	appAuth := auth.NewWpsAppAuthenticator()
 	bizConf := conf.Get().GetApp()
 	return &FullSyncUsecase{repo: repo, dingTalkRepo: dingTalkRepo,
-		appAuth: appAuth, wps: wps, localCache: cache, bizConf: bizConf, log: log.NewHelper(logger)}
+		appAuth: appAuth, wps: wps, localCache: cache, bizConf: bizConf, log: logger}
 }
 
-// 优化全量同步任务，internal/biz/full_sync.go的CreateSyncAccount方法，
-// 1. 验证是否提交过uc.localCache，否则返回错误
-// 2. 获取token并从第三方获取部门和用户数据
-// 3. 数据入库，包括SaveCompanyCfg公司配置入库，SaveDepartments部门入库，SaveUsers用户入库，SaveDepartmentUserRelations关系入库
-// 4. 调用wps接口，通知调用 PostEcisaccountsyncAll 开始同步
-// 5. 更新任务状态uc.localCache ，包括任务状态，进度，开始时间，结束时间，实际时间
-// 6. 返回结果，包括任务id
-
-// 其中3里面的的三项可以是并发，但需要保证数据一致性，
-// 2里面已经有并发，但需要保证数据一致性，
-// 确可以入库完成，再有通知调用
 func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
-	uc.log.WithContext(ctx).Infof("CreateSyncAccount req: %v", req)
+	uc.log.Log(log.LevelInfo, "msg", "CreateSyncAccount", "req", req)
 
 	taskId := req.GetTaskName()
 
-	taskCachekey := prefix + taskId
-
-	_, ok, err := uc.localCache.Get(ctx, taskCachekey)
+	_, ok, err := uc.GetCacheTask(ctx, taskId)
 	if err != nil {
 		return nil, err
 	}
@@ -65,120 +54,24 @@ func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.Create
 		return nil, status.Error(codes.AlreadyExists, "task name "+taskId+" exists")
 	}
 
-	err = uc.repo.SaveCompanyCfg(ctx, &dingtalk.DingtalkCompanyCfg{
-		ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
-		PlatformIds:    uc.bizConf.GetPlatformIds(),
-		CompanyId:      uc.bizConf.GetCompanyId(),
-	})
+	companyCfg, users, depts, deptUsers, err := uc.getFullData(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = uc.saveFullData(ctx, companyCfg, users, depts, deptUsers, taskId)
 	if err != nil {
 		return nil, err
 	}
 
-	// 1. 获取access_token
-	dingTalkAccessToken, err := uc.dingTalkRepo.GetAccessToken(ctx)
-	uc.log.Infof("GetAccessToken: %+v, err: %v", dingTalkAccessToken, err)
+	err = uc.notifyFullSync(ctx, taskId)
 	if err != nil {
 		return nil, err
 	}
-	accessToken := dingTalkAccessToken.AccessToken
-
-	// 1. 从第三方获取部门和用户数据
-
-	depts, err := uc.dingTalkRepo.FetchDepartments(ctx, accessToken)
-	uc.log.Infof("FetchDepartments depts: %+v, err: %v", depts, err)
+	err = uc.createCacheTask(ctx, taskId, "in_progress")
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. 数据入库
-	deptCount, err := uc.repo.SaveDepartments(ctx, depts, taskId)
-	uc.log.Infof("SaveDepartments deptCount: %d, err: %v", deptCount, err)
-	if err != nil {
-		return nil, err
-	}
-	var deptIds []int64
-	for _, dept := range depts {
-		deptIds = append(deptIds, dept.DeptID)
-	}
-
-	// 1. 从第三方获取用户数据
-	deptUsers, err := uc.dingTalkRepo.FetchDepartmentUsers(ctx, accessToken, deptIds)
-
-	for _, deptUser := range deptUsers {
-		uc.log.Infof("FetchDepartmentUsers deptUser: %+v", deptUser)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	// 2. 数据入库
-	//这里可以 将deptUsers转为model.TbLasUser,
-	cnt, err := uc.repo.SaveUsers(ctx, deptUsers, taskId)
-	uc.log.Infof("SaveUsers cnt: %d, err: %v", cnt, err)
-	if err != nil {
-		return nil, err
-	}
-
-	// 2. 关系数据入库
-	var deptUserRelations []*dingtalk.DingtalkDeptUserRelation
-	for _, deptUser := range deptUsers {
-		order := make(map[int64]int64, 0)
-		if len(deptUser.DeptOrderList) > 0 {
-			for _, depIdOrder := range deptUser.DeptOrderList {
-				order[depIdOrder.DeptID] = depIdOrder.DeptID
-			}
-		}
-		for _, depId := range deptUser.DeptIDList {
-
-			reliation := &dingtalk.DingtalkDeptUserRelation{
-				Uid: deptUser.Userid,
-				Did: strconv.FormatInt(depId, 10),
-			}
-			if order, ok := order[depId]; ok {
-				reliation.Order = order
-			}
-			deptUserRelations = append(deptUserRelations, reliation)
-		}
-
-	}
-
-	// 3. 数据入库
-	cnt, err = uc.repo.SaveDepartmentUserRelations(ctx, deptUserRelations, taskId)
-	uc.log.Infof("SaveDepartmentUserRelations cnt: %d, err: %v", cnt, err)
-	if err != nil {
-		return nil, err
-	}
-
-	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
-	uc.log.Infof("GetAccessToken appAccessToken: %+v, err: %v", appAccessToken, err)
-
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := uc.wps.PostEcisaccountsyncAll(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncAllRequest{
-		TaskId:         taskId,
-		ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
-	})
-	uc.log.Infof("PostEcisaccountsyncAll resp: %+v, err: %v", resp, err)
-
-	if err != nil {
-		return nil, err
-	}
-	taskInfo := &models.Task{
-		ID:          1,
-		Title:       req.GetTaskName(),
-		Description: req.GetTaskName(),
-		Status:      "in_progress",
-		CreatorID:   1,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		DueDate:     time.Now(),
-		StartDate:   time.Now(),
-		Progress:    30,
-		ActualTime:  0,
-	}
-	uc.localCache.Set(ctx, taskCachekey, taskInfo, 300*time.Minute)
 	return &v1.CreateSyncAccountReply{
 		TaskId:     taskId,
 		CreateTime: timestamppb.Now(),
@@ -186,7 +79,7 @@ func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.Create
 }
 
 func (uc *FullSyncUsecase) GetSyncAccount(ctx context.Context, req *v1.GetSyncAccountRequest) (*v1.GetSyncAccountReply, error) {
-	uc.log.WithContext(ctx).Infof("GetSyncAccount: %v", req)
+	uc.log.Log(log.LevelInfo, "msg", "GetSyncAccount", "req", req)
 
 	taskId := req.GetTaskId()
 
@@ -210,11 +103,111 @@ func (uc *FullSyncUsecase) GetSyncAccount(ctx context.Context, req *v1.GetSyncAc
 	}
 	return nil, status.Error(codes.NotFound, "task "+taskId+" not found")
 }
+func (uc *FullSyncUsecase) getFullData(ctx context.Context) (companyCfg *dingtalk.DingtalkCompanyCfg,
+	users []*dingtalk.DingtalkDeptUser, depts []*dingtalk.DingtalkDept,
+	deptUsers []*dingtalk.DingtalkDeptUserRelation, err error) {
+	companyCft := &dingtalk.DingtalkCompanyCfg{
+		ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
+		PlatformIds:    uc.bizConf.GetPlatformIds(),
+		CompanyId:      uc.bizConf.GetCompanyId(),
+	}
 
+	dingTalkAccessToken, err := uc.dingTalkRepo.GetAccessToken(ctx)
+	uc.log.Log(log.LevelInfo, "msg", "GetAccessToken", "dingTalkAccessToken", dingTalkAccessToken, "err", err)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+	accessToken := dingTalkAccessToken.AccessToken
+
+	depts, err = uc.dingTalkRepo.FetchDepartments(ctx, accessToken)
+	uc.log.Log(log.LevelInfo, "msg", "FetchDepartments", "depts", depts, "err", err)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	var deptIds []int64
+	for _, dept := range depts {
+		deptIds = append(deptIds, dept.DeptID)
+	}
+	// 1. 从第三方获取用户数据
+	users, err = uc.dingTalkRepo.FetchDepartmentUsers(ctx, accessToken, deptIds)
+
+	for _, deptUser := range users {
+		uc.log.Log(log.LevelInfo, "msg", "FetchDepartmentUsers", "deptUser", deptUser)
+	}
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+	for _, deptUser := range users {
+		order := make(map[int64]int64, 0)
+		if len(deptUser.DeptOrderList) > 0 {
+			for _, depIdOrder := range deptUser.DeptOrderList {
+				order[depIdOrder.DeptID] = depIdOrder.DeptID
+			}
+		}
+		for _, depId := range deptUser.DeptIDList {
+
+			reliation := &dingtalk.DingtalkDeptUserRelation{
+				Uid: deptUser.Userid,
+				Did: strconv.FormatInt(depId, 10),
+			}
+			if order, ok := order[depId]; ok {
+				reliation.Order = order
+			}
+			deptUsers = append(deptUsers, reliation)
+		}
+
+	}
+	return companyCft, users, depts, deptUsers, nil
+}
+func (uc *FullSyncUsecase) notifyFullSync(ctx context.Context, taskId string) (err error) {
+	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	if err != nil {
+		return err
+	}
+	resp, err := uc.wps.PostEcisaccountsyncAll(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncAllRequest{
+		TaskId:         taskId,
+		ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
+	})
+	uc.log.Log(log.LevelInfo, "msg", "PostEcisaccountsyncAll", "resp", resp, "err", err)
+	return err
+}
+func (uc *FullSyncUsecase) saveFullData(ctx context.Context, companyCfg *dingtalk.DingtalkCompanyCfg, users []*dingtalk.DingtalkDeptUser, depts []*dingtalk.DingtalkDept,
+	deptUsers []*dingtalk.DingtalkDeptUserRelation, taskId string) (err error) {
+	var wg sync.WaitGroup
+	errChan := make(chan error, 4)
+	wg.Add(4)
+	go func() {
+		defer wg.Done()
+		errChan <- uc.repo.SaveCompanyCfg(ctx, companyCfg)
+	}()
+	go func() {
+		defer wg.Done()
+		_, err := uc.repo.SaveDepartments(ctx, depts, taskId)
+		errChan <- err
+	}()
+	go func() {
+		defer wg.Done()
+		_, err := uc.repo.SaveUsers(ctx, users, taskId)
+		errChan <- err
+	}()
+	go func() {
+		defer wg.Done()
+		_, err := uc.repo.SaveDepartmentUserRelations(ctx, deptUsers, taskId)
+		errChan <- err
+	}()
+	wg.Wait()
+	close(errChan)
+	for err := range errChan {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 func (uc *FullSyncUsecase) ParseExecell(ctx context.Context, taskId, filename string) (err error) {
 
-	log := uc.log.WithContext(ctx)
-	log.Infof("ParseExecell taskId: %s,filename:%s", taskId, filename)
+	uc.log.Log(log.LevelInfo, "msg", "ParseExecell", "taskId", taskId, "filename", filename)
 
 	f, err := excelize.OpenFile(filename)
 	if err != nil {
@@ -271,7 +264,7 @@ func (uc *FullSyncUsecase) ParseExecell(ctx context.Context, taskId, filename st
 }
 
 func (uc *FullSyncUsecase) transUser(ctx context.Context, taskId string, rows *excelize.Rows) (err error) {
-	uc.log.WithContext(ctx).Infof("transUser taskId: %s", taskId)
+	uc.log.Log(log.LevelInfo, "msg", "transUser", "taskId", taskId)
 
 	//uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
 	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
@@ -285,7 +278,7 @@ func (uc *FullSyncUsecase) transUser(ctx context.Context, taskId string, rows *e
 		}
 		// log.Info(row)
 		if len(row) < 3 {
-			uc.log.Warnf("row len < 3: %v", row)
+			uc.log.Log(log.LevelWarn, "msg", "transUser", "row", row)
 			continue
 		}
 
@@ -322,7 +315,7 @@ func (uc *FullSyncUsecase) transUser(ctx context.Context, taskId string, rows *e
 	return nil
 }
 func (uc *FullSyncUsecase) transDept(ctx context.Context, taskId string, rows *excelize.Rows) (err error) {
-	uc.log.WithContext(ctx).Infof("transDept taskId: %s", taskId)
+	uc.log.Log(log.LevelInfo, "msg", "transDept", "taskId", taskId)
 
 	//uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
 	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
@@ -337,7 +330,7 @@ func (uc *FullSyncUsecase) transDept(ctx context.Context, taskId string, rows *e
 
 		// log.Info(row)
 		if len(row) < 3 {
-			uc.log.Warnf("row len < 3: %v", row)
+			uc.log.Log(log.LevelWarn, "msg", "transDept", "row", row)
 			continue
 		}
 
@@ -375,8 +368,7 @@ func (uc *FullSyncUsecase) transDept(ctx context.Context, taskId string, rows *e
 	return nil
 }
 func (uc *FullSyncUsecase) transUserDept(ctx context.Context, taskId string, rows *excelize.Rows) (err error) {
-	log := uc.log.WithContext(ctx)
-	log.Infof("transUserDept taskId: %s", taskId)
+	uc.log.Log(log.LevelInfo, "msg", "transUserDept", "taskId", taskId)
 
 	//uc.repo.UpdateTask(ctx, taskId, models.TaskStatusInProgress)
 	thirdCompanyId := uc.bizConf.GetThirdCompanyId()
@@ -390,7 +382,7 @@ func (uc *FullSyncUsecase) transUserDept(ctx context.Context, taskId string, row
 		}
 		//log.Info(row)
 		if len(row) < 2 {
-			log.Warnf("row len < 2: %v", row)
+			uc.log.Log(log.LevelWarn, "msg", "transUserDept", "row", row)
 			continue
 		}
 
@@ -422,24 +414,25 @@ func (uc *FullSyncUsecase) transUserDept(ctx context.Context, taskId string, row
 	return nil
 }
 
-// func (uc *AccounterUsecase) CreateCacheTask(ctx context.Context, taskName, status string) error {
+func (uc *FullSyncUsecase) createCacheTask(ctx context.Context, taskName, status string) error {
 
-// 	cacheKey := prefix + taskName
-// 	task := &models.Task{
-// 		Title:         taskName,
-// 		Description:   taskName,
-// 		CreatedAt:     time.Now(),
-// 		Status:        models.TaskStatusInProgress,
-// 		Progress:      0,
-// 		StartDate:     time.Now(),
-// 		DueDate:       time.Now().Add(time.Minute * 30),
-// 		CompletedAt:   time.Now(),
-// 		CreatorID:     99,
-// 		EstimatedTime: 10,
-// 		ActualTime:    0,
-// 	}
-// 	return uc.localCache.Set(ctx, cacheKey, task, 300*time.Minute)
-// }
+	now := time.Now()
+	taskInfo := &models.Task{
+		ID:          1,
+		Title:       taskName,
+		Description: taskName,
+		Status:      status,
+		CreatorID:   1,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		DueDate:     now,
+		StartDate:   now,
+		Progress:    30,
+		ActualTime:  0,
+	}
+	return uc.localCache.Set(ctx, taskName, taskInfo, 300*time.Minute)
+}
+
 // func (uc *AccounterUsecase) UpdateCacheTask(ctx context.Context, taskName, status string) error {
 
 // 	cacheKey := prefix + taskName
@@ -479,24 +472,24 @@ func (uc *FullSyncUsecase) transUserDept(ctx context.Context, taskId string, row
 // 	return uc.localCache.Set(ctx, cacheKey, task, 300*time.Minute)
 // }
 
-// func (uc *AccounterUsecase) GetCacheTask(ctx context.Context, taskName string) (*models.Task, error) {
+func (uc *FullSyncUsecase) GetCacheTask(ctx context.Context, taskName string) (*models.Task, bool, error) {
 
-// 	cacheKey := prefix + taskName
-// 	var task *models.Task
-// 	taskInfo, ok, err := uc.localCache.Get(ctx, cacheKey)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	if !ok {
-// 		return nil, errors.New("notfound")
-// 	}
-// 	task, ok1 := taskInfo.(*models.Task)
-// 	if !ok1 {
-// 		return nil, errors.New("type error")
-// 	}
-// 	return task, nil
+	cacheKey := prefix + taskName
+	var task *models.Task
+	taskInfo, ok, err := uc.localCache.Get(ctx, cacheKey)
+	if err != nil {
+		return nil, false, err
+	}
+	if !ok {
+		return nil, false, nil
+	}
+	task, ok1 := taskInfo.(*models.Task)
+	if !ok1 {
+		return nil, false, errors.New("type error")
+	}
+	return task, true, nil
 
-// }
+}
 
 func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string, tags []string) error {
 
@@ -518,7 +511,7 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 
 		var deleteUsers []*dingtalk.DingtalkDeptUser
 		for _, user := range users.Data.Items {
-			uc.log.Infof("user: %+v", user)
+			uc.log.Log(log.LevelInfo, "msg", "Items", "user", user)
 
 			for _, phone := range tags {
 				if user.Phone == phone || user.LoginName == phone {
@@ -539,14 +532,14 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 			}
 
 		}
-		uc.log.Infof("deleteUsers: %v", deleteUsers)
+		uc.log.Log(log.LevelInfo, "msg", "deleteUsers", "deleteUsers", deleteUsers)
 		for i, user := range deleteUsers {
-			uc.log.Infof("deleteUsers i:%d, user: %+v", i, user)
+			uc.log.Log(log.LevelInfo, "msg", "deleteUsers", "i", i, "user", user)
 		}
 
 		err = uc.repo.SaveIncrementUsers(ctx, nil, deleteUsers, nil)
 		if err != nil {
-			uc.log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
+			uc.log.Log(log.LevelError, "msg", "OrgDeptCreate.SaveIncrementDepartments", "err", err)
 			return err
 		}
 
@@ -554,13 +547,13 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 			ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
 		})
 
-		uc.log.Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+		uc.log.Log(log.LevelInfo, "msg", "UserLeaveOrg.CallEcisaccountsyncIncrement", "res", res, "err", err)
 
 		if err != nil {
 			return err
 		}
 		if res.Code != "200" {
-			uc.log.Errorf("code %v, not '200'", res.Code)
+			uc.log.Log(log.LevelError, "msg", "UserLeaveOrg.CallEcisaccountsyncIncrement", "res", res, "err", err)
 			return fmt.Errorf("code %s not 200", res.Code)
 		}
 	}
@@ -571,7 +564,7 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 		if err != nil {
 			return err
 		}
-		uc.log.Infof("rootDept: %v", rootDept)
+		uc.log.Log(log.LevelInfo, "msg", "rootDept", "rootDept", rootDept)
 
 		// 2. 查询部门下的子部门(要递归)
 		allDepts, err := uc.wps.GetDeptChildren(ctx, appAccessToken.AccessToken, wps.GetDeptChildrenRequest{
@@ -583,7 +576,7 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 		if err != nil {
 			return err
 		}
-		uc.log.Infof("children: %v", allDepts)
+		uc.log.Log(log.LevelInfo, "msg", "children", "allDepts", allDepts)
 
 		var deleteDepts []*dingtalk.DingtalkDept
 		//删除部门除了根部门
@@ -618,14 +611,14 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 
 		}
 
-		uc.log.Infof("deleteDepts: %v", deleteDepts)
+		uc.log.Log(log.LevelInfo, "msg", "deleteDepts", "deleteDepts", deleteDepts)
 		for i, dept := range deleteDepts {
-			uc.log.Infof("deleteDepts i:%d, dept: %+v", i, dept)
+			uc.log.Log(log.LevelInfo, "msg", "deleteDepts", "i", i, "dept", dept)
 		}
 
 		err = uc.repo.SaveIncrementDepartments(ctx, nil, deleteDepts, nil)
 		if err != nil {
-			uc.log.Errorf("OrgDeptCreate.SaveIncrementDepartments err: %v", err)
+			uc.log.Log(log.LevelError, "msg", "OrgDeptCreate.SaveIncrementDepartments", "err", err)
 			return err
 		}
 
@@ -633,13 +626,13 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 			ThirdCompanyId: uc.bizConf.GetThirdCompanyId(),
 		})
 
-		uc.log.Infof("UserLeaveOrg.CallEcisaccountsyncIncrement res: %v, err: %v", res, err)
+		uc.log.Log(log.LevelInfo, "msg", "UserLeaveOrg.CallEcisaccountsyncIncrement", "res", res, "err", err)
 
 		if err != nil {
 			return err
 		}
 		if res.Code != "200" {
-			uc.log.Errorf("code %v, not '200'", res.Code)
+			uc.log.Log(log.LevelError, "msg", "UserLeaveOrg.CallEcisaccountsyncIncrement", "res", res, "err", err)
 			return fmt.Errorf("code %s not 200", res.Code)
 		}
 

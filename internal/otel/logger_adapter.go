@@ -120,7 +120,7 @@ func (a *KratosLoggerAdapter) initZapLogger() {
 
 		// 添加调用者信息
 		if !a.config.Logs.ZapDisableCaller {
-			options = append(options, zap.AddCaller(), zap.AddCallerSkip(6))
+			options = append(options, zap.AddCaller(), zap.AddCallerSkip(2))
 		}
 
 		// 添加堆栈跟踪
@@ -518,7 +518,25 @@ func convertToZapField(key string, value any) zap.Field {
 		return zap.Bool(key, v)
 	case error:
 		return zap.Error(v)
+	case []interface{}:
+		// 对于接口切片，尝试转换为JSON字符串
+		if jsonBytes, err := json.Marshal(v); err == nil {
+			return zap.String(key, string(jsonBytes))
+		}
+		return zap.Any(key, v)
+	case map[string]interface{}:
+		// 对于map，尝试转换为JSON字符串
+		if jsonBytes, err := json.Marshal(v); err == nil {
+			return zap.String(key, string(jsonBytes))
+		}
+		return zap.Any(key, v)
 	default:
+		// 对于其他复杂类型，尝试JSON序列化
+		// 这包括结构体、结构体指针、结构体切片等
+		if jsonBytes, err := json.Marshal(v); err == nil {
+			return zap.String(key, string(jsonBytes))
+		}
+		// 如果JSON序列化失败，回退到Any
 		return zap.Any(key, v)
 	}
 }

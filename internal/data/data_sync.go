@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"nancalacc/internal/data/models"
 
+	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
 )
 
@@ -14,7 +15,7 @@ const (
 )
 
 func (r *accounterRepo) BatchGetDeptUsers(ctx context.Context, taskName string) ([]*models.TbLasDepartmentUser, error) {
-	r.log.WithContext(ctx).Infof("BatchGetDeptUsers taskName: %s", taskName)
+	r.log.Log(log.LevelInfo, "msg", "BatchGetDeptUsers", "taskName", taskName)
 
 	var (
 		allUsers   = make([]*models.TbLasDepartmentUser, 0, pageSize)
@@ -39,7 +40,7 @@ func (r *accounterRepo) BatchGetDeptUsers(ctx context.Context, taskName string) 
 
 		result := query.Limit(pageSize).Find(&pageUsers)
 		if result.Error != nil {
-			r.log.WithContext(ctx).Errorf("Query failed at lastID=%d: %v", lastID, result.Error)
+			r.log.Log(log.LevelError, "msg", "BatchGetDeptUsers", "Query failed at lastID", lastID, "err", result.Error)
 			return nil, fmt.Errorf("database error: %w", result.Error)
 		}
 
@@ -62,12 +63,12 @@ func (r *accounterRepo) BatchGetDeptUsers(ctx context.Context, taskName string) 
 		return nil, gorm.ErrRecordNotFound
 	}
 
-	r.log.WithContext(ctx).Debugf("Fetched %d records", totalCount)
+	r.log.Log(log.LevelInfo, "msg", "BatchGetDeptUsers", "Fetched", totalCount, "records")
 	return allUsers, nil
 }
 
 func (r *accounterRepo) BatchGetUsers(ctx context.Context, taskName string) ([]*models.TbLasUser, error) {
-	r.log.WithContext(ctx).Infof("BatchGetUsers taskName: %s", taskName)
+	r.log.Log(log.LevelInfo, "msg", "BatchGetUsers", "taskName", taskName)
 
 	var (
 		allUsers   = make([]*models.TbLasUser, 0, pageSize)
@@ -95,7 +96,7 @@ func (r *accounterRepo) BatchGetUsers(ctx context.Context, taskName string) ([]*
 
 		result := query.Limit(pageSize).Find(&pageUsers)
 		if result.Error != nil {
-			r.log.WithContext(ctx).Errorf("Query failed at lastID=%d: %v", lastID, result.Error)
+			r.log.Log(log.LevelError, "msg", "BatchGetUsers", "Query failed at lastID", lastID, "err", result.Error)
 			return nil, fmt.Errorf("database error: %w", result.Error)
 		}
 
@@ -116,12 +117,12 @@ func (r *accounterRepo) BatchGetUsers(ctx context.Context, taskName string) ([]*
 		return nil, gorm.ErrRecordNotFound
 	}
 
-	r.log.WithContext(ctx).Debugf("Fetched %d users", totalCount)
+	r.log.Log(log.LevelInfo, "msg", "BatchGetUsers", "Fetched", totalCount, "users")
 	return allUsers, nil
 }
 
 func (r *accounterRepo) BatchGetDepts(ctx context.Context, taskName string) ([]*models.TbLasDepartment, error) {
-	r.log.WithContext(ctx).Infof("BatchGetDepts taskName: %s", taskName)
+	r.log.Log(log.LevelInfo, "msg", "BatchGetDepts", "taskName", taskName)
 
 	var (
 		allDepts   = make([]*models.TbLasDepartment, 0, pageSize)
@@ -146,7 +147,7 @@ func (r *accounterRepo) BatchGetDepts(ctx context.Context, taskName string) ([]*
 
 		result := query.Limit(pageSize).Find(&pageDepts)
 		if result.Error != nil {
-			r.log.WithContext(ctx).Errorf("Query failed at lastID=%d: %v", lastID, result.Error)
+			r.log.Log(log.LevelError, "msg", "BatchGetDepts", "Query failed at lastID", lastID, "err", result.Error)
 			return nil, fmt.Errorf("database error: %w", result.Error)
 		}
 
@@ -167,6 +168,6 @@ func (r *accounterRepo) BatchGetDepts(ctx context.Context, taskName string) ([]*
 		return nil, gorm.ErrRecordNotFound
 	}
 
-	r.log.WithContext(ctx).Debugf("Fetched %d departments", totalCount)
+	r.log.Log(log.LevelInfo, "msg", "BatchGetDepts", "Fetched", totalCount, "departments")
 	return allDepts, nil
 }

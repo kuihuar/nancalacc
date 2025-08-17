@@ -22,7 +22,7 @@ type AccounterUsecase struct {
 	appAuth      auth.Authenticator
 	wps          wps.Wps
 	localCache   CacheService
-	log          *log.Helper
+	log          log.Logger
 }
 
 var (
@@ -32,16 +32,16 @@ var (
 // NewGreeterUsecase new a Greeter usecase.
 func NewAccounterUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, wps wps.Wps, cache CacheService, logger log.Logger) *AccounterUsecase {
 	appAuth := auth.NewWpsAppAuthenticator()
-	return &AccounterUsecase{repo: repo, dingTalkRepo: dingTalkRepo, appAuth: appAuth, wps: wps, localCache: cache, log: log.NewHelper(logger)}
+	return &AccounterUsecase{repo: repo, dingTalkRepo: dingTalkRepo, appAuth: appAuth, wps: wps, localCache: cache, log: logger}
 }
 
 func (uc *AccounterUsecase) CreateTask(ctx context.Context, taskName string) (int, error) {
-	uc.log.WithContext(ctx).Infof("CreateTask taskName: %s", taskName)
+	uc.log.Log(log.LevelInfo, "msg", "CreateTask", "taskName", taskName)
 	return uc.repo.CreateTask(ctx, taskName)
 
 }
 func (uc *AccounterUsecase) GetTask(ctx context.Context, taskName string) (*v1.GetTaskReply_Task, error) {
-	uc.log.WithContext(ctx).Infof("GetTask taskName: %s", taskName)
+	uc.log.Log(log.LevelInfo, "msg", "GetTask", "taskName", taskName)
 
 	taskInfo, err := uc.GetCacheTask(ctx, taskName)
 	if err != nil {
@@ -59,7 +59,7 @@ func (uc *AccounterUsecase) GetTask(ctx context.Context, taskName string) (*v1.G
 
 }
 func (uc *AccounterUsecase) UpdateTask(ctx context.Context, taskName, status string) error {
-	uc.log.WithContext(ctx).Infof("UpdateTask taskId: %s, status %s", taskName, status)
+	uc.log.Log(log.LevelInfo, "msg", "UpdateTask", "taskId", taskName, "status", status)
 	return uc.repo.UpdateTask(ctx, taskName, status)
 
 }

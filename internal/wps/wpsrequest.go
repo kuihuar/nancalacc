@@ -31,7 +31,7 @@ var (
 )
 
 type WPSRequest struct {
-	logger      *log.Helper
+	logger      log.Logger
 	baseURL     string
 	method      string
 	path        string
@@ -68,7 +68,7 @@ func NewWPSRequest(baseURL, accessKey, secretKey string, opts ...Option) *WPSReq
 	return r
 }
 
-func WithLogger(logger *log.Helper) Option {
+func WithLogger(logger log.Logger) Option {
 	return func(r *WPSRequest) {
 		r.logger = logger
 	}

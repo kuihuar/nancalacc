@@ -12,18 +12,17 @@ import (
 // GreeterUsecase is a Greeter usecase.
 type Oauth2Usecase struct {
 	dingTalkRepo dingtalk.Dingtalk
-	log          *log.Helper
+	log          log.Logger
 }
 
 // NewGreeterUsecase new a Greeter usecase.
 func NewOauth2Usecase(dingTalkRepo dingtalk.Dingtalk, logger log.Logger) *Oauth2Usecase {
-	return &Oauth2Usecase{dingTalkRepo: dingTalkRepo, log: log.NewHelper(logger)}
+	return &Oauth2Usecase{dingTalkRepo: dingTalkRepo, log: logger}
 }
 
 func (uc *Oauth2Usecase) GetUserInfo(ctx context.Context, req *v1.GetUserInfoRequest) (*v1.GetUserInfoResponse, error) {
 
-	log := uc.log.WithContext(ctx)
-	log.Infof("GetUserInfo req: %v", req)
+	uc.log.Log(log.LevelInfo, "msg", "GetUserInfo", "req", req)
 
 	accessToken := req.GetAccessToken()
 	if accessToken == "" {
@@ -31,15 +30,15 @@ func (uc *Oauth2Usecase) GetUserInfo(ctx context.Context, req *v1.GetUserInfoReq
 	}
 	var userId string
 	userInfo, err := uc.dingTalkRepo.GetUserInfo(ctx, accessToken, "me")
-	log.Infof("GetUserInfo.dingTalkRepo.GetUserInfo: %v, err:%v", userInfo, err)
+	uc.log.Log(log.LevelInfo, "msg", "GetUserInfo.dingTalkRepo.GetUserInfo", "userInfo", userInfo, "err", err)
 	if err != nil {
-		log.Errorf("GetUserInfo.dingTalkRepo.GetUserInfo: %v, err:%v", userInfo, err)
+		uc.log.Log(log.LevelError, "msg", "GetUserInfo.dingTalkRepo.GetUserInfo", "userInfo", userInfo, "err", err)
 		return nil, err
 	}
 	token, err := uc.dingTalkRepo.GetAccessToken(ctx)
-	log.Infof("GetUserInfo.dingTalkRepo.GetAccessToken: token: %v, err: %v", token, err)
+	uc.log.Log(log.LevelInfo, "msg", "GetUserInfo.dingTalkRepo.GetAccessToken", "token", token, "err", err)
 	if err != nil {
-		uc.log.WithContext(ctx).Error("GetUserInfo.dingTalkRepo.GetAccessToken: token: %v, err: %v", token, err)
+		uc.log.Log(log.LevelError, "msg", "GetUserInfo.dingTalkRepo.GetAccessToken", "token", token, "err", err)
 		return nil, err
 	}
 	userId, err = uc.dingTalkRepo.GetUseridByUnionid(ctx, token.AccessToken, userInfo.UnionId)
@@ -60,8 +59,7 @@ func (uc *Oauth2Usecase) GetUserInfo(ctx context.Context, req *v1.GetUserInfoReq
 }
 func (uc *Oauth2Usecase) GetAccessToken(ctx context.Context, req *v1.GetAccessTokenRequest) (*v1.GetAccessTokenResponse, error) {
 
-	log := uc.log.WithContext(ctx)
-	log.Infof("GetAccessToken req: %v", req)
+	uc.log.Log(log.LevelInfo, "msg", "GetAccessToken", "req", req)
 
 	code := req.GetCode()
 	if code == "" {
