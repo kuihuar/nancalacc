@@ -108,10 +108,12 @@ func (uc *FullSyncUsecase) GetSyncAccount(ctx context.Context, req *v1.GetSyncAc
 
 	taskCacheInfo, ok, err := uc.localCache.Get(ctx, req.GetTaskId())
 	if err != nil {
-		return nil, err
+		uc.log.Log(log.LevelError, "msg", "GetSyncAccount.Get", "taskId", req.GetTaskId(), "err", err)
+		return nil, fmt.Errorf("failed to get task from cache: %w", err)
 	}
 	if ok {
-		taskInfo, ok1 := taskCacheInfo.(*models.Task)
+		// 尝试类型断言为 models.Task（值类型）
+		taskInfo, ok1 := taskCacheInfo.(models.Task)
 		if ok1 {
 			return &v1.GetSyncAccountReply{
 				Status:     v1.GetSyncAccountReply_Status(taskInfo.Progress),
@@ -120,7 +122,21 @@ func (uc *FullSyncUsecase) GetSyncAccount(ctx context.Context, req *v1.GetSyncAc
 			}, nil
 		}
 
+		// 如果值类型断言失败，尝试指针类型断言
+		taskInfoPtr, ok2 := taskCacheInfo.(*models.Task)
+		if ok2 {
+			return &v1.GetSyncAccountReply{
+				Status:     v1.GetSyncAccountReply_Status(taskInfoPtr.Progress),
+				ActualTime: int64(taskInfoPtr.ActualTime),
+				StartTime:  timestamppb.New(taskInfoPtr.CreatedAt),
+			}, nil
+		}
+
+		uc.log.Log(log.LevelError, "msg", "GetSyncAccount.type_assertion", "taskId", req.GetTaskId(), "taskInfo_type", fmt.Sprintf("%T", taskCacheInfo))
+		return nil, fmt.Errorf("type error: cached value is not models.Task, got %T", taskCacheInfo)
 	}
+
+	uc.log.Log(log.LevelInfo, "msg", "GetSyncAccount.not_found", "taskId", req.GetTaskId())
 	return nil, status.Error(codes.NotFound, "task "+req.GetTaskId()+" not found")
 }
 func (uc *FullSyncUsecase) getFullData(ctx context.Context) (companyCfg *dingtalk.DingtalkCompanyCfg,
@@ -595,6 +611,9 @@ func (uc *FullSyncUsecase) transUserDept(ctx context.Context, taskId string, row
 
 		processedCount++
 
+		for _, deptuser := range deptusers {
+			uc.log.Log(log.LevelInfo, "msg", "transUserDeptXXXXX", "deptuser", deptuser)
+		}
 		// 批量保存
 		if len(deptusers) >= uc.batchSize {
 			if _, err := uc.repo.BatchSaveDeptUsers(ctx, deptusers); err != nil {
@@ -775,41 +794,57 @@ func (uc *FullSyncUsecase) CleanSyncAccount(ctx context.Context, taskName string
 
 }
 
-func (uc *FullSyncUsecase) GetCacheTask(ctx context.Context, taskName string) (*models.Task, bool, error) {
+func (uc *FullSyncUsecase) GetCacheTask(ctx context.Context, taskName string) (models.Task, bool, error) {
 
-	var task *models.Task
+	var task models.Task
 	taskInfo, ok, err := uc.localCache.Get(ctx, taskName)
 	if err != nil {
-		return nil, false, err
+		uc.log.Log(log.LevelError, "msg", "GetCacheTask.Get", "taskName", taskName, "err", err)
+		return task, false, fmt.Errorf("failed to get task from cache: %w", err)
 	}
 	if !ok {
-		return nil, false, nil
+		uc.log.Log(log.LevelInfo, "msg", "GetCacheTask.not_found", "taskName", taskName)
+		return task, false, nil
 	}
-	task, ok1 := taskInfo.(*models.Task)
-	if !ok1 {
-		return nil, false, errors.New("type error")
-	}
-	return task, true, nil
 
+	task, ok1 := taskInfo.(models.Task)
+	if !ok1 {
+		uc.log.Log(log.LevelError, "msg", "GetCacheTask.type_assertion", "taskName", taskName, "taskInfo_type", fmt.Sprintf("%T", taskInfo))
+		return task, false, fmt.Errorf("type error: cached value is not models.Task, got %T", taskInfo)
+	}
+	uc.log.Log(log.LevelInfo, "msg", "GetCacheTask.success", "taskName", taskName, "task", task)
+	return task, true, nil
 }
 
 func (uc *FullSyncUsecase) CreateCacheTask(ctx context.Context, taskName, status string) error {
 
 	now := time.Now()
-	taskInfo := &models.Task{
-		ID:          1,
+	// 使用时间戳作为任务 ID，确保唯一性
+	taskId := uint(now.Unix())
+
+	taskInfo := models.Task{
+		ID:          taskId,
 		Title:       taskName,
-		Description: taskName,
+		Description: fmt.Sprintf("Task: %s", taskName),
 		Status:      status,
-		CreatorID:   1,
+		CreatorID:   1, // 可以后续改进为实际的用户 ID
 		CreatedAt:   now,
 		UpdatedAt:   now,
-		DueDate:     now,
+		DueDate:     now.Add(24 * time.Hour), // 设置默认截止时间为24小时后
 		StartDate:   now,
-		Progress:    30,
+		Progress:    0, // 初始进度为0
 		ActualTime:  0,
 	}
-	return uc.localCache.Set(ctx, taskName, taskInfo, 300*time.Minute)
+	uc.log.Log(log.LevelInfo, "msg", "CreateCacheTask", "taskInfo", taskInfo, "taskName", taskName, "status", status)
+
+	err := uc.localCache.Set(ctx, taskName, taskInfo, 300*time.Minute)
+	if err != nil {
+		uc.log.Log(log.LevelError, "msg", "CreateCacheTask.Set", "taskName", taskName, "err", err)
+		return fmt.Errorf("failed to create cache task: %w", err)
+	}
+
+	uc.log.Log(log.LevelInfo, "msg", "CreateCacheTask.success", "taskName", taskName, "taskId", taskId)
+	return nil
 }
 
 // updateTaskProgress 更新任务进度
@@ -817,20 +852,34 @@ func (uc *FullSyncUsecase) UpdateCacheTask(ctx context.Context, taskId, status s
 	// 暂时使用日志记录，实际实现可以根据需要更新缓存或数据库
 	uc.log.Log(log.LevelInfo, "msg", "updateCacheTask", "taskId", taskId, "status", status, "progress", progress)
 
-	var task *models.Task
+	// var task models.Task
 	taskInfo, ok, err := uc.localCache.Get(ctx, taskId)
 	if err != nil {
-		return err
+		uc.log.Log(log.LevelError, "msg", "UpdateCacheTask.Get", "taskId", taskId, "err", err)
+		return fmt.Errorf("failed to get task from cache: %w", err)
 	}
 	if !ok {
+		uc.log.Log(log.LevelWarn, "msg", "UpdateCacheTask.Get", "taskId", taskId, "err", "task not found in cache")
 		return errors.New("task not found")
 	}
-	task, ok1 := taskInfo.(*models.Task)
+
+	task, ok1 := taskInfo.(models.Task)
 	if !ok1 {
-		return errors.New("type error")
+		uc.log.Log(log.LevelError, "msg", "UpdateCacheTask.type_assertion", "taskId", taskId, "taskInfo_type", fmt.Sprintf("%T", taskInfo))
+		return errors.New("type error: cached value is not models.Task")
 	}
+	// 更新任务信息
 	task.Status = status
 	task.Progress = int8(progress)
 	task.UpdatedAt = time.Now()
-	return uc.localCache.Set(ctx, taskId, task, 300*time.Minute)
+
+	// 设置更新后的任务到缓存
+	err = uc.localCache.Set(ctx, taskId, task, 300*time.Minute)
+	if err != nil {
+		uc.log.Log(log.LevelError, "msg", "UpdateCacheTask.Set", "taskId", taskId, "err", err)
+		return fmt.Errorf("failed to set cache: %w", err)
+	}
+
+	uc.log.Log(log.LevelInfo, "msg", "UpdateCacheTask.success", "taskId", taskId, "status", status, "progress", progress)
+	return nil
 }

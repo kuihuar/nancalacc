@@ -85,7 +85,7 @@ otel:
   
   # 指标配置
   metrics:
-    enabled: true                  # 是否启用指标收集
+    enabled: false                  # 是否启用指标收集
     prometheus:
       enabled: true                # 是否启用Prometheus
       endpoint: "192.168.1.142:9090"   # Prometheus端点
@@ -95,7 +95,7 @@ otel:
   logs:
     enabled: true                  # 是否启用日志收集
     level: "info"                  # 日志级别: debug, info, warn, error, fatal
-    format: "json"                 # 日志格式: json, console
+    format: "console"                 # 日志格式: json, console
     output: "both"               # 输出目标: stdout, stderr, file
     file_path: "logs/app.log"                  # 文件路径（当output为file时）
     max_size: 100                  # 最大文件大小（MB）
@@ -111,7 +111,7 @@ otel:
     zap_development: false           # 生产模式
     zap_disable_caller: false       # 启用调用者信息
     zap_disable_stacktrace: false    # 启用堆栈跟踪
-    zap_encoding: "json"             # 编码格式: json, console
+    zap_encoding: "console"             # 编码格式: json, console
     zap_time_key: "timestamp"        # 时间字段名
     zap_level_key: "level"           # 级别字段名
     zap_name_key: "logger"           # 名称字段名
@@ -124,7 +124,7 @@ otel:
       slow_threshold: "1s"         # 慢查询阈值
       log_level: "info"            # GORM日志级别
     loki:
-      enabled: true                # 是否启用Loki
+      enabled: false                # 是否启用Loki
       endpoint: "http://192.168.1.142:3100/loki/api/v1/push"  # Loki推送端点
 auth:
   wpsapp:

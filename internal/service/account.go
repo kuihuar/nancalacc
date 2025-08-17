@@ -114,6 +114,8 @@ func (s *AccountService) UploadFile(ctx context.Context, req *v1.UploadRequest) 
 
 	taskId := time.Now().Add(time.Duration(1) * time.Second).Format("20060102150405")
 
+	s.log.Log(log.LevelInfo, "msg", "UploadFile", "taskId", taskId)
+
 	if req.GetFile() == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "file is empty")
 	}
@@ -146,11 +148,6 @@ func (s *AccountService) UploadFile(ctx context.Context, req *v1.UploadRequest) 
 		os.Remove(filename)
 		return nil, status.Errorf(codes.Internal, "failed to create cache task: %v", err)
 	}
-
-	// 解析Excel文件 - 使用传入的context并设置超时
-	parseCtx, cancel := context.WithTimeout(ctx, 300*time.Minute)
-	defer cancel()
-
 	// 使用带错误处理的异步执行
 	go func() {
 		defer func() {
@@ -159,6 +156,21 @@ func (s *AccountService) UploadFile(ctx context.Context, req *v1.UploadRequest) 
 				s.log.Log(log.LevelWarn, "msg", "failed to remove temp file", "filename", filename, "err", err)
 			}
 		}()
+
+		// 检查原始 context 状态
+		// select {
+		// case <-ctx.Done():
+		// 	s.log.Log(log.LevelWarn, "msg", "original context already canceled before starting goroutine", "err", ctx.Err())
+		// 	return
+		// default:
+		// 	// 继续执行
+		// }
+
+		// 使用 Background context 避免依赖可能被取消的原始 context
+		parseCtx, cancel := context.WithTimeout(context.Background(), 120*time.Minute)
+		defer cancel()
+
+		s.log.Log(log.LevelInfo, "msg", "starting excel parsing", "taskId", taskId, "filename", filename)
 
 		// 更新任务状态为进行中
 		if err := s.fullSyncUsecase.UpdateCacheTask(parseCtx, taskId, "in_progress", 20); err != nil {

@@ -44,106 +44,119 @@ func NewAccounterRepo(data *Data, logger log.Logger) biz.AccounterRepo {
 
 func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.DingtalkDeptUser, taskId string) (int, error) {
 
-	r.log.Log(log.LevelInfo, "msg", "SaveUsers", "users", users, "taskId", taskId)
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+	r.log.Log(log.LevelInfo, "msg", "SaveUsers", "users_count", len(users), "taskId", taskId)
 
 	if len(users) == 0 {
 		r.log.Log(log.LevelWarn, "msg", "SaveUsers", "users is empty")
 		return 0, nil
 	}
+
 	thirdCompanyID := r.bizConf.ThirdCompanyId
 	platformID := r.bizConf.PlatformIds
 	entities := make([]*models.TbLasUser, 0, len(users))
+	invalidUsers := make([]string, 0)
+
+	// 批量验证和转换，收集无效数据
 	for _, user := range users {
-		err := dingtalk.ValidateDingTalkUser(ctx, user)
-		if err != nil {
-			r.log.Log(log.LevelError, "msg", "ValidateDingTalkUser", "err", err)
+		if err := dingtalk.ValidateDingTalkUser(ctx, user); err != nil {
+			r.log.Log(log.LevelWarn, "msg", "invalid user skipped", "user_id", user.Userid, "err", err)
+			invalidUsers = append(invalidUsers, user.Userid)
 			continue
 		}
 		entity := models.MakeLasUser(user, thirdCompanyID, platformID, Source, taskId)
 		entities = append(entities, entity)
 	}
-	// result := r.data.db.WithContext(ctx).Clauses(clause.OnConflict{
-	// 		Columns: []clause.Column{
-	// 			{Name: "uid"},
-	// 			{Name: "task_id"},
-	// 			{Name: "platform_id"},
-	// 		},
-	// 		DoNothing: true,
-	// 	}).Clauses(clause.OnConflict{
-	// 		Columns: []clause.Column{
-	// 			{Name: "account"},
-	// 			{Name: "task_id"},
-	// 			{Name: "third_company_id"},
-	// 		},
-	// 		DoNothing: true,
-	// 	}).Create(&entities)
+
+	// 记录无效数据统计
+	if len(invalidUsers) > 0 {
+		r.log.Log(log.LevelWarn, "msg", "invalid users found", "count", len(invalidUsers), "invalid_ids", invalidUsers)
+	}
+
+	if len(entities) == 0 {
+		r.log.Log(log.LevelWarn, "msg", "no valid users to save")
+		return 0, nil
+	}
+
 	db, err := r.data.GetSyncDB()
 	if err != nil {
 		return 0, err
 	}
-	result := db.WithContext(ctx).Create(&entities)
+
+	// 使用 Upsert 操作避免重复键错误
+	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "uid"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
+		DoNothing: true,
+	}).Create(&entities)
 
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Log(log.LevelError, "msg", "SaveUsers", "user already exists")
-		} else {
-			return 0, result.Error
-		}
-
+		r.log.Log(log.LevelError, "msg", "SaveUsers failed", "err", result.Error)
+		return 0, result.Error
 	}
 
+	r.log.Log(log.LevelInfo, "msg", "SaveUsers completed", "saved_count", int(result.RowsAffected), "total_processed", len(users))
 	return int(result.RowsAffected), nil
 }
 
 func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*dingtalk.DingtalkDept, taskId string) (int, error) {
 
-	r.log.Log(log.LevelInfo, "msg", "SaveDepartments", "depts", depts, "taskId", taskId)
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	r.log.Log(log.LevelInfo, "msg", "SaveDepartments", "depts_count", len(depts), "taskId", taskId)
+
+	// 使用传入的 context 并设置超时
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	entities := make([]*models.TbLasDepartment, 0, len(depts))
+	if len(depts) == 0 {
+		r.log.Log(log.LevelWarn, "msg", "SaveDepartments", "depts is empty")
+		return 0, nil
+	}
+
+	entities := make([]*models.TbLasDepartment, 0, len(depts)+1) // +1 for root department
 
 	thirdCompanyID := r.bizConf.ThirdCompanyId
 	platformID := r.bizConf.PlatformIds
 	companyID := r.bizConf.CompanyId
-	rootDep := models.MakeTbLasRootDepartment(thirdCompanyID, platformID, companyID, Source, taskId)
+
+	// 先添加部门实体
 	for _, dep := range depts {
 		entity := models.MakeTbLasDepartment(dep, thirdCompanyID, platformID, companyID, Source, taskId)
 		entities = append(entities, entity)
 	}
+
+	// 添加根部门
+	rootDep := models.MakeTbLasRootDepartment(thirdCompanyID, platformID, companyID, Source, taskId)
 	entities = append(entities, rootDep)
+
 	db, err := r.data.GetSyncDB()
 	if err != nil {
 		return 0, err
 	}
+
+	// 使用 Upsert 操作，避免重复键错误
 	result := db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "did"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
 		DoNothing: true,
 	}).Create(&entities)
 
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Log(log.LevelError, "msg", "SaveDepartments", "department already exists")
-		} else {
-			return 0, result.Error
-		}
-
+		r.log.Log(log.LevelError, "msg", "SaveDepartments failed", "err", result.Error)
+		return 0, result.Error
 	}
 
+	r.log.Log(log.LevelInfo, "msg", "SaveDepartments completed", "saved_count", int(result.RowsAffected), "total_processed", len(entities))
 	return int(result.RowsAffected), nil
 }
 
 func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relations []*dingtalk.DingtalkDeptUserRelation, taskId string) (int, error) {
-	r.log.Log(log.LevelInfo, "msg", "SaveDepartmentUserRelations", "relations.size", len(relations), "taskId", taskId)
+	r.log.Log(log.LevelInfo, "msg", "SaveDepartmentUserRelations", "relations_count", len(relations), "taskId", taskId)
 
-	for _, relation := range relations {
-		r.log.Log(log.LevelInfo, "msg", "SaveDepartmentUserRelations", "relation", relation)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	// 使用传入的 context 并设置超时
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
+
+	if len(relations) == 0 {
+		r.log.Log(log.LevelWarn, "msg", "SaveDepartmentUserRelations", "relations is empty")
+		return 0, nil
+	}
 
 	entities := make([]*models.TbLasDepartmentUser, 0, len(relations))
 
@@ -159,15 +172,18 @@ func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relatio
 	if err != nil {
 		return 0, err
 	}
+
 	result := db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "did"}, {Name: "uid"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
 		DoNothing: true,
 	}).Create(&entities)
 
 	if result.Error != nil {
+		r.log.Log(log.LevelError, "msg", "SaveDepartmentUserRelations failed", "err", result.Error)
 		return 0, result.Error
 	}
 
+	r.log.Log(log.LevelInfo, "msg", "SaveDepartmentUserRelations completed", "saved_count", int(result.RowsAffected), "total_processed", len(relations))
 	return int(result.RowsAffected), nil
 }
 
@@ -205,38 +221,6 @@ func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, input *dingtalk.Ding
 	return nil
 }
 
-// func (r *accounterRepo) CallEcisaccountsyncAll(ctx context.Context, taskId string) (biz.EcisaccountsyncAllResponse, error) {
-// 	r.log.Log(log.LevelInfo, "msg", "CallEcisaccountsyncAll", "taskId", taskId)
-
-// 	path := r.serviceConf.Business.EcisaccountsyncUrl
-
-// 	// path := "http://encs-pri-proxy-gateway/ecisaccountsync/api/sync/all"
-// 	var resp biz.EcisaccountsyncAllResponse
-
-// 	thirdCompanyID := r.serviceConf.Business.ThirdCompanyId
-
-// 	collectCost := "1100000"
-// 	uri := fmt.Sprintf("%s?taskId=%s&thirdCompanyId=%s&collectCost=%s", path, taskId, thirdCompanyID, collectCost)
-
-// 	r.log.Log(log.LevelInfo, "msg", "CallEcisaccountsyncAll", "uri", uri)
-// 	bs, err := httputil.PostJSON(uri, nil, time.Second*10)
-// 	r.log.Log(log.LevelInfo, "msg", "CallEcisaccountsyncAll.Post", "output", "bs", string(bs), "err", err)
-
-// 	if err != nil {
-// 		return resp, err
-// 	}
-// 	err = json.Unmarshal(bs, &resp)
-// 	if err != nil {
-// 		return resp, fmt.Errorf("Unmarshal err: %w", err)
-// 	}
-// 	if resp.Code != "200" {
-// 		return resp, fmt.Errorf("code not 200: %s", resp.Code)
-// 	}
-
-// 	return resp, nil
-
-// }
-
 func (r *accounterRepo) ClearAll(ctx context.Context) error {
 	db, err := r.data.GetSyncDB()
 	if err != nil {
@@ -263,289 +247,350 @@ func (r *accounterRepo) ClearAll(ctx context.Context) error {
 
 // user_del/user_update/user_add(update_type). . auto/manual(sync_type)
 func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersDel, usersUpd []*dingtalk.DingtalkDeptUser) error {
-	r.log.Log(log.LevelInfo, "msg", "SaveIncrementUsers")
+	r.log.Log(log.LevelInfo, "msg", "SaveIncrementUsers", "users_add", len(usersAdd), "users_del", len(usersDel), "users_upd", len(usersUpd))
+
 	inputlen := len(usersAdd) + len(usersDel) + len(usersUpd)
 	if inputlen == 0 {
 		return errors.New("empty input")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+
+	// 使用传入的 context 并设置超时
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	entities := make([]*models.TbLasUserIncrement, 0, inputlen)
+	invalidUsers := make([]string, 0)
 
 	thirdCompanyID := r.bizConf.ThirdCompanyId
 	platformID := r.bizConf.PlatformIds
 	companyID := r.bizConf.CompanyId
 
-	// user_del/user_update/user_add
+	// 批量处理用户数据
 	for _, add := range usersAdd {
-		err := dingtalk.ValidateDingTalkUser(ctx, add)
-		if err != nil {
-			r.log.Log(log.LevelError, "msg", "ValidateDingTalkUser", "err", err)
+		if err := dingtalk.ValidateDingTalkUser(ctx, add); err != nil {
+			r.log.Log(log.LevelWarn, "msg", "invalid user_add skipped", "user_id", add.Userid, "err", err)
+			invalidUsers = append(invalidUsers, add.Userid)
 			continue
 		}
 		entity := models.MakeLasUserIncrement(add, thirdCompanyID, platformID, companyID, Source, "user_add")
 		entities = append(entities, entity)
 	}
+
 	for _, del := range usersDel {
-		err := dingtalk.ValidateDingTalkUser(ctx, del)
-		if err != nil {
-			r.log.Log(log.LevelError, "msg", "ValidateDingTalkUser", "err", err)
+		if err := dingtalk.ValidateDingTalkUser(ctx, del); err != nil {
+			r.log.Log(log.LevelWarn, "msg", "invalid user_del skipped", "user_id", del.Userid, "err", err)
+			invalidUsers = append(invalidUsers, del.Userid)
 			continue
 		}
 		entity := models.MakeLasUserIncrement(del, thirdCompanyID, platformID, companyID, Source, "user_del")
-		// entity := r.makeLasUserIncrement(user, "user_del")
 		entities = append(entities, entity)
 	}
+
 	for _, upd := range usersUpd {
-		err := dingtalk.ValidateDingTalkUser(ctx, upd)
-		if err != nil {
-			r.log.Log(log.LevelError, "msg", "ValidateDingTalkUser", "err", err)
+		if err := dingtalk.ValidateDingTalkUser(ctx, upd); err != nil {
+			r.log.Log(log.LevelWarn, "msg", "invalid user_upd skipped", "user_id", upd.Userid, "err", err)
+			invalidUsers = append(invalidUsers, upd.Userid)
 			continue
 		}
-		// entity := r.makeLasUserIncrement(user, "user_update")
 		entity := models.MakeLasUserIncrement(upd, thirdCompanyID, platformID, companyID, Source, "user_update")
 		entities = append(entities, entity)
 	}
 
-	r.log.Log(log.LevelInfo, "msg", "SaveIncrementUsers", "entities", entities)
+	// 记录无效数据统计
+	if len(invalidUsers) > 0 {
+		r.log.Log(log.LevelWarn, "msg", "invalid users found", "count", len(invalidUsers), "invalid_ids", invalidUsers)
+	}
 
-	for i, item := range entities {
-		r.log.Log(log.LevelInfo, "msg", "SaveIncrementUsers", "entities", "i", i, "item", item)
+	if len(entities) == 0 {
+		r.log.Log(log.LevelWarn, "msg", "no valid users to save")
+		return nil
 	}
 
 	db, err := r.data.GetSyncDB()
 	if err != nil {
 		return err
 	}
-	result := db.WithContext(ctx).Create(&entities)
+
+	// 使用 Upsert 操作避免重复键错误
+	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "uid"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
+		DoNothing: true,
+	}).Create(&entities)
 
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Log(log.LevelError, "msg", "SaveIncrementUsers", "user already exists")
-		} else {
-			return result.Error
-		}
+		r.log.Log(log.LevelError, "msg", "SaveIncrementUsers failed", "err", result.Error)
+		return result.Error
 	}
+
+	r.log.Log(log.LevelInfo, "msg", "SaveIncrementUsers completed", "saved_count", int(result.RowsAffected), "total_processed", len(entities))
 	return nil
 }
 
 // dept_del/dept_update/dept_add/dept_move(update_type)
 func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel, deptsUpd []*dingtalk.DingtalkDept) error {
-	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartments")
+	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartments", "depts_add", len(deptsAdd), "depts_del", len(deptsDel), "depts_upd", len(deptsUpd))
+
 	inputlen := len(deptsAdd) + len(deptsDel) + len(deptsUpd)
 	if inputlen == 0 {
 		return errors.New("empty input")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+
+	// 使用传入的 context 并设置超时
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	// dept_del/dept_update/dept_add
 	entities := make([]*models.TbLasDepartmentIncrement, 0, inputlen)
 	thirdCompanyID := r.bizConf.ThirdCompanyId
 	platformID := r.bizConf.PlatformIds
 
+	// 批量处理部门数据
 	for _, add := range deptsAdd {
 		entity := models.MakeDepartmentIncrement(add, thirdCompanyID, platformID, "", Source, "dept_add")
 		entities = append(entities, entity)
 	}
+
 	for _, del := range deptsDel {
-		// entity := r.makeDepartmentIncrement(dep, "dept_del")
 		entity := models.MakeDepartmentIncrement(del, thirdCompanyID, platformID, "", Source, "dept_del")
 		entities = append(entities, entity)
 	}
 
 	for _, upd := range deptsUpd {
-		// entity := r.makeDepartmentIncrement(dep, "dept_update")
 		entity := models.MakeDepartmentIncrement(upd, thirdCompanyID, platformID, "", Source, "dept_update")
 		entities = append(entities, entity)
 	}
 
-	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartments", "entities", entities)
-
-	for i, item := range entities {
-		r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartments", "entities", "i", i, "item", item)
+	if len(entities) == 0 {
+		r.log.Log(log.LevelWarn, "msg", "no valid departments to save")
+		return nil
 	}
 
 	db, err := r.data.GetSyncDB()
 	if err != nil {
 		return err
 	}
-	result := db.WithContext(ctx).Create(&entities)
+
+	// 使用 Upsert 操作避免重复键错误
+	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "did"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
+		DoNothing: true,
+	}).Create(&entities)
 
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Log(log.LevelError, "msg", "SaveIncrementDepartments", "user already exists")
-		} else {
-			return result.Error
-		}
-
+		r.log.Log(log.LevelError, "msg", "SaveIncrementDepartments failed", "err", result.Error)
+		return result.Error
 	}
 
+	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartments completed", "saved_count", int(result.RowsAffected), "total_processed", len(entities))
 	return nil
 }
 
 func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel, relationsUpd []*dingtalk.DingtalkDeptUserRelation) error {
-	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations")
+	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations", "relations_add", len(relationsAdd), "relations_del", len(relationsDel), "relations_upd", len(relationsUpd))
 
 	inputlen := len(relationsAdd) + len(relationsDel) + len(relationsUpd)
 	if inputlen == 0 {
 		return errors.New("empty input")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations", "input", "relationsAdd", "relationsDel", relationsDel, "relationsUpd", relationsUpd)
-
-	for i, item := range relationsAdd {
-		r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations", "input", "relationsAdd", "i", i, "item", item)
-	}
-	for i, item := range relationsDel {
-		r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations", "input", "relationsDel", "i", i, "item", item)
-	}
-	for i, item := range relationsUpd {
-		r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations", "input", "relationsUpd", "i", i, "item", item)
-	}
-
 	entities := make([]*models.TbLasDepartmentUserIncrement, 0, inputlen)
 
 	thirdCompanyID := r.bizConf.ThirdCompanyId
 	platformID := r.bizConf.PlatformIds
-	// user_dept_add/user_dept_del/user_dept_update/user_dept_move
+
+	// 批量处理部门用户关系数据
 	for _, add := range relationsAdd {
 		entity := models.MmakeTbLasDepartmentUserIncrement(add, thirdCompanyID, platformID, "", Source, "user_dept_add")
 		entities = append(entities, entity)
 	}
 
 	for _, del := range relationsDel {
-		// entity := r.makeDeptUserRelatins(relation, "user_dept_del")
 		entity := models.MmakeTbLasDepartmentUserIncrement(del, thirdCompanyID, platformID, "", Source, "user_dept_del")
 		entities = append(entities, entity)
 	}
+
 	for _, upd := range relationsUpd {
-		// entity := r.makeDeptUserRelatins(relation, "user_dept_update")
 		entity := models.MmakeTbLasDepartmentUserIncrement(upd, thirdCompanyID, platformID, "", Source, "user_dept_update")
 		entities = append(entities, entity)
 	}
 
-	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations", "entities", entities)
-
-	for i, item := range entities {
-		r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations", "entities", "i", i, "item", item)
+	if len(entities) == 0 {
+		r.log.Log(log.LevelWarn, "msg", "no valid relations to save")
+		return nil
 	}
 
 	db, err := r.data.GetSyncDB()
 	if err != nil {
 		return err
 	}
-	result := db.WithContext(ctx).Create(&entities)
+
+	// 使用 Upsert 操作避免重复键错误
+	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "did"}, {Name: "uid"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
+		DoNothing: true,
+	}).Create(&entities)
 
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Log(log.LevelError, "msg", "SaveIncrementDepartmentUserRelations", "relation already exists")
-		} else {
-			return result.Error
-		}
-
+		r.log.Log(log.LevelError, "msg", "SaveIncrementDepartmentUserRelations failed", "err", result.Error)
+		return result.Error
 	}
 
+	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations completed", "saved_count", int(result.RowsAffected), "total_processed", len(entities))
 	return nil
 }
 func (r *accounterRepo) BatchSaveUsers(ctx context.Context, users []*models.TbLasUser) (int, error) {
 
-	r.log.Log(log.LevelInfo, "msg", "BatchSaveUsers", "users", users)
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+	r.log.Log(log.LevelInfo, "msg", "BatchSaveUsers", "users_count", len(users))
 
 	if len(users) == 0 {
 		r.log.Log(log.LevelWarn, "msg", "BatchSaveUsers", "users is empty")
 		return 0, nil
 	}
 
-	// for _, user := range users {
-	// 	r.log.Warn(user)
-	// }
+	// 检查 context 是否已取消
+	select {
+	case <-ctx.Done():
+		r.log.Log(log.LevelError, "msg", "BatchSaveUsers", "context canceled before database operation", "err", ctx.Err())
+		return 0, ctx.Err()
+	default:
+		// 继续执行
+	}
+
+	// 记录 context 的截止时间（如果有的话）
+	if deadline, ok := ctx.Deadline(); ok {
+		r.log.Log(log.LevelInfo, "msg", "BatchSaveUsers", "context deadline", "deadline", deadline, "time_until_deadline", time.Until(deadline))
+	}
 
 	db, err := r.data.GetSyncDB()
 	if err != nil {
 		return 0, err
 	}
-	result := db.WithContext(ctx).Create(users)
+
+	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "uid"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
+		DoNothing: true,
+	}).Create(users)
 
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Log(log.LevelError, "msg", "BatchSaveUsers", "user already exists")
+		// 检查是否是 context 相关错误
+		if errors.Is(result.Error, context.DeadlineExceeded) {
+			r.log.Log(log.LevelError, "msg", "BatchSaveUsers", "context deadline exceeded", "err", result.Error)
+		} else if errors.Is(result.Error, context.Canceled) {
+			r.log.Log(log.LevelError, "msg", "BatchSaveUsers", "context canceled during database operation", "err", result.Error)
 		} else {
-			return 0, result.Error
+			r.log.Log(log.LevelError, "msg", "BatchSaveUsers failed", "err", result.Error)
 		}
+		return 0, result.Error
 	}
 
+	r.log.Log(log.LevelInfo, "msg", "BatchSaveUsers completed", "saved_count", int(result.RowsAffected), "total_processed", len(users))
 	return int(result.RowsAffected), nil
 }
 func (r *accounterRepo) BatchSaveDepts(ctx context.Context, depts []*models.TbLasDepartment) (int, error) {
 
-	r.log.Log(log.LevelInfo, "msg", "BatchSaveDepts", "depts", depts)
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+	r.log.Log(log.LevelInfo, "msg", "BatchSaveDepts", "depts_count", len(depts))
 
 	if len(depts) == 0 {
 		r.log.Log(log.LevelWarn, "msg", "BatchSaveDepts", "depts is empty")
 		return 0, nil
 	}
-	// for _, dept := range depts {
-	// 	r.log.Info(dept)
-	// }
+
+	// 检查 context 是否已取消
+	select {
+	case <-ctx.Done():
+		r.log.Log(log.LevelError, "msg", "BatchSaveDepts", "context canceled before database operation", "err", ctx.Err())
+		return 0, ctx.Err()
+	default:
+		// 继续执行
+	}
+
+	// 记录 context 的截止时间（如果有的话）
+	if deadline, ok := ctx.Deadline(); ok {
+		r.log.Log(log.LevelInfo, "msg", "BatchSaveDepts", "context deadline", "deadline", deadline, "time_until_deadline", time.Until(deadline))
+	}
 
 	db, err := r.data.GetSyncDB()
 	if err != nil {
 		return 0, err
 	}
-	result := db.WithContext(ctx).Create(depts)
+
+	// 使用 Upsert 操作避免重复键错误
+	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "did"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
+		DoNothing: true,
+	}).Create(depts)
 
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Log(log.LevelError, "msg", "BatchSaveDepts", "dept already exists")
+		// 检查是否是 context 相关错误
+		if errors.Is(result.Error, context.DeadlineExceeded) {
+			r.log.Log(log.LevelError, "msg", "BatchSaveDepts", "context deadline exceeded", "err", result.Error)
+		} else if errors.Is(result.Error, context.Canceled) {
+			r.log.Log(log.LevelError, "msg", "BatchSaveDepts", "context canceled during database operation", "err", result.Error)
 		} else {
-			return 0, result.Error
+			r.log.Log(log.LevelError, "msg", "BatchSaveDepts failed", "err", result.Error)
 		}
-
+		return 0, result.Error
 	}
+
+	r.log.Log(log.LevelInfo, "msg", "BatchSaveDepts completed", "saved_count", int(result.RowsAffected), "total_processed", len(depts))
 	return int(result.RowsAffected), nil
 }
 func (r *accounterRepo) BatchSaveDeptUsers(ctx context.Context, usersdepts []*models.TbLasDepartmentUser) (int, error) {
 
-	r.log.Log(log.LevelInfo, "msg", "BatchSaveDeptUsers", "usersdepts", usersdepts)
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+	r.log.Log(log.LevelInfo, "msg", "BatchSaveDeptUsers", "usersdepts_count", len(usersdepts))
+
+	// 直接使用传入的 ctx，继承父级的超时设置
 
 	if len(usersdepts) == 0 {
 		r.log.Log(log.LevelWarn, "msg", "BatchSaveDeptUsers", "usersdepts is empty")
 		return 0, nil
 	}
-	// for _, userdept := range usersdepts {
-	// 	r.log.Info(userdept)
-	// }
+
+	// 检查 context 是否已取消
+	select {
+	case <-ctx.Done():
+		r.log.Log(log.LevelError, "msg", "BatchSaveDeptUsers", "context canceled before database operation", "err", ctx.Err())
+		return 0, ctx.Err()
+	default:
+		// 继续执行
+	}
+
+	// 记录 context 的截止时间（如果有的话）
+	if deadline, ok := ctx.Deadline(); ok {
+		r.log.Log(log.LevelInfo, "msg", "BatchSaveDeptUsers", "context deadline", "deadline", deadline, "time_until_deadline", time.Until(deadline))
+	}
+
 	db, err := r.data.GetSyncDB()
 	if err != nil {
 		return 0, err
 	}
-	result := db.WithContext(ctx).Create(usersdepts)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
-			r.log.Log(log.LevelError, "msg", "BatchSaveDeptUsers", "deptuser already exists")
-		} else {
-			return 0, result.Error
-		}
 
+	// 使用 Upsert 操作避免重复键错误
+	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "did"}, {Name: "uid"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
+		DoNothing: true,
+	}).Create(usersdepts)
+
+	if result.Error != nil {
+		// 检查是否是 context 相关错误
+		if errors.Is(result.Error, context.DeadlineExceeded) {
+			r.log.Log(log.LevelError, "msg", "BatchSaveDeptUsers", "context deadline exceeded", "err", result.Error)
+		} else if errors.Is(result.Error, context.Canceled) {
+			r.log.Log(log.LevelError, "msg", "BatchSaveDeptUsers", "context canceled during database operation", "err", result.Error)
+		} else {
+			r.log.Log(log.LevelError, "msg", "BatchSaveDeptUsers failed", "err", result.Error)
+		}
+		return 0, result.Error
 	}
+
+	r.log.Log(log.LevelInfo, "msg", "BatchSaveDeptUsers completed", "saved_count", int(result.RowsAffected), "total_processed", len(usersdepts))
 	return int(result.RowsAffected), nil
 }
 
 func (r *accounterRepo) CreateTask(ctx context.Context, taskName string) (int, error) {
 	r.log.Log(log.LevelInfo, "msg", "CreateTask", "name", taskName)
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	// 使用传入的 context 并设置超时
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	task := &models.Task{
 		Title:         taskName,
@@ -584,9 +629,6 @@ func (r *accounterRepo) UpdateTask(ctx context.Context, taskName, status string)
 	r.log.Log(log.LevelInfo, "msg", "UpdateTask", "taskName", taskName, "status", status)
 	// pending/in_progress/completed/cancelled
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
 	var task models.Task
 	db, err := r.data.GetMainDB()
 	if err != nil {
@@ -622,9 +664,7 @@ func (r *accounterRepo) UpdateTask(ctx context.Context, taskName, status string)
 
 func (r *accounterRepo) GetTask(ctx context.Context, taskName string) (*models.Task, error) {
 
-	r.log.Log(log.LevelInfo, "msg", "CreateTask", "name", taskName)
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+	r.log.Log(log.LevelInfo, "msg", "GetTask", "name", taskName)
 	task := &models.Task{}
 	db, err := r.data.GetMainDB()
 	if err != nil {
