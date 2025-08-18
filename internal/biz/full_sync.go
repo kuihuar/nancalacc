@@ -70,7 +70,9 @@ func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.Create
 	uc.log.Log(log.LevelInfo, "msg", "CreateSyncAccount", "req", req)
 
 	taskId := req.GetTaskName()
-
+	if taskId == "" {
+		return nil, status.Error(codes.InvalidArgument, "task name is empty")
+	}
 	_, ok, err := uc.GetCacheTask(ctx, taskId)
 	if err != nil {
 		return nil, err
@@ -79,7 +81,16 @@ func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.Create
 		return nil, status.Error(codes.AlreadyExists, "task name "+taskId+" exists")
 	}
 
+	err = uc.CreateCacheTask(ctx, taskId, "pending")
+	if err != nil {
+		return nil, err
+	}
+
 	companyCfg, users, depts, deptUsers, err := uc.getFullData(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = uc.UpdateCacheTask(ctx, taskId, "in_progress", 40)
 	if err != nil {
 		return nil, err
 	}
@@ -87,12 +98,15 @@ func (uc *FullSyncUsecase) CreateSyncAccount(ctx context.Context, req *v1.Create
 	if err != nil {
 		return nil, err
 	}
-
+	err = uc.UpdateCacheTask(ctx, taskId, "in_progress", 80)
+	if err != nil {
+		return nil, err
+	}
 	err = uc.notifyFullSync(ctx, taskId)
 	if err != nil {
 		return nil, err
 	}
-	err = uc.CreateCacheTask(ctx, taskId, "in_progress")
+	err = uc.UpdateCacheTask(ctx, taskId, "completed", 100)
 	if err != nil {
 		return nil, err
 	}
@@ -872,6 +886,7 @@ func (uc *FullSyncUsecase) UpdateCacheTask(ctx context.Context, taskId, status s
 	task.Status = status
 	task.Progress = int8(progress)
 	task.UpdatedAt = time.Now()
+	task.ActualTime = int(time.Since(task.CreatedAt).Minutes())
 
 	// 设置更新后的任务到缓存
 	err = uc.localCache.Set(ctx, taskId, task, 300*time.Minute)

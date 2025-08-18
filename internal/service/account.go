@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type AccountService struct {
@@ -56,10 +57,54 @@ func (s *AccountService) CreateSyncAccount(ctx context.Context, req *v1.CreateSy
 		}
 	}
 
-	// 这里设置传进来的最大分钟数
-	ctx, cancel := context.WithTimeout(ctx, 50*time.Minute)
+	// 4. 立即创建任务记录（状态：pending）
+	_, ok, err := s.fullSyncUsecase.GetCacheTask(ctx, req.GetTaskName())
+	if err != nil {
+		s.log.Log(log.LevelError, "msg", "CreateSyncAccountAsync.GetCacheTask", "taskId", req.GetTaskName(), "err", err)
+		return nil, status.Errorf(codes.Internal, "failed to create task: %v", err)
+	}
+	if ok {
+		return nil, status.Errorf(codes.AlreadyExists, "task name %s exists", req.GetTaskName())
+	}
+
+	// 5. 启动异步处理
+	go s.executeAsyncSync(req)
+
+	// 6. 立即返回任务ID，不等待同步完成
+	s.log.Log(log.LevelInfo, "msg", "CreateSyncAccountAsync.started", "taskId", req.GetTaskName())
+
+	return &v1.CreateSyncAccountReply{
+		TaskId:     req.GetTaskName(),
+		CreateTime: timestamppb.Now(),
+	}, nil
+}
+func (s *AccountService) executeAsyncSync(req *v1.CreateSyncAccountRequest) {
+	startTime := time.Now()
+	taskId := req.GetTaskName()
+	// 设置异步执行的超时时间（比HTTP超时更长）
+	asyncCtx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 	defer cancel()
-	return s.fullSyncUsecase.CreateSyncAccount(ctx, req)
+
+	defer func() {
+		if r := recover(); r != nil {
+			s.log.Log(log.LevelError, "msg", "executeAsyncSync.panic", "taskId", taskId, "panic", r)
+		}
+	}()
+
+	s.log.Log(log.LevelInfo, "msg", "executeAsyncSync.start", "taskId", taskId, "layer", "service")
+
+	_, err := s.fullSyncUsecase.CreateSyncAccount(asyncCtx, req)
+	if err != nil {
+		err = s.fullSyncUsecase.UpdateCacheTask(asyncCtx, taskId, "failed", 0)
+		if err != nil {
+			s.log.Log(log.LevelError, "msg", "executeAsyncSync.update_cache_task", "taskId", taskId, "err", err)
+		}
+		s.log.Log(log.LevelError, "msg", "executeAsyncSync.business_layer", "taskId", taskId, "err", err)
+		return
+	}
+
+	actualTime := int(time.Since(startTime).Minutes())
+	s.log.Log(log.LevelInfo, "msg", "executeAsyncSync.completed", "taskId", taskId, "actualTime", actualTime, "layer", "service")
 }
 func (s *AccountService) GetSyncAccount(ctx context.Context, req *v1.GetSyncAccountRequest) (*v1.GetSyncAccountReply, error) {
 

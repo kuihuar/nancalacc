@@ -11,7 +11,7 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-// ExampleJobWithConfig 展示如何添加包含配置的任务
+// 注册所有定时任务
 func RegisterJobsConfig(s *CronService) {
 	// 示例1: 添加一个简单的配置化任务
 	addSimpleConfigJob(s)
@@ -26,10 +26,10 @@ func RegisterJobsConfig(s *CronService) {
 	//addDynamicConfigJob(s)
 
 	// 添加 CreateSyncAccount 任务
-	addCreateSyncAccountJob(s)
+	//addCreateSyncAccountJob(s)
 
 	// 添加数据库检测任务
-	addDatabaseCheckJob(s)
+	//addDatabaseCheckJob(s)
 }
 
 // addSimpleConfigJob 添加简单配置任务
