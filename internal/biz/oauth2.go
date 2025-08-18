@@ -45,7 +45,7 @@ func (uc *Oauth2Usecase) GetUserInfo(ctx context.Context, req *v1.GetUserInfoReq
 	log.Infof("GetUserInfo.GetUseridByUnionid: userId: %v, err: %v", userId, err)
 
 	if err != nil {
-		log.Error("GetUserInfo.GetUseridByUnionid: userId: %v, err: %v", userId, err)
+		uc.log.Log(log.LevelError, "msg", "GetUserInfo.GetUseridByUnionid", "userId", userId, "err", err)
 		return nil, err
 	}
 

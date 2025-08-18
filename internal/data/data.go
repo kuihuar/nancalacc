@@ -167,6 +167,11 @@ func (d *Data) GetRedis() *redis.Client {
 	return d.redis
 }
 
+// GetDBManager 获取数据库管理器
+func (d *Data) GetDBManager() *DatabaseManager {
+	return d.dbManager
+}
+
 // IsRedisAvailable 检查 Redis 是否可用
 func (d *Data) IsRedisAvailable() bool {
 	if d.redis == nil {

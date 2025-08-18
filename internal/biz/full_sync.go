@@ -197,9 +197,9 @@ func (uc *FullSyncUsecase) getFullData(ctx context.Context) (companyCfg *dingtal
 	return companyCft, users, depts, deptUsers, nil
 }
 func (uc *FullSyncUsecase) notifyFullSync(ctx context.Context, taskId string) (err error) {
-	ctx = context.Background()
 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
 	if err != nil {
+		uc.log.Log(log.LevelError, "msg", "notifyFullSync.GetAccessToken", "err", err)
 		return err
 	}
 	resp, err := uc.wps.PostEcisaccountsyncAll(ctx, appAccessToken.AccessToken, &wps.EcisaccountsyncAllRequest{

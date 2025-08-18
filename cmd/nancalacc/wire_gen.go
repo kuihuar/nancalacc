@@ -48,7 +48,7 @@ func wireApp(confServer *conf.Server, confData *conf.Data, openTelemetry *conf.O
 	accountService := service.NewAccountService(accounterUsecase, oauth2Usecase, fullSyncUsecase, logger)
 	grpcServer := server.NewGRPCServer(confServer, accountService, integration)
 	httpServer := server.NewHTTPServer(confServer, accountService, integration, openTelemetry)
-	cronService := task.NewCronServiceWithJobs(accounterUsecase, logger)
+	cronService := task.NewCronServiceWithJobs(fullSyncUsecase, dataData, logger)
 	incrementalSyncUsecase := biz.NewIncrementalSyncUsecase(accounterRepo, dingtalkDingtalk, wpsWps, logger)
 	dingTalkEventService := service.NewDingTalkEventService(incrementalSyncUsecase, logger)
 	app := newApp(integration, grpcServer, httpServer, cronService, dingTalkEventService)

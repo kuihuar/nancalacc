@@ -28,7 +28,7 @@ type AccountService struct {
 }
 
 func NewAccountService(accounterUsecase *biz.AccounterUsecase, oauth2Usecase *biz.Oauth2Usecase, fullSyncUsecase *biz.FullSyncUsecase, logger log.Logger) *AccountService {
-	limiter := limiter.NewRateLimiter()
+	limiter := limiter.NewRateLimiter(nil) // 使用默认配置
 	return &AccountService{accounterUsecase: accounterUsecase, oauth2Usecase: oauth2Usecase, fullSyncUsecase: fullSyncUsecase, limiter: limiter, log: logger}
 }
 
@@ -41,6 +41,21 @@ func (s *AccountService) CreateSyncAccount(ctx context.Context, req *v1.CreateSy
 		taskId := time.Now().Add(time.Duration(1) * time.Second).Format("20060102150405")
 		req.TaskName = &taskId
 	}
+
+	// 使用更合理的限流配置
+	// 全局限流：每秒最多10个请求，突发20个请求
+	if !s.limiter.Allow("global_sync_account", 10, 20) {
+		return nil, status.Errorf(codes.ResourceExhausted, "global rate limit exceeded")
+	}
+
+	// 如果提供了任务名称，对特定任务进行额外限流
+	if req.GetTaskName() != "" {
+		// 特定任务限流：每秒最多2个请求，突发5个请求
+		if !s.limiter.Allow("task_"+req.GetTaskName(), 2, 5) {
+			return nil, status.Errorf(codes.ResourceExhausted, "task rate limit exceeded for: %s", req.GetTaskName())
+		}
+	}
+
 	// 这里设置传进来的最大分钟数
 	ctx, cancel := context.WithTimeout(ctx, 50*time.Minute)
 	defer cancel()
