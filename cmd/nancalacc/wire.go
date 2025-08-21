@@ -11,6 +11,7 @@ import (
 	"nancalacc/internal/data"
 	"nancalacc/internal/dingtalk"
 	"nancalacc/internal/otel"
+	"nancalacc/internal/repository"
 	"nancalacc/internal/server"
 	"nancalacc/internal/service"
 	"nancalacc/internal/task"
@@ -32,6 +33,7 @@ func wireApp(*conf.Server, *conf.Data, *conf.OpenTelemetry, *otel.Integration) (
 		provideLogger,
 		server.ProviderSet,
 		data.ProviderSet,
+		repository.ProviderSet,
 		wps.WpsProviderSet,
 		dingtalk.DingtalkProviderSet,
 		biz.ProviderSet,

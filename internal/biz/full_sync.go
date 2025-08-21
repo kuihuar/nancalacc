@@ -9,6 +9,7 @@ import (
 	"nancalacc/internal/conf"
 	"nancalacc/internal/data/models"
 	"nancalacc/internal/dingtalk"
+	"nancalacc/internal/repository/contracts"
 	"nancalacc/internal/wps"
 	"os"
 	"strconv"
@@ -25,12 +26,12 @@ import (
 
 // FullSyncUsecase is a FullSync usecase.
 type FullSyncUsecase struct {
-	repo         AccounterRepo
+	repo         contracts.AccountRepository
 	dingTalkRepo dingtalk.Dingtalk
 	appAuth      auth.Authenticator
 	wps          wps.Wps
 	bizConf      *conf.App
-	localCache   CacheService
+	localCache   contracts.CacheRepository
 	log          log.Logger
 	// 批量处理配置
 	batchSize  int
@@ -38,7 +39,7 @@ type FullSyncUsecase struct {
 }
 
 // NewFullSyncUsecase new a FullSync usecase.
-func NewFullSyncUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, wps wps.Wps, cache CacheService, logger log.Logger) *FullSyncUsecase {
+func NewFullSyncUsecase(repo contracts.AccountRepository, dingTalkRepo dingtalk.Dingtalk, wps wps.Wps, cache contracts.CacheRepository, logger log.Logger) *FullSyncUsecase {
 	appAuth := auth.NewWpsAppAuthenticator()
 	bizConf := conf.Get().GetApp()
 

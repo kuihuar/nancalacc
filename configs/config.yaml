@@ -21,7 +21,7 @@ data:
     max_open_conns: 20
     max_idle_conns: 10
     conn_max_lifetime: 6h
-    env: "prod"
+    env: "dev"
     enable: true
   redis:
     addr: 192.168.1.142:6379

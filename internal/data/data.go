@@ -14,8 +14,6 @@ import (
 // ProviderSet is data providers.
 var ProviderSet = wire.NewSet(
 	NewRedisClient,
-	NewAccounterRepo,
-	NewLocalCacheService,
 	NewDatabaseFactory,     // 数据库工厂
 	NewDatabaseInitializer, // 数据库初始化器
 	NewDataWithFactory,     // 使用工厂创建数据层
@@ -246,3 +244,8 @@ func (d *Data) NancalDB() *gorm.DB {
 	}
 	return nil
 }
+
+// NewLocalCacheService 创建本地缓存服务
+// func NewLocalCacheService(logger log.Logger) localcache.CacheRepository {
+// 	return localcache.NewLocalCacheService(logger)
+// }

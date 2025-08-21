@@ -1,14 +1,20 @@
-package data
+package mysql
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
-	"nancalacc/internal/biz"
 	"nancalacc/internal/conf"
+	"nancalacc/internal/data"
 	"nancalacc/internal/data/models"
 	"nancalacc/internal/dingtalk"
+	"nancalacc/internal/repository/contracts"
+
+	// "nancalacc/internal/repository"
+
+	// "nancalacc/internal/repository"
 
 	//nancalaccLog "nancalacc/internal/log"
 
@@ -17,14 +23,14 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-type accounterRepo struct {
+type accountRepository struct {
 	bizConf *conf.App
-	data    *Data
+	data    *data.Data
 	log     log.Logger
 }
 
 // getSyncDB 获取同步数据库连接
-func (r *accounterRepo) getSyncDB() (*gorm.DB, error) {
+func (r *accountRepository) getSyncDB() (*gorm.DB, error) {
 	return r.data.GetSyncDB()
 }
 
@@ -34,15 +40,15 @@ var (
 )
 
 // NewAccounterRepo .
-func NewAccounterRepo(data *Data, logger log.Logger) biz.AccounterRepo {
-	return &accounterRepo{
+func NewAccountRepository(data *data.Data, logger log.Logger) contracts.AccountRepository {
+	return &accountRepository{
 		bizConf: conf.Get().GetApp(),
 		data:    data,
 		log:     logger,
 	}
 }
 
-func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.DingtalkDeptUser, taskId string) (int, error) {
+func (r *accountRepository) SaveUsers(ctx context.Context, users []*dingtalk.DingtalkDeptUser, taskId string) (int, error) {
 
 	r.log.Log(log.LevelInfo, "msg", "SaveUsers", "users_count", len(users), "taskId", taskId)
 
@@ -97,7 +103,7 @@ func (r *accounterRepo) SaveUsers(ctx context.Context, users []*dingtalk.Dingtal
 	return int(result.RowsAffected), nil
 }
 
-func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*dingtalk.DingtalkDept, taskId string) (int, error) {
+func (r *accountRepository) SaveDepartments(ctx context.Context, depts []*dingtalk.DingtalkDept, taskId string) (int, error) {
 
 	r.log.Log(log.LevelInfo, "msg", "SaveDepartments", "depts_count", len(depts), "taskId", taskId)
 
@@ -146,7 +152,7 @@ func (r *accounterRepo) SaveDepartments(ctx context.Context, depts []*dingtalk.D
 	return int(result.RowsAffected), nil
 }
 
-func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relations []*dingtalk.DingtalkDeptUserRelation, taskId string) (int, error) {
+func (r *accountRepository) SaveDepartmentUserRelations(ctx context.Context, relations []*dingtalk.DingtalkDeptUserRelation, taskId string) (int, error) {
 	r.log.Log(log.LevelInfo, "msg", "SaveDepartmentUserRelations", "relations_count", len(relations), "taskId", taskId)
 
 	// 使用传入的 context 并设置超时
@@ -187,7 +193,7 @@ func (r *accounterRepo) SaveDepartmentUserRelations(ctx context.Context, relatio
 	return int(result.RowsAffected), nil
 }
 
-func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, input *dingtalk.DingtalkCompanyCfg) error {
+func (r *accountRepository) SaveCompanyCfg(ctx context.Context, input *dingtalk.DingtalkCompanyCfg) error {
 	r.log.Log(log.LevelInfo, "msg", "SaveCompanyCfg", "input", input)
 
 	now := time.Now()
@@ -221,7 +227,7 @@ func (r *accounterRepo) SaveCompanyCfg(ctx context.Context, input *dingtalk.Ding
 	return nil
 }
 
-func (r *accounterRepo) ClearAll(ctx context.Context) error {
+func (r *accountRepository) ClearAll(ctx context.Context) error {
 	db, err := r.data.GetSyncDB()
 	if err != nil {
 		return err
@@ -246,7 +252,7 @@ func (r *accounterRepo) ClearAll(ctx context.Context) error {
 }
 
 // user_del/user_update/user_add(update_type). . auto/manual(sync_type)
-func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersDel, usersUpd []*dingtalk.DingtalkDeptUser) error {
+func (r *accountRepository) SaveIncrementUsers(ctx context.Context, usersAdd, usersDel, usersUpd []*dingtalk.DingtalkDeptUser) error {
 	r.log.Log(log.LevelInfo, "msg", "SaveIncrementUsers", "users_add", len(usersAdd), "users_del", len(usersDel), "users_upd", len(usersUpd))
 
 	inputlen := len(usersAdd) + len(usersDel) + len(usersUpd)
@@ -327,7 +333,7 @@ func (r *accounterRepo) SaveIncrementUsers(ctx context.Context, usersAdd, usersD
 }
 
 // dept_del/dept_update/dept_add/dept_move(update_type)
-func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel, deptsUpd []*dingtalk.DingtalkDept) error {
+func (r *accountRepository) SaveIncrementDepartments(ctx context.Context, deptsAdd, deptsDel, deptsUpd []*dingtalk.DingtalkDept) error {
 	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartments", "depts_add", len(deptsAdd), "depts_del", len(deptsDel), "depts_upd", len(deptsUpd))
 
 	inputlen := len(deptsAdd) + len(deptsDel) + len(deptsUpd)
@@ -384,7 +390,7 @@ func (r *accounterRepo) SaveIncrementDepartments(ctx context.Context, deptsAdd, 
 	return nil
 }
 
-func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel, relationsUpd []*dingtalk.DingtalkDeptUserRelation) error {
+func (r *accountRepository) SaveIncrementDepartmentUserRelations(ctx context.Context, relationsAdd, relationsDel, relationsUpd []*dingtalk.DingtalkDeptUserRelation) error {
 	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations", "relations_add", len(relationsAdd), "relations_del", len(relationsDel), "relations_upd", len(relationsUpd))
 
 	inputlen := len(relationsAdd) + len(relationsDel) + len(relationsUpd)
@@ -437,7 +443,7 @@ func (r *accounterRepo) SaveIncrementDepartmentUserRelations(ctx context.Context
 	r.log.Log(log.LevelInfo, "msg", "SaveIncrementDepartmentUserRelations completed", "saved_count", int(result.RowsAffected), "total_processed", len(entities))
 	return nil
 }
-func (r *accounterRepo) BatchSaveUsers(ctx context.Context, users []*models.TbLasUser) (int, error) {
+func (r *accountRepository) BatchSaveUsers(ctx context.Context, users []*models.TbLasUser) (int, error) {
 
 	r.log.Log(log.LevelInfo, "msg", "BatchSaveUsers", "users_count", len(users))
 
@@ -485,7 +491,7 @@ func (r *accounterRepo) BatchSaveUsers(ctx context.Context, users []*models.TbLa
 	r.log.Log(log.LevelInfo, "msg", "BatchSaveUsers completed", "saved_count", int(result.RowsAffected), "total_processed", len(users))
 	return int(result.RowsAffected), nil
 }
-func (r *accounterRepo) BatchSaveDepts(ctx context.Context, depts []*models.TbLasDepartment) (int, error) {
+func (r *accountRepository) BatchSaveDepts(ctx context.Context, depts []*models.TbLasDepartment) (int, error) {
 
 	r.log.Log(log.LevelInfo, "msg", "BatchSaveDepts", "depts_count", len(depts))
 
@@ -534,7 +540,7 @@ func (r *accounterRepo) BatchSaveDepts(ctx context.Context, depts []*models.TbLa
 	r.log.Log(log.LevelInfo, "msg", "BatchSaveDepts completed", "saved_count", int(result.RowsAffected), "total_processed", len(depts))
 	return int(result.RowsAffected), nil
 }
-func (r *accounterRepo) BatchSaveDeptUsers(ctx context.Context, usersdepts []*models.TbLasDepartmentUser) (int, error) {
+func (r *accountRepository) BatchSaveDeptUsers(ctx context.Context, usersdepts []*models.TbLasDepartmentUser) (int, error) {
 
 	r.log.Log(log.LevelInfo, "msg", "BatchSaveDeptUsers", "usersdepts_count", len(usersdepts))
 
@@ -586,7 +592,7 @@ func (r *accounterRepo) BatchSaveDeptUsers(ctx context.Context, usersdepts []*mo
 	return int(result.RowsAffected), nil
 }
 
-func (r *accounterRepo) CreateTask(ctx context.Context, taskName string) (int, error) {
+func (r *accountRepository) CreateTask(ctx context.Context, taskName string) (int, error) {
 	r.log.Log(log.LevelInfo, "msg", "CreateTask", "name", taskName)
 
 	// 使用传入的 context 并设置超时
@@ -624,7 +630,7 @@ func (r *accounterRepo) CreateTask(ctx context.Context, taskName string) (int, e
 	}
 }
 
-func (r *accounterRepo) UpdateTask(ctx context.Context, taskName, status string) error {
+func (r *accountRepository) UpdateTask(ctx context.Context, taskName, status string) error {
 
 	r.log.Log(log.LevelInfo, "msg", "UpdateTask", "taskName", taskName, "status", status)
 	// pending/in_progress/completed/cancelled
@@ -662,7 +668,7 @@ func (r *accounterRepo) UpdateTask(ctx context.Context, taskName, status string)
 	return nil
 }
 
-func (r *accounterRepo) GetTask(ctx context.Context, taskName string) (*models.Task, error) {
+func (r *accountRepository) GetTask(ctx context.Context, taskName string) (*models.Task, error) {
 
 	r.log.Log(log.LevelInfo, "msg", "GetTask", "name", taskName)
 	task := &models.Task{}
@@ -680,4 +686,181 @@ func (r *accounterRepo) GetTask(ctx context.Context, taskName string) (*models.T
 		return nil, errors.New("notfound")
 	}
 	return task, nil
+}
+
+func (r *accountRepository) BatchGetDeptUsers(ctx context.Context, taskName, thirdCompanyId, platformId string) ([]*models.TbLasDepartmentUser, error) {
+	r.log.Log(log.LevelInfo, "msg", "BatchGetDeptUsers", "taskName", taskName, "platformId", platformId)
+
+	var (
+		allUsers   = make([]*models.TbLasDepartmentUser, 0, pageSize)
+		lastID     uint64
+		totalCount int
+	)
+
+	db, err := r.data.GetSyncDB()
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		var pageUsers []*models.TbLasDepartmentUser
+
+		// 优化后的查询条件，按照索引顺序排列
+		query := db.WithContext(ctx).
+			Where("task_id = ?", taskName).
+			Where("third_company_id = ?", thirdCompanyId).
+			Where("platform_id = ?", platformId).
+			Where("check_type = ?", 1). // 只查询勾选的记录
+			Order("id ASC")
+
+		if lastID > 0 {
+			query = query.Where("id > ?", lastID)
+		}
+
+		result := query.Limit(pageSize).Find(&pageUsers)
+		if result.Error != nil {
+			r.log.Log(log.LevelError, "msg", "BatchGetDeptUsers", "Query failed at lastID", lastID, "err", result.Error)
+			return nil, fmt.Errorf("database error: %w", result.Error)
+		}
+
+		if len(pageUsers) == 0 {
+			break
+		}
+
+		lastID = uint64(pageUsers[len(pageUsers)-1].ID)
+		allUsers = append(allUsers, pageUsers...)
+		totalCount += len(pageUsers)
+
+		if len(pageUsers) < pageSize {
+			break
+		}
+	}
+
+	if len(allUsers) == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	r.log.Log(log.LevelInfo, "msg", "BatchGetDeptUsers", "Fetched", totalCount, "records")
+	return allUsers, nil
+}
+
+func (r *accountRepository) BatchGetUsers(ctx context.Context, taskName, thirdCompanyId, platformId string) ([]*models.TbLasUser, error) {
+	r.log.Log(log.LevelInfo, "msg", "BatchGetUsers", "taskName", taskName, "platformId", platformId)
+
+	var (
+		allUsers   = make([]*models.TbLasUser, 0, pageSize)
+		lastID     uint64
+		totalCount int
+	)
+
+	// 只选择必要字段，减少数据传输量
+	selectedFields := []string{
+		"id", "task_id", "third_company_id", "platform_id", "uid",
+		"def_did", "def_did_order", "account", "nick_name", "email",
+		"phone", "employment_status", "check_type",
+	}
+
+	db, err := r.data.GetSyncDB()
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		var pageUsers []*models.TbLasUser
+
+		// 优化后的查询条件，按照索引顺序排列
+		query := db.WithContext(ctx).
+			Select(selectedFields).
+			Where("task_id = ?", taskName).
+			Where("third_company_id = ?", thirdCompanyId).
+			Where("platform_id = ?", platformId).
+			//Where("check_type = ?", 1).               // 只查询勾选的记录
+			//Where("employment_status = ?", "active"). // 只查询在职用户
+			Order("id ASC")
+
+		if lastID > 0 {
+			query = query.Where("id > ?", lastID)
+		}
+
+		result := query.Limit(pageSize).Find(&pageUsers)
+		if result.Error != nil {
+			r.log.Log(log.LevelError, "msg", "BatchGetUsers", "Query failed at lastID", lastID, "err", result.Error)
+			return nil, fmt.Errorf("database error: %w", result.Error)
+		}
+
+		if len(pageUsers) == 0 {
+			break
+		}
+
+		lastID = uint64(pageUsers[len(pageUsers)-1].ID)
+		allUsers = append(allUsers, pageUsers...)
+		totalCount += len(pageUsers)
+
+		if len(pageUsers) < pageSize {
+			break
+		}
+	}
+
+	if len(allUsers) == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	r.log.Log(log.LevelInfo, "msg", "BatchGetUsers", "Fetched", totalCount, "users")
+	return allUsers, nil
+}
+
+func (r *accountRepository) BatchGetDepts(ctx context.Context, taskName, thirdCompanyId, platformId string) ([]*models.TbLasDepartment, error) {
+	r.log.Log(log.LevelInfo, "msg", "BatchGetDepts", "taskName", taskName, "platformId", platformId)
+
+	var (
+		allDepts   = make([]*models.TbLasDepartment, 0, pageSize)
+		lastID     uint64
+		totalCount int
+	)
+
+	db, err := r.data.GetSyncDB()
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		var pageDepts []*models.TbLasDepartment
+
+		// 优化后的查询条件，按照索引顺序排列
+		query := db.WithContext(ctx).
+			Where("task_id = ?", taskName).
+			Where("third_company_id = ?", thirdCompanyId).
+			Where("platform_id = ?", platformId).
+			Where("check_type = ?", 1). // 只查询勾选的记录
+			Order("id ASC")
+
+		if lastID > 0 {
+			query = query.Where("id > ?", lastID)
+		}
+
+		result := query.Limit(pageSize).Find(&pageDepts)
+		if result.Error != nil {
+			r.log.Log(log.LevelError, "msg", "BatchGetDepts", "Query failed at lastID", lastID, "err", result.Error)
+			return nil, fmt.Errorf("database error: %w", result.Error)
+		}
+
+		if len(pageDepts) == 0 {
+			break
+		}
+
+		lastID = uint64(pageDepts[len(pageDepts)-1].ID)
+		allDepts = append(allDepts, pageDepts...)
+		totalCount += len(pageDepts)
+
+		if len(pageDepts) < pageSize {
+			break
+		}
+	}
+
+	if len(allDepts) == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	r.log.Log(log.LevelInfo, "msg", "BatchGetDepts", "Fetched", totalCount, "departments")
+	return allDepts, nil
 }

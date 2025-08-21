@@ -9,6 +9,7 @@ import (
 	"nancalacc/internal/conf"
 	"nancalacc/internal/dingtalk"
 	"nancalacc/internal/pkg/utils"
+	"nancalacc/internal/repository/contracts"
 	"nancalacc/internal/wps"
 	"strconv"
 
@@ -19,7 +20,7 @@ import (
 
 // GreeterUsecase is a Greeter usecase.
 type IncrementalSyncUsecase struct {
-	repo         AccounterRepo
+	repo         contracts.AccountRepository
 	dingTalkRepo dingtalk.Dingtalk
 	bizConf      *conf.App
 	wpsAppAuth   auth.Authenticator
@@ -28,7 +29,7 @@ type IncrementalSyncUsecase struct {
 }
 
 // NewGreeterUsecase new a Greeter usecase.
-func NewIncrementalSyncUsecase(repo AccounterRepo, dingTalkRepo dingtalk.Dingtalk, wps wps.Wps, logger log.Logger) *IncrementalSyncUsecase {
+func NewIncrementalSyncUsecase(repo contracts.AccountRepository, dingTalkRepo dingtalk.Dingtalk, wps wps.Wps, logger log.Logger) *IncrementalSyncUsecase {
 	wpsAppAuth := auth.NewWpsAppAuthenticator()
 	bizConf := conf.Get().GetApp()
 	return &IncrementalSyncUsecase{

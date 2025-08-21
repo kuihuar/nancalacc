@@ -14,6 +14,7 @@ import (
 	"nancalacc/internal/data"
 	"nancalacc/internal/dingtalk"
 	"nancalacc/internal/otel"
+	"nancalacc/internal/repository"
 	"nancalacc/internal/server"
 	"nancalacc/internal/service"
 	"nancalacc/internal/task"
@@ -38,18 +39,18 @@ func wireApp(confServer *conf.Server, confData *conf.Data, openTelemetry *conf.O
 	if err != nil {
 		return nil, nil, err
 	}
-	accounterRepo := data.NewAccounterRepo(dataData, logger)
+	accountRepository := repository.NewAccountRepository(dataData, logger)
 	dingtalkDingtalk := dingtalk.NewDingTalkRepo(logger)
 	wpsWps := wps.NewWps(logger)
-	cacheService := data.NewLocalCacheService(logger)
-	accounterUsecase := biz.NewAccounterUsecase(accounterRepo, dingtalkDingtalk, wpsWps, cacheService, logger)
+	cacheRepository := repository.NewCacheRepository(dataData, logger)
+	accounterUsecase := biz.NewAccounterUsecase(accountRepository, dingtalkDingtalk, wpsWps, cacheRepository, logger)
 	oauth2Usecase := biz.NewOauth2Usecase(dingtalkDingtalk, logger)
-	fullSyncUsecase := biz.NewFullSyncUsecase(accounterRepo, dingtalkDingtalk, wpsWps, cacheService, logger)
+	fullSyncUsecase := biz.NewFullSyncUsecase(accountRepository, dingtalkDingtalk, wpsWps, cacheRepository, logger)
 	accountService := service.NewAccountService(accounterUsecase, oauth2Usecase, fullSyncUsecase, logger)
 	grpcServer := server.NewGRPCServer(confServer, accountService, integration)
 	httpServer := server.NewHTTPServer(confServer, accountService, integration, openTelemetry)
 	cronService := task.NewCronServiceWithJobs(fullSyncUsecase, dataData, logger)
-	incrementalSyncUsecase := biz.NewIncrementalSyncUsecase(accounterRepo, dingtalkDingtalk, wpsWps, logger)
+	incrementalSyncUsecase := biz.NewIncrementalSyncUsecase(accountRepository, dingtalkDingtalk, wpsWps, logger)
 	dingTalkEventService := service.NewDingTalkEventService(incrementalSyncUsecase, logger)
 	app := newApp(integration, grpcServer, httpServer, cronService, dingTalkEventService)
 	return app, func() {
