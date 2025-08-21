@@ -7,6 +7,8 @@
 package main
 
 import (
+	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/log"
 	"nancalacc/internal/biz"
 	"nancalacc/internal/conf"
 	"nancalacc/internal/data"
@@ -17,10 +19,9 @@ import (
 	"nancalacc/internal/service"
 	"nancalacc/internal/task"
 	"nancalacc/internal/wps"
+)
 
-	"github.com/go-kratos/kratos/v2"
-	"github.com/go-kratos/kratos/v2/log"
-
+import (
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -38,11 +39,7 @@ func wireApp(confServer *conf.Server, confData *conf.Data, openTelemetry *conf.O
 	if err != nil {
 		return nil, nil, err
 	}
-	syncDB, err := dataData.GetSyncDB()
-	if err != nil {
-		return nil, nil, err
-	}
-	accountRepository := repository.NewAccountRepository(syncDB, logger)
+	accountRepository := repository.NewAccountRepository(dataData, logger)
 	dingtalkDingtalk := dingtalk.NewDingTalkRepo(logger)
 	wpsWps := wps.NewWps(logger)
 	cacheRepository := repository.NewCacheRepository(logger)
