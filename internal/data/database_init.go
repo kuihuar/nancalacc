@@ -37,6 +37,12 @@ func (di *DatabaseInitializer) InitializeDatabases() (*DatabaseManager, error) {
 		return nil, fmt.Errorf("failed to initialize sync database: %w", err)
 	}
 
+	// 初始化 Saga 数据库
+	if err := di.initializeSagaDB(dbManager); err != nil {
+		di.logger.Log(log.LevelWarn, "msg", "failed to initialize saga database", "error", err)
+		// Saga 数据库初始化失败不影响主流程
+	}
+
 	// 初始化用户数据库（可选）
 	if err := di.initializeUserDB(dbManager); err != nil {
 		di.logger.Log(log.LevelWarn, "msg", "failed to initialize user database", "error", err)
@@ -129,6 +135,25 @@ func (di *DatabaseInitializer) initializeLogDB(dbManager *DatabaseManager) error
 	return nil
 }
 
+// initializeSagaDB 初始化 Saga 数据库
+func (di *DatabaseInitializer) initializeSagaDB(dbManager *DatabaseManager) error {
+	config := di.factory.CreateSagaDBConfig()
+
+	if !config.Enable {
+		di.logger.Log(log.LevelInfo, "msg", "saga database is disabled")
+		return nil
+	}
+
+	db, err := di.factory.CreateDatabase(SagaDBType, config)
+	if err != nil {
+		return fmt.Errorf("failed to create saga database: %w", err)
+	}
+
+	dbManager.RegisterDatabase(SagaDBType, "saga", db, config)
+	di.logger.Log(log.LevelInfo, "msg", "saga database initialized successfully")
+	return nil
+}
+
 // NewDataWithFactory 使用数据库工厂创建数据层实例
 func NewDataWithFactory(
 	factory *DatabaseFactory,
@@ -144,10 +169,23 @@ func NewDataWithFactory(
 		return nil, nil, fmt.Errorf("failed to initialize databases: %w", err)
 	}
 
+	// 获取主数据库用于 Saga 存储（也可以使用专门的 Saga 数据库）
+	mainDB, err := dbManager.GetDatabase(MainDBType)
+	if err != nil {
+		logger.Log(log.LevelError, "msg", "failed to get main database for saga", "error", err)
+		mainDB = nil
+	}
+
+	var sagaRepo *SagaRepository
+	if mainDB != nil {
+		sagaRepo = NewSagaRepository(mainDB)
+	}
+
 	data := &Data{
 		dbManager: dbManager,
 		redis:     redis,
 		logger:    logger,
+		sagaRepo:  sagaRepo,
 	}
 
 	// 返回清理函数

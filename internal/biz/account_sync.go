@@ -1,189 +1,319 @@
 package biz
 
-// import (
-// 	"context"
-// 	"fmt"
-// 	v1 "nancalacc/api/account/v1"
-// 	"nancalacc/internal/data/models"
-// 	"nancalacc/internal/wps"
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	v1 "nancalacc/api/account/v1"
+	"nancalacc/internal/data/models"
+	"nancalacc/internal/wps"
+	"os"
 
-// 	"github.com/go-kratos/kratos/v2/log"
-// )
+	"github.com/go-kratos/kratos/v2/log"
+)
 
-// func (uc *AccounterUsecase) CreateSyncTask(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
+func (uc *AccounterUsecase) CreateSyncTask(ctx context.Context, req *v1.CreateSyncAccountRequest) (*v1.CreateSyncAccountReply, error) {
 
-// 	wpsAllDept, _ := uc.GetAllWpsDept(ctx)
+	// wpsAllDept, err := uc.GetAllWpsDept(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	wpsAllDeptJson, err := os.ReadFile("data/wpsAllDept.json")
+	if err != nil {
+		uc.log.Log(log.LevelError, "msg", "CreateSyncTask.os.OpenFile", "err", err)
+	}
+	var wpsAllDept []wps.DeptItem
+	err = json.Unmarshal(wpsAllDeptJson, &wpsAllDept)
+	if err != nil {
+		uc.log.Log(log.LevelError, "msg", "CreateSyncTask.json.Unmarshal", "err", err)
+	}
 
-// 	fmt.Printf("wpsAllDept: %v", wpsAllDept)
-// 	wpsAlluser, _ := uc.GetAllWpsUser(ctx)
+	uc.log.Log(log.LevelInfo, "msg", "CreateSyncTask", "wpsAllDept len", len(wpsAllDept))
 
-// 	fmt.Printf("wpsAlluser: %v", wpsAlluser)
-// 	allTableDept, _ := uc.repo.BatchGetDepts(ctx, "taskName")
-// 	allTableUser, _ := uc.repo.BatchGetUsers(ctx, "taskName")
-// 	allTableDeptuser, _ := uc.repo.BatchGetDeptUsers(ctx, "taskName")
-// 	allTableDeptMap := make(map[string]*models.TbLasDepartment, len(allTableDept))
-// 	allTableUserMap := make(map[string]*models.TbLasUser, len(allTableUser))
-// 	allTableDeptuserMap := make(map[string][]*models.TbLasDepartmentUser, 0)
-// 	for _, item := range allTableDept {
-// 		allTableDeptMap[item.Did] = item
-// 	}
-// 	for _, item := range allTableUser {
-// 		allTableUserMap[item.Uid] = item
-// 	}
-// 	for _, item := range allTableDeptuser {
-// 		allTableDeptuserMap[item.Uid] = append(allTableDeptuserMap[item.Uid], item)
-// 	}
+	wpsAlluserJson, err := os.ReadFile("data/wpsAlluser.json")
+	if err != nil {
+		uc.log.Log(log.LevelError, "msg", "CreateSyncTask.os.OpenFile", "err", err)
+	}
+	var wpsAlluser []wps.UserItem
+	err = json.Unmarshal(wpsAlluserJson, &wpsAlluser)
+	if err != nil {
+		uc.log.Log(log.LevelError, "msg", "CreateSyncTask.json.Unmarshal", "err", err)
+	}
 
-// 	var addp, updp, delp []*models.TbLasDepartment
-// 	for _, item := range wpsAllDept {
-// 		if v, ok := allTableDeptMap[item.ExDeptID]; ok {
-// 			updp = append(updp, v)
-// 			delete(allTableDeptMap, item.ExDeptID)
-// 		} else {
-// 			addp = append(addp, v)
-// 		}
-// 	}
-// 	if len(allTableDeptMap) > 0 {
-// 		for _, v := range allTableDeptMap {
-// 			delp = append(delp, v)
-// 		}
-// 	}
+	uc.log.Log(log.LevelInfo, "msg", "CreateSyncTask", "wpsAlluser len", len(wpsAlluser))
 
-// 	fmt.Printf("addp: %v, updp: %v, del: %v", addp, updp, delp)
+	taskName := "20250818130326"
+	thirdCompanyId := "1"
+	platformId := "1"
+	allTableDept, err := uc.repo.BatchGetDepts(ctx, taskName, thirdCompanyId, platformId)
+	if err != nil {
+		return nil, err
+	}
+	allTableUser, err := uc.repo.BatchGetUsers(ctx, taskName, thirdCompanyId, platformId)
+	if err != nil {
+		return nil, err
+	}
+	allTableDeptuser, err := uc.repo.BatchGetDeptUsers(ctx, taskName, thirdCompanyId, platformId)
+	if err != nil {
+		return nil, err
+	}
+	uc.log.Log(log.LevelInfo, "msg", "CreateSyncTask", "allTableDept len", len(allTableDept), "allTableUser len", len(allTableUser), "allTableDeptuser len", len(allTableDeptuser))
 
-// 	var addu, updu, delu []wps.UserItem
-// 	for _, item := range wpsAlluser {
-// 		if v, ok := allTableUserMap[item.ExUserID]; ok {
-// 			//这里可以将tabuser里 的属性拷贝到WPS user
-// 			item.UserName = v.NickName
-// 			updu = append(updu, item)
-// 			delete(allTableUserMap, item.ExUserID)
-// 		} else {
-// 			//这个也调用makeWpsUser生成的wps user
+	wpsAllDeptMap := make(map[string]*wps.DeptItem, len(wpsAllDept))
+	for _, item := range wpsAllDept {
+		wpsAllDeptMap[item.ExDeptID] = &item
+	}
 
-// 			delu = append(addu, item)
-// 		}
-// 	}
-// 	if len(allTableUserMap) > 0 {
-// 		for _, v := range allTableUserMap {
-// 			addu = append(delu, makeWpsUser(*v))
-// 		}
-// 	}
+	var addDept, updDept, delDept []*wps.DeptItem
+	for _, dept := range allTableDept {
+		if v, ok := wpsAllDeptMap[dept.Did]; ok {
+			itemDept := v
+			itemDept.Name = dept.Name
+			// itemDept.ParentID = dept.ParentID
+			itemDept.Order = dept.Order
+			itemDept.Source = dept.Source
 
-// 	fmt.Printf("addu: %v, updu: %v, del: %v", addu, updu, delu)
+			//存在加一条更新的,更新字段后
 
-// 	for _, item := range addu {
-// 		if relations, ok := allTableDeptuserMap[item.ExUserID]; ok {
-// 			var depts []wps.Dept
-// 			for _, relation := range relations {
-// 				depts = append(depts, wps.Dept{DeptID: relation.Did, Name: allTableDeptMap[relation.Did].Name})
-// 			}
-// 			item.Depts = depts
-// 		}
+			updDept = append(updDept, itemDept)
+			//dept.Name = v.Name
+			delete(wpsAllDeptMap, dept.Did)
+		} else {
+			//这几个参数有可能不对
+			newDept := wps.DeptItem{
+				ExDeptID: dept.Did,
+				Name:     dept.Name,
+				Order:    dept.Order,
+				Source:   dept.Source,
+			}
+			addDept = append(addDept, &newDept)
+		}
+	}
+	if len(wpsAllDeptMap) > 0 {
+		for _, v := range wpsAllDeptMap {
+			delDept = append(delDept, v)
+		}
+	}
 
-// 	}
+	fmt.Printf("addDept: %v, updDept: %v, delDept: %v", addDept, updDept, delDept)
 
-// 	for _, item := range updu {
-// 		if relations, ok := allTableDeptuserMap[item.ExUserID]; ok {
-// 			var depts []wps.Dept
-// 			for _, relation := range relations {
-// 				depts = append(depts, wps.Dept{DeptID: relation.Did, Name: allTableDeptMap[relation.Did].Name})
-// 			}
-// 			item.Depts = depts
-// 		}
+	return nil, nil
+	// for _, user := range allTableUser {
 
-// 	}
-// 	fmt.Printf("addu: %v, updu: %v, del: %v", addu, updu, delu)
+	wpsAlluserMap := make(map[string]*wps.UserItem, len(wpsAlluser))
+	for _, item := range wpsAlluser {
+		wpsAlluserMap[item.ExUserID] = &item
+	}
 
-// 	return nil, nil
-// }
-// func makeWpsUser(tbuser models.TbLasUser) wps.UserItem {
-// 	user := wps.UserItem{
-// 		ExUserID: tbuser.Uid,
-// 	}
-// 	return user
-// }
-// func (uc *AccounterUsecase) GetAllWpsUser(ctx context.Context) (users []wps.UserItem, err error) {
-// 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
-// 	if err != nil {
-// 		return
-// 	}
-// 	for {
-// 		// 查询企业下所有用户
-// 		alluser, err := uc.wps.GetCompAllUsers(ctx, appAccessToken.AccessToken, wps.GetCompAllUsersRequest{
-// 			Recursive: true,
-// 			PageSize:  50,
-// 			WithTotal: true,
-// 			Status:    []string{"active", "notactive", "disabled"},
-// 		})
-// 		if err != nil {
-// 			break
-// 		}
-// 		for _, u := range alluser.Data.Items {
-// 			if u.ID == "1" {
-// 				continue
-// 			}
-// 			if u.Source == "sync" {
-// 				users = append(users, u)
-// 			}
+	// wpsAllDeptJson, err := json.Marshal(wpsAllDept)
+	// if err != nil {
+	// 	uc.log.Log(log.LevelError, "msg", "CreateSyncTask.json.Marshal", "err", err)
+	// }
 
-// 		}
+	// f, err := os.OpenFile("data/wpsAllDept.json", os.O_CREATE|os.O_WRONLY, 0644)
+	// if err != nil {
+	// 	uc.log.Log(log.LevelError, "msg", "CreateSyncTask.os.OpenFile", "err", err)
+	// }
+	// defer f.Close()
+	// f.Write(wpsAllDeptJson)
+	// uc.log.Log(log.LevelInfo, "msg", "CreateSyncTask", "wpsAllDeptJson", string(wpsAllDeptJson))
 
-// 	}
-// 	return
+	// wpsAlluser, err := uc.GetAllWpsUser(ctx)
 
-// }
+	// uc.log.Log(log.LevelInfo, "msg", "CreateSyncTask", "wpsAlluser len", len(wpsAlluser))
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// wpsAlluserJson, err := json.Marshal(wpsAlluser)
+	// if err != nil {
+	// 	uc.log.Log(log.LevelError, "msg", "CreateSyncTask.json.Marshal", "err", err)
+	// }
+	// f, err := os.OpenFile("data/wpsAlluser.json", os.O_CREATE|os.O_WRONLY, 0644)
+	// if err != nil {
+	// 	uc.log.Log(log.LevelError, "msg", "CreateSyncTask.os.OpenFile", "err", err)
+	// }
+	// defer f.Close()
+	// f.Write(wpsAlluserJson)
+	// uc.log.Log(log.LevelInfo, "msg", "CreateSyncTask", "wpsAlluserJson", string(wpsAlluserJson))
 
-// func (uc *AccounterUsecase) GetAllWpsDept(ctx context.Context) (depts []wps.DeptItem, err error) {
-// 	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	//查询根部门
-// 	rootDept, err := uc.wps.GetDepartmentRoot(ctx, appAccessToken.AccessToken, wps.GetDepartmentRootRequest{})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	log.Infof("rootDept: %v", rootDept)
-// 	queue := []string{rootDept.Data.ID}
-// 	for len(queue) > 0 {
-// 		var pageToken string
-// 		currDepId := queue[0]
+	return nil, nil
 
-// 		// 2. 查询部门下的子部门(要递归)
-// 		deptInfo, err := uc.wps.GetDeptChildren(ctx, appAccessToken.AccessToken, wps.GetDeptChildrenRequest{
-// 			DeptID:    currDepId,
-// 			Recursive: true,
-// 			PageSize:  50,
-// 			WithTotal: true,
-// 			PageToken: pageToken,
-// 		})
-// 		if err != nil {
-// 			return nil, err
-// 		}
+	allTableDeptMap := make(map[string]*models.TbLasDepartment, len(allTableDept))
+	allTableUserMap := make(map[string]*models.TbLasUser, len(allTableUser))
+	allTableDeptuserMap := make(map[string][]*models.TbLasDepartmentUser, 0)
+	for _, item := range allTableDept {
+		allTableDeptMap[item.Did] = item
+	}
+	for _, item := range allTableUser {
+		allTableUserMap[item.Uid] = item
+	}
+	for _, item := range allTableDeptuser {
+		allTableDeptuserMap[item.Uid] = append(allTableDeptuserMap[item.Uid], item)
+	}
 
-// 		if deptInfo.Data.Total == 0 {
-// 			queue = queue[1:]
-// 			continue
-// 		} else if deptInfo.Data.Total > 0 && deptInfo.Data.Total < 50 {
-// 			queue = queue[1:]
-// 			for _, item := range deptInfo.Data.Items {
-// 				depts = append(depts, item)
-// 				queue = append(queue, item.ID)
-// 			}
-// 			continue
-// 		} else if deptInfo.Data.NextPageToken != "" {
-// 			pageToken = deptInfo.Data.NextPageToken
-// 		} else {
-// 			queue = queue[1:]
-// 			continue
-// 		}
+	var addp, updp, delp []*models.TbLasDepartment
+	// for _, item := range wpsAllDept {
+	// 	if v, ok := allTableDeptMap[item.ExDeptID]; ok {
+	// 		updp = append(updp, v)
+	// 		delete(allTableDeptMap, item.ExDeptID)
+	// 	} else {
+	// 		addp = append(addp, v)
+	// 	}
+	// }
+	if len(allTableDeptMap) > 0 {
+		for _, v := range allTableDeptMap {
+			delp = append(delp, v)
+		}
+	}
 
-// 	}
+	fmt.Printf("addp: %v, updp: %v, del: %v", addp, updp, delp)
 
-// 	return depts, nil
+	var addu, updu, delu []wps.UserItem
+	for _, item := range wpsAlluser {
+		if v, ok := allTableUserMap[item.ExUserID]; ok {
+			//这里可以将tabuser里 的属性拷贝到WPS user
+			item.UserName = v.NickName
+			updu = append(updu, item)
+			delete(allTableUserMap, item.ExUserID)
+		} else {
+			//这个也调用makeWpsUser生成的wps user
 
-// }
+			delu = append(addu, item)
+		}
+	}
+	if len(allTableUserMap) > 0 {
+		for _, v := range allTableUserMap {
+			addu = append(delu, makeWpsUser(*v))
+		}
+	}
+
+	fmt.Printf("addu: %v, updu: %v, del: %v", addu, updu, delu)
+
+	for _, item := range addu {
+		if relations, ok := allTableDeptuserMap[item.ExUserID]; ok {
+			var depts []wps.Dept
+			for _, relation := range relations {
+				depts = append(depts, wps.Dept{DeptID: relation.Did, Name: allTableDeptMap[relation.Did].Name})
+			}
+			item.Depts = depts
+		}
+
+	}
+
+	for _, item := range updu {
+		if relations, ok := allTableDeptuserMap[item.ExUserID]; ok {
+			var depts []wps.Dept
+			for _, relation := range relations {
+				depts = append(depts, wps.Dept{DeptID: relation.Did, Name: allTableDeptMap[relation.Did].Name})
+			}
+			item.Depts = depts
+		}
+
+	}
+	fmt.Printf("addu: %v, updu: %v, del: %v", addu, updu, delu)
+
+	return nil, nil
+}
+
+func makeWpsUser(tbuser models.TbLasUser) wps.UserItem {
+	user := wps.UserItem{
+		ExUserID: tbuser.Uid,
+	}
+	return user
+}
+
+func (uc *AccounterUsecase) GetAllWpsUser(ctx context.Context) (users []wps.UserItem, err error) {
+	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	if err != nil {
+		return
+	}
+	pageSize := 50
+	// 查询企业下所有用户
+	req := wps.GetCompAllUsersRequest{
+		Recursive: true,
+		PageSize:  pageSize,
+		WithTotal: true,
+		Status:    []string{"active", "notactive", "disabled"},
+		WithDept:  true,
+	}
+	for {
+		alluser, err := uc.wps.GetCompAllUsers(ctx, appAccessToken.AccessToken, req)
+		if err != nil {
+			uc.log.Log(log.LevelError, "msg", "GetAllWpsUser.GetCompAllUsers", "err", err)
+			return nil, err
+		}
+
+		for _, u := range alluser.Data.Items {
+			if u.ID == "1" {
+				//continue
+			}
+			//if u.Source == "sync" {
+			users = append(users, u)
+			//}
+
+		}
+		if alluser.Data.NextPageToken != "" {
+			req.PageToken = alluser.Data.NextPageToken
+		}
+		if alluser.Data.Total < pageSize || alluser.Data.NextPageToken == "" {
+			break
+		}
+
+	}
+	return
+
+}
+
+func (uc *AccounterUsecase) GetAllWpsDept(ctx context.Context) (depts []wps.DeptItem, err error) {
+	appAccessToken, err := uc.appAuth.GetAccessToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+	//查询根部门
+	rootDept, err := uc.wps.GetDepartmentRoot(ctx, appAccessToken.AccessToken, wps.GetDepartmentRootRequest{})
+	if err != nil {
+		return nil, err
+	}
+	log.Infof("rootDept: %v", rootDept)
+	queue := []string{rootDept.Data.ID}
+	for len(queue) > 0 {
+		currDepId := queue[0]
+
+		req := wps.GetDeptChildrenRequest{
+			DeptID:    currDepId,
+			Recursive: true,
+			PageSize:  50,
+			WithTotal: true,
+		}
+		// 2. 查询部门下的子部门(要递归)
+		deptInfo, err := uc.wps.GetDeptChildren(ctx, appAccessToken.AccessToken, req)
+		if err != nil {
+			uc.log.Log(log.LevelError, "msg", "GetAllWpsDept.GetDeptChildren", "err", err)
+			return nil, err
+		}
+
+		if deptInfo.Data.Total == 0 {
+			queue = queue[1:]
+			continue
+		} else if deptInfo.Data.Total > 0 && deptInfo.Data.Total < 50 {
+			queue = queue[1:]
+			for _, item := range deptInfo.Data.Items {
+				depts = append(depts, item)
+				queue = append(queue, item.ID)
+			}
+			continue
+		} else if deptInfo.Data.NextPageToken != "" {
+			req.PageToken = deptInfo.Data.NextPageToken
+		} else {
+			queue = queue[1:]
+			continue
+		}
+
+	}
+
+	return depts, nil
+
+}
 
 // // 这个方法是把全量数据执插入表后，可以自已调用原生API去同步
 // func (uc *AccounterUsecase) StartSync(ctx context.Context, taskId, filename string) (err error) {

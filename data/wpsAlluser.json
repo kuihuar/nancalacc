@@ -1,0 +1,162 @@
+[
+    {
+        "avatar": "/avatar/u/v1/avatar?name=YWRtaW4=",
+        "ctime": 1739954679,
+        "depts": [
+            {
+                "abs_path": "金山办公",
+                "dept_id": "",
+                "name": "金山办公"
+            }
+        ],
+        "email": "",
+        "employee_id": "",
+        "employment_status": "",
+        "employment_type": "",
+        "ex_user_id": "",
+        "gender": "secrecy",
+        "id": "1",
+        "leader_id": "",
+        "login_name": "admin",
+        "phone": "",
+        "role": "super-admin",
+        "source": "",
+        "status": "active",
+        "telephone": "",
+        "title": "",
+        "type": "",
+        "user_name": "admin",
+        "work_place": ""
+    },
+    {
+        "avatar": "/avatar/u/v1/avatar?name=bGl1IGppYW5mZW4=",
+        "ctime": 1752671450,
+        "depts": [
+            {
+                "abs_path": "金山办公/Luke",
+                "dept_id": "",
+                "name": "Luke"
+            },
+            {
+                "abs_path": "金山办公/Luke/dev",
+                "dept_id": "",
+                "name": "dev"
+            },
+            {
+                "abs_path": "金山办公/Luke/部门A",
+                "dept_id": "",
+                "name": "部门A"
+            },
+            {
+                "abs_path": "金山办公/Luke/ops",
+                "dept_id": "",
+                "name": "ops"
+            }
+        ],
+        "email": "kuihuar@163.com",
+        "employee_id": "",
+        "employment_status": "",
+        "employment_type": "",
+        "ex_user_id": "manager331",
+        "gender": "secrecy",
+        "id": "77",
+        "leader_id": "",
+        "login_name": "18301586518",
+        "phone": "18301586518",
+        "role": "normal",
+        "source": "",
+        "status": "active",
+        "telephone": "",
+        "title": "super",
+        "type": "",
+        "user_name": "liu jianfen",
+        "work_place": ""
+    },
+    {
+        "avatar": "/avatar/u/v1/avatar?name=5p2o5q-F",
+        "ctime": 1752671450,
+        "depts": [
+            {
+                "abs_path": "金山办公/Luke/ops",
+                "dept_id": "",
+                "name": "ops"
+            }
+        ],
+        "email": "",
+        "employee_id": "",
+        "employment_status": "",
+        "employment_type": "",
+        "ex_user_id": "2102690963848221",
+        "gender": "secrecy",
+        "id": "78",
+        "leader_id": "",
+        "login_name": "13691221280",
+        "phone": "",
+        "role": "normal",
+        "source": "",
+        "status": "notactive",
+        "telephone": "",
+        "title": "",
+        "type": "",
+        "user_name": "杨毅",
+        "work_place": ""
+    },
+    {
+        "avatar": "/avatar/u/v1/avatar?name=VXUx",
+        "ctime": 1752923701,
+        "depts": [
+            {
+                "abs_path": "金山办公/Luke/部门D",
+                "dept_id": "",
+                "name": "部门D"
+            }
+        ],
+        "email": "",
+        "employee_id": "",
+        "employment_status": "",
+        "employment_type": "",
+        "ex_user_id": "033014104332101118010",
+        "gender": "secrecy",
+        "id": "81",
+        "leader_id": "",
+        "login_name": "18910953345",
+        "phone": "",
+        "role": "normal",
+        "source": "",
+        "status": "active",
+        "telephone": "",
+        "title": "jianf",
+        "type": "",
+        "user_name": "Uu1",
+        "work_place": ""
+    },
+    {
+        "avatar": "/avatar/u/v1/avatar?name=6LW15a2d",
+        "ctime": 1753239342,
+        "depts": [
+            {
+                "abs_path": "金山办公/Luke/部门A/a1",
+                "dept_id": "",
+                "name": "a1"
+            }
+        ],
+        "email": "zhaoxiao@qq.com",
+        "employee_id": "",
+        "employment_status": "",
+        "employment_type": "",
+        "ex_user_id": "29290326581145992",
+        "gender": "secrecy",
+        "id": "83",
+        "leader_id": "",
+        "login_name": "29290326581145992",
+        "phone": "",
+        "role": "normal",
+        "source": "",
+        "status": "active",
+        "telephone": "",
+        "title": "",
+        "type": "",
+        "user_name": "赵孝",
+        "work_place": ""
+    }
+]

@@ -8,7 +8,6 @@ server:
 data:
   database:
     driver: mysql
-    # 使用环境变量或加密配置
     source: root:liujianfeng@tcp(192.168.1.142:3306)/nancalacc?timeout=15s&charset=utf8mb4&parseTime=True
     max_open_conns: 20
     max_idle_conns: 10
@@ -22,7 +21,7 @@ data:
     max_open_conns: 20
     max_idle_conns: 10
     conn_max_lifetime: 6h
-    env: "dev"
+    env: "prod"
     enable: true
   redis:
     addr: 192.168.1.142:6379

@@ -161,6 +161,8 @@ func (s *AccountService) GetAccessToken(ctx context.Context, req *v1.GetAccessTo
 }
 
 func (s *AccountService) Callback(ctx context.Context, req *v1.CallbackRequest) (*v1.CallbackResponse, error) {
+
+	s.accounterUsecase.CreateSyncTask(ctx, &v1.CreateSyncAccountRequest{})
 	return nil, status.Errorf(codes.Unimplemented, "method Callback not implemented")
 }
 

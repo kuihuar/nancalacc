@@ -14,7 +14,7 @@ data:
     max_idle_conns: 10
     conn_max_lifetime: 6h
     tag: migrate
-    enable: false
+    enable: true
   database_sync:
     driver: mysql
     source: root:liujianfeng@tcp(192.168.1.142:3306)/nancalacc?timeout=15s&charset=utf8mb4&parseTime=True

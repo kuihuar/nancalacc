@@ -44,9 +44,53 @@ api:
 	       --openapi_out=fq_schema_naming=true,default_response=false:. \
 	       $(API_PROTO_FILES)
 
+.PHONY: generate-openapi
+# generate OpenAPI documentation
+generate-openapi:
+	@echo "Generating OpenAPI documentation..."
+	mkdir -p docs/api/openapi
+	protoc --proto_path=./api \
+	       --proto_path=./third_party \
+	       --openapi_out=fq_schema_naming=true,default_response=false,allow_merge=true:./docs/api/openapi \
+	       $(API_PROTO_FILES)
+	@echo "OpenAPI documentation generated in docs/api/openapi/"
+
+.PHONY: generate-swagger-ui
+# generate Swagger UI
+generate-swagger-ui:
+	@echo "Setting up Swagger UI..."
+	mkdir -p docs/api/swagger
+	@if [ ! -d "docs/api/swagger/swagger-ui" ]; then \
+		curl -L https://github.com/swagger-api/swagger-ui/archive/refs/tags/v5.10.3.tar.gz | tar -xz; \
+		mv swagger-ui-5.10.3/dist docs/api/swagger/swagger-ui; \
+		rm -rf swagger-ui-5.10.3; \
+	fi
+	@echo "Swagger UI setup completed"
+
+.PHONY: generate-docs
+# generate all documentation
+generate-docs: generate-openapi generate-swagger-ui
+	@echo "All documentation generated successfully"
+
+.PHONY: serve-docs
+# serve documentation locally
+serve-docs:
+	@echo "Starting documentation server at http://localhost:8080/docs"
+	@cd docs/api && python3 -m http.server 8080
+
+.PHONY: watch-docs
+# watch for changes and regenerate docs
+watch-docs:
+	@echo "Watching for .proto file changes..."
+	@while true; do \
+		inotifywait -r -e modify,create,delete api/; \
+		make generate-openapi; \
+		echo "Documentation updated at $$(date)"; \
+	done
+
 .PHONY: build
 # build
-build:
+build: generate-docs
 	@echo "Building with version: $(VERSION)"
 	mkdir -p bin/ && go build -ldflags "-X main.Version=$(VERSION)" -o ./bin/ ./...
 
@@ -62,6 +106,7 @@ all:
 	make api;
 	make config;
 	make generate;
+	make generate-docs;
 
 # show help
 help:

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Swagger UI</title>
+</head>
+<body>
+    <h1>Debug Swagger UI</h1>
+    <div id="status"></div>
+    <div id="swagger-ui"></div>
+    
+    <script src="./swagger/swagger-ui/swagger-ui-bundle.js"></script>
+    <script src="./swagger/swagger-ui/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = 'Loading...';
+            
+            // 先测试OpenAPI文件是否可以访问
+            fetch('../openapi/openapi.yaml')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    statusDiv.innerHTML = 'OpenAPI file loaded successfully. Length: ' + data.length;
+                    console.log('OpenAPI content:', data.substring(0, 200));
+                    
+                    // 加载Swagger UI
+                    const ui = SwaggerUIBundle({
+                        url: '../openapi/openapi.yaml',
+                        dom_id: '#swagger-ui',
+                        deepLinking: true,
+                        presets: [
+                            SwaggerUIBundle.presets.apis,
+                            SwaggerUIStandalonePreset
+                        ],
+                        plugins: [
+                            SwaggerUIBundle.plugins.DownloadUrl
+                        ],
+                        layout: "StandaloneLayout",
+                        validatorUrl: null,
+                        docExpansion: "list",
+                        filter: true,
+                        showRequestHeaders: true,
+                        showCommonExtensions: true,
+                        tryItOutEnabled: true,
+                        onComplete: function() {
+                            statusDiv.innerHTML += '<br>Swagger UI loaded successfully!';
+                        },
+                        onFailure: function(data) {
+                            statusDiv.innerHTML += '<br>Swagger UI failed: ' + JSON.stringify(data);
+                            console.error('Swagger UI failed:', data);
+                        }
+                    });
+                })
+                .catch(error => {
+                    statusDiv.innerHTML = 'Error loading OpenAPI file: ' + error.message;
+                    console.error('Error:', error);
+                });
+        };
+    </script>
+</body>
+</html> 

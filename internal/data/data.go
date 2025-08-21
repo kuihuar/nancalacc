@@ -30,6 +30,7 @@ const (
 	UserDBType  DatabaseType = "user"  // 用户数据库
 	LogDBType   DatabaseType = "log"   // 日志数据库
 	CacheDBType DatabaseType = "cache" // 缓存数据库
+	SagaDBType  DatabaseType = "saga"  // Saga 分布式事务数据库
 )
 
 // DatabaseConfig 数据库配置
@@ -128,6 +129,8 @@ type Data struct {
 	dbManager *DatabaseManager
 	redis     *redis.Client
 	logger    log.Logger
+	sagaRepo  *SagaRepository
+	// 可以添加其他仓库
 }
 
 // cleanup 清理资源
@@ -155,6 +158,16 @@ func (d *Data) GetMainDB() (*gorm.DB, error) {
 // GetSyncDB 获取同步数据库
 func (d *Data) GetSyncDB() (*gorm.DB, error) {
 	return d.dbManager.GetDatabase(SyncDBType)
+}
+
+// GetSagaDB 获取 Saga 数据库
+func (d *Data) GetSagaDB() (*gorm.DB, error) {
+	return d.dbManager.GetDatabase(SagaDBType)
+}
+
+// GetSagaRepository 获取 Saga 仓库
+func (d *Data) GetSagaRepository() *SagaRepository {
+	return d.sagaRepo
 }
 
 // GetDatabase 获取指定类型的数据库

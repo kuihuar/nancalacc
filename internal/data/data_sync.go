@@ -10,18 +10,19 @@ import (
 )
 
 const (
-	pageSize   = 1000  // 每页数据量
-	maxResults = 10000 // 最大结果数限制
+	pageSize = 1000 // 每页数据量
+	// maxResults = 10000 // 最大结果数限制
 )
 
-func (r *accounterRepo) BatchGetDeptUsers(ctx context.Context, taskName string) ([]*models.TbLasDepartmentUser, error) {
-	r.log.Log(log.LevelInfo, "msg", "BatchGetDeptUsers", "taskName", taskName)
+func (r *accounterRepo) BatchGetDeptUsers(ctx context.Context, taskName, thirdCompanyId, platformId string) ([]*models.TbLasDepartmentUser, error) {
+	r.log.Log(log.LevelInfo, "msg", "BatchGetDeptUsers", "taskName", taskName, "platformId", platformId)
 
 	var (
 		allUsers   = make([]*models.TbLasDepartmentUser, 0, pageSize)
 		lastID     uint64
 		totalCount int
 	)
+
 	db, err := r.data.GetSyncDB()
 	if err != nil {
 		return nil, err
@@ -30,9 +31,13 @@ func (r *accounterRepo) BatchGetDeptUsers(ctx context.Context, taskName string) 
 	for {
 		var pageUsers []*models.TbLasDepartmentUser
 
+		// 优化后的查询条件，按照索引顺序排列
 		query := db.WithContext(ctx).
 			Where("task_id = ?", taskName).
-			Order("id ASC") // 必须按ID排序
+			Where("third_company_id = ?", thirdCompanyId).
+			Where("platform_id = ?", platformId).
+			Where("check_type = ?", 1). // 只查询勾选的记录
+			Order("id ASC")
 
 		if lastID > 0 {
 			query = query.Where("id > ?", lastID)
@@ -45,15 +50,13 @@ func (r *accounterRepo) BatchGetDeptUsers(ctx context.Context, taskName string) 
 		}
 
 		if len(pageUsers) == 0 {
-			break // 没有更多数据
+			break
 		}
 
-		// 更新lastID为当前页最后一条记录的ID
 		lastID = uint64(pageUsers[len(pageUsers)-1].ID)
 		allUsers = append(allUsers, pageUsers...)
 		totalCount += len(pageUsers)
 
-		// 如果获取数量小于pageSize，说明是最后一页
 		if len(pageUsers) < pageSize {
 			break
 		}
@@ -67,8 +70,8 @@ func (r *accounterRepo) BatchGetDeptUsers(ctx context.Context, taskName string) 
 	return allUsers, nil
 }
 
-func (r *accounterRepo) BatchGetUsers(ctx context.Context, taskName string) ([]*models.TbLasUser, error) {
-	r.log.Log(log.LevelInfo, "msg", "BatchGetUsers", "taskName", taskName)
+func (r *accounterRepo) BatchGetUsers(ctx context.Context, taskName, thirdCompanyId, platformId string) ([]*models.TbLasUser, error) {
+	r.log.Log(log.LevelInfo, "msg", "BatchGetUsers", "taskName", taskName, "platformId", platformId)
 
 	var (
 		allUsers   = make([]*models.TbLasUser, 0, pageSize)
@@ -76,18 +79,29 @@ func (r *accounterRepo) BatchGetUsers(ctx context.Context, taskName string) ([]*
 		totalCount int
 	)
 
-	selectedFields := []string{"id", "name", "dept_id"} // 只选择必要字段
+	// 只选择必要字段，减少数据传输量
+	selectedFields := []string{
+		"id", "task_id", "third_company_id", "platform_id", "uid",
+		"def_did", "def_did_order", "account", "nick_name", "email",
+		"phone", "employment_status", "check_type",
+	}
 
 	db, err := r.data.GetSyncDB()
 	if err != nil {
 		return nil, err
 	}
+
 	for {
 		var pageUsers []*models.TbLasUser
 
+		// 优化后的查询条件，按照索引顺序排列
 		query := db.WithContext(ctx).
 			Select(selectedFields).
 			Where("task_id = ?", taskName).
+			Where("third_company_id = ?", thirdCompanyId).
+			Where("platform_id = ?", platformId).
+			//Where("check_type = ?", 1).               // 只查询勾选的记录
+			//Where("employment_status = ?", "active"). // 只查询在职用户
 			Order("id ASC")
 
 		if lastID > 0 {
@@ -121,8 +135,8 @@ func (r *accounterRepo) BatchGetUsers(ctx context.Context, taskName string) ([]*
 	return allUsers, nil
 }
 
-func (r *accounterRepo) BatchGetDepts(ctx context.Context, taskName string) ([]*models.TbLasDepartment, error) {
-	r.log.Log(log.LevelInfo, "msg", "BatchGetDepts", "taskName", taskName)
+func (r *accounterRepo) BatchGetDepts(ctx context.Context, taskName, thirdCompanyId, platformId string) ([]*models.TbLasDepartment, error) {
+	r.log.Log(log.LevelInfo, "msg", "BatchGetDepts", "taskName", taskName, "platformId", platformId)
 
 	var (
 		allDepts   = make([]*models.TbLasDepartment, 0, pageSize)
@@ -134,11 +148,16 @@ func (r *accounterRepo) BatchGetDepts(ctx context.Context, taskName string) ([]*
 	if err != nil {
 		return nil, err
 	}
+
 	for {
 		var pageDepts []*models.TbLasDepartment
 
+		// 优化后的查询条件，按照索引顺序排列
 		query := db.WithContext(ctx).
 			Where("task_id = ?", taskName).
+			Where("third_company_id = ?", thirdCompanyId).
+			Where("platform_id = ?", platformId).
+			Where("check_type = ?", 1). // 只查询勾选的记录
 			Order("id ASC")
 
 		if lastID > 0 {

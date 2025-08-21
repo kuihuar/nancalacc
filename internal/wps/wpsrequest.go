@@ -205,23 +205,24 @@ func (r *WPSRequest) Do(ctx context.Context) ([]byte, error) {
 	req.Header.Set(KsoAuthHeader, sign.Authorization)
 	req.Header.Set(AuthorizationHeader, r.accessToken)
 
-	command, err := http2curl.GetCurlCommand(req)
+	// command, err := http2curl.GetCurlCommand(req)
+	_, err = http2curl.GetCurlCommand(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get curl command: %w", err)
+		return nil, fmt.Errorf("failed to get curl err: %w", err)
 	}
-	r.logger.Log(log.LevelWarn, "request command", command)
+	//r.logger.Log(log.LevelWarn, "request command", command)
 
 	// Execute request
 	resp, err := r.client.Do(req.WithContext(ctx))
 
-	r.logger.Log(log.LevelInfo, "response", resp, "err", err)
+	//r.logger.Log(log.LevelInfo, "response", resp, "err", err)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrHTTPRequest, err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
-	r.logger.Log(log.LevelInfo, "response body", string(body), "err", err)
+	//r.logger.Log(log.LevelInfo, "response body", string(body), "err", err)
 	if resp.StatusCode >= http.StatusBadRequest {
 		return nil, fmt.Errorf("resp.StatusCode %d egt %d", ErrHTTPRequest, resp.StatusCode)
 	}

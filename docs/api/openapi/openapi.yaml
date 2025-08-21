@@ -1,0 +1,266 @@
+# Generated with protoc-gen-openapi
+# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
+
+openapi: 3.0.3
+info:
+    title: Account API
+    version: 0.0.1
+paths:
+    /v1/account:
+        get:
+            tags:
+                - Account
+            operationId: Account_GetSyncAccount
+            parameters:
+                - name: taskId
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.account.v1.GetSyncAccountReply'
+        post:
+            tags:
+                - Account
+            operationId: Account_CreateSyncAccount
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.account.v1.CreateSyncAccountRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.account.v1.CreateSyncAccountReply'
+        delete:
+            tags:
+                - Account
+            operationId: Account_CancelSyncTask
+            parameters:
+                - name: taskId
+                  in: query
+                  schema:
+                    type: string
+                - name: tags
+                  in: query
+                  schema:
+                    type: array
+                    items:
+                        type: string
+            responses:
+                "200":
+                    description: OK
+                    content: {}
+    /v1/oauth/callback:
+        get:
+            tags:
+                - Account
+            operationId: Account_Callback
+            parameters:
+                - name: code
+                  in: query
+                  schema:
+                    type: string
+                - name: state
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.account.v1.CallbackResponse'
+    /v1/oauth/userAccessToken:
+        get:
+            tags:
+                - Account
+            operationId: Account_GetAccessToken
+            parameters:
+                - name: code
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.account.v1.GetAccessTokenResponse'
+    /v1/oauth/userinfo/me:
+        get:
+            tags:
+                - Account
+            operationId: Account_GetUserInfo
+            parameters:
+                - name: accessToken
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.account.v1.GetUserInfoResponse'
+    /v1/task:
+        get:
+            tags:
+                - Account
+            operationId: Account_GetTask
+            parameters:
+                - name: taskName
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.account.v1.GetTaskReply'
+    /v1/upload:
+        post:
+            tags:
+                - Account
+            operationId: Account_UploadFile
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/api.account.v1.UploadRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/api.account.v1.UploadReply'
+components:
+    schemas:
+        api.account.v1.CallbackResponse:
+            type: object
+            properties:
+                status:
+                    type: string
+                message:
+                    type: string
+            description: 定义回调响应
+        api.account.v1.CreateSyncAccountReply:
+            type: object
+            properties:
+                taskId:
+                    type: string
+                createTime:
+                    type: string
+                    format: date-time
+            description: 创建同步响应
+        api.account.v1.CreateSyncAccountRequest:
+            type: object
+            properties:
+                triggerType:
+                    type: integer
+                    format: enum
+                syncType:
+                    type: integer
+                    format: enum
+                taskName:
+                    type: string
+            description: 创建同步请求
+        api.account.v1.GetAccessTokenResponse:
+            type: object
+            properties:
+                accessToken:
+                    type: string
+                refreshToken:
+                    type: string
+                expiresIn:
+                    type: string
+        api.account.v1.GetSyncAccountReply:
+            type: object
+            properties:
+                status:
+                    type: integer
+                    format: enum
+                userCount:
+                    type: string
+                departmentCount:
+                    type: string
+                userDepartmentRelationCount:
+                    type: string
+                actualTime:
+                    type: string
+                startTime:
+                    type: string
+                    format: date-time
+                latestSyncTime:
+                    type: string
+                    format: date-time
+            description: 查询同步响应
+        api.account.v1.GetTaskReply:
+            type: object
+            properties:
+                task:
+                    $ref: '#/components/schemas/api.account.v1.GetTaskReply_Task'
+        api.account.v1.GetTaskReply_Task:
+            type: object
+            properties:
+                name:
+                    type: string
+                status:
+                    type: string
+                createTime:
+                    type: string
+                    format: date-time
+                startTime:
+                    type: string
+                    format: date-time
+                completedTime:
+                    type: string
+                    format: date-time
+                acturlTime:
+                    type: integer
+                    format: int32
+        api.account.v1.GetUserInfoResponse:
+            type: object
+            properties:
+                unionId:
+                    type: string
+                userId:
+                    type: string
+                name:
+                    type: string
+                email:
+                    type: string
+                avatar:
+                    type: string
+        api.account.v1.UploadReply:
+            type: object
+            properties:
+                url:
+                    type: string
+                task:
+                    type: string
+        api.account.v1.UploadRequest:
+            type: object
+            properties:
+                file:
+                    type: string
+                    format: bytes
+                filename:
+                    type: string
+tags:
+    - name: Account

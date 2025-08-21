@@ -217,6 +217,31 @@ func (df *DatabaseFactory) CreateSyncDBConfig() *DatabaseConnectionConfig {
 	return config
 }
 
+// CreateSagaDBConfig 创建 Saga 数据库配置
+func (df *DatabaseFactory) CreateSagaDBConfig() *DatabaseConnectionConfig {
+	config := NewDatabaseConnectionConfig()
+
+	// 从配置中获取 Saga 数据库配置
+	// 注意：这里需要根据实际的配置结构进行调整
+	// 如果配置中没有专门的 Saga 数据库配置，可以使用主数据库配置
+	if df.config.Database != nil {
+		config.Source = df.config.Database.Source
+		config.SourceKey = df.config.Database.SourceKey
+		config.Env = df.config.Database.Env
+		config.MaxOpenConns = int(df.config.Database.MaxOpenConns)
+		config.MaxIdleConns = int(df.config.Database.MaxIdleConns)
+		config.Enable = df.config.Database.Enable
+
+		if df.config.Database.ConnMaxLifetime != "" {
+			if duration, err := time.ParseDuration(df.config.Database.ConnMaxLifetime); err == nil {
+				config.ConnMaxLifetime = duration
+			}
+		}
+	}
+
+	return config
+}
+
 // CreateUserDBConfig 创建用户数据库配置（示例）
 func (df *DatabaseFactory) CreateUserDBConfig() *DatabaseConnectionConfig {
 	config := NewDatabaseConnectionConfig()

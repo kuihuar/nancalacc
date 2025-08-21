@@ -435,6 +435,9 @@ func (ws *wps) GetCompAllUsers(ctx context.Context, accessToken string, input Ge
 			uri += fmt.Sprintf("&status=%s", status)
 		}
 	}
+	if input.WithDept {
+		uri += "&with_dept=true"
+	}
 	if len(input.PageToken) > 0 {
 		uri += fmt.Sprintf("&page_token=%s", input.PageToken)
 	}
