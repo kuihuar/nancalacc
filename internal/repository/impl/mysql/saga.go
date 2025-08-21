@@ -1,4 +1,4 @@
-package data
+package mysql
 
 import (
 	"context"
@@ -327,7 +327,3 @@ func (r *SagaRepository) GetEventStatistics(ctx context.Context) (map[string]int
 func (r *SagaRepository) Ping(ctx context.Context) error {
 	return r.db.WithContext(ctx).Exec("SELECT 1").Error
 }
-
-// func (r *SagaRepository) GetStatistics(ctx context.Context) (map[string]int64, error) {
-// 	return nil, nil
-// }

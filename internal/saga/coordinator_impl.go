@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"nancalacc/internal/data/models"
+	"nancalacc/internal/repository/contracts"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/uuid"
@@ -15,14 +16,14 @@ import (
 
 // CoordinatorImpl Saga 协调器实现
 type CoordinatorImpl struct {
-	repo   Repository
+	repo   contracts.Repository
 	logger log.Logger
 	mu     sync.RWMutex
 	config *Config
 }
 
 // NewCoordinator 创建新的 Saga 协调器
-func NewCoordinator(repo Repository, logger log.Logger, config *Config) Coordinator {
+func NewCoordinator(repo contracts.Repository, logger log.Logger, config *Config) Coordinator {
 	if config == nil {
 		config = &Config{
 			MaxRetries:               3,

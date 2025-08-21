@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"nancalacc/internal/repository/contracts"
+
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/wire"
@@ -127,7 +129,7 @@ type Data struct {
 	dbManager *DatabaseManager
 	redis     *redis.Client
 	logger    log.Logger
-	sagaRepo  *SagaRepository
+	sagaRepo  contracts.Repository
 	// 可以添加其他仓库
 }
 
@@ -164,7 +166,7 @@ func (d *Data) GetSagaDB() (*gorm.DB, error) {
 }
 
 // GetSagaRepository 获取 Saga 仓库
-func (d *Data) GetSagaRepository() *SagaRepository {
+func (d *Data) GetSagaRepository() contracts.Repository {
 	return d.sagaRepo
 }
 

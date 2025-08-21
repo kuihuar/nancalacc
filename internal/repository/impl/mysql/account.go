@@ -7,16 +7,10 @@ import (
 	"time"
 
 	"nancalacc/internal/conf"
-	"nancalacc/internal/data"
 	"nancalacc/internal/data/models"
+
 	"nancalacc/internal/dingtalk"
 	"nancalacc/internal/repository/contracts"
-
-	// "nancalacc/internal/repository"
-
-	// "nancalacc/internal/repository"
-
-	//nancalaccLog "nancalacc/internal/log"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
@@ -25,13 +19,8 @@ import (
 
 type accountRepository struct {
 	bizConf *conf.App
-	data    *data.Data
+	db      *gorm.DB
 	log     log.Logger
-}
-
-// getSyncDB 获取同步数据库连接
-func (r *accountRepository) getSyncDB() (*gorm.DB, error) {
-	return r.data.GetSyncDB()
 }
 
 var (
@@ -40,10 +29,10 @@ var (
 )
 
 // NewAccounterRepo .
-func NewAccountRepository(data *data.Data, logger log.Logger) contracts.AccountRepository {
+func NewAccountRepository(db *gorm.DB, logger log.Logger) contracts.AccountRepository {
 	return &accountRepository{
 		bizConf: conf.Get().GetApp(),
-		data:    data,
+		db:      db,
 		log:     logger,
 	}
 }
@@ -83,13 +72,13 @@ func (r *accountRepository) SaveUsers(ctx context.Context, users []*dingtalk.Din
 		return 0, nil
 	}
 
-	db, err := r.data.GetSyncDB()
-	if err != nil {
-		return 0, err
-	}
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return 0, err
+	// }
 
 	// 使用 Upsert 操作避免重复键错误
-	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+	result := r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "uid"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
 		DoNothing: true,
 	}).Create(&entities)
@@ -132,13 +121,13 @@ func (r *accountRepository) SaveDepartments(ctx context.Context, depts []*dingta
 	rootDep := models.MakeTbLasRootDepartment(thirdCompanyID, platformID, companyID, Source, taskId)
 	entities = append(entities, rootDep)
 
-	db, err := r.data.GetSyncDB()
-	if err != nil {
-		return 0, err
-	}
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return 0, err
+	// }
 
 	// 使用 Upsert 操作，避免重复键错误
-	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+	result := r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "did"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
 		DoNothing: true,
 	}).Create(&entities)
@@ -174,12 +163,12 @@ func (r *accountRepository) SaveDepartmentUserRelations(ctx context.Context, rel
 		entities = append(entities, entity)
 	}
 
-	db, err := r.data.GetSyncDB()
-	if err != nil {
-		return 0, err
-	}
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return 0, err
+	// }
 
-	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+	result := r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "did"}, {Name: "uid"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
 		DoNothing: true,
 	}).Create(&entities)
@@ -206,11 +195,11 @@ func (r *accountRepository) SaveCompanyCfg(ctx context.Context, input *dingtalk.
 		Mtime:          now,
 	}
 
-	db, err := r.data.GetSyncDB()
-	if err != nil {
-		return err
-	}
-	err = db.WithContext(ctx).Where(models.TbCompanyCfg{
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return err
+	// }
+	err := r.db.WithContext(ctx).Where(models.TbCompanyCfg{
 		ThirdCompanyId: input.ThirdCompanyId,
 		CompanyId:      input.CompanyId,
 	}).FirstOrCreate(entity).Error
@@ -228,23 +217,23 @@ func (r *accountRepository) SaveCompanyCfg(ctx context.Context, input *dingtalk.
 }
 
 func (r *accountRepository) ClearAll(ctx context.Context) error {
-	db, err := r.data.GetSyncDB()
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return err
+	// }
+	err := r.db.WithContext(ctx).Exec("truncate table tb_company_cfg").Error
 	if err != nil {
 		return err
 	}
-	err = db.WithContext(ctx).Exec("truncate table tb_company_cfg").Error
+	err = r.db.WithContext(ctx).Exec("truncate table tb_las_department").Error
 	if err != nil {
 		return err
 	}
-	err = db.WithContext(ctx).Exec("truncate table tb_las_department").Error
+	err = r.db.WithContext(ctx).Exec("truncate table tb_las_department_user").Error
 	if err != nil {
 		return err
 	}
-	err = db.WithContext(ctx).Exec("truncate table tb_las_department_user").Error
-	if err != nil {
-		return err
-	}
-	err = db.WithContext(ctx).Exec("truncate table tb_las_account").Error
+	err = r.db.WithContext(ctx).Exec("truncate table tb_las_account").Error
 	if err != nil {
 		return err
 	}
@@ -312,13 +301,13 @@ func (r *accountRepository) SaveIncrementUsers(ctx context.Context, usersAdd, us
 		return nil
 	}
 
-	db, err := r.data.GetSyncDB()
-	if err != nil {
-		return err
-	}
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return err
+	// }
 
 	// 使用 Upsert 操作避免重复键错误
-	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+	result := r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "uid"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
 		DoNothing: true,
 	}).Create(&entities)
@@ -370,13 +359,13 @@ func (r *accountRepository) SaveIncrementDepartments(ctx context.Context, deptsA
 		return nil
 	}
 
-	db, err := r.data.GetSyncDB()
-	if err != nil {
-		return err
-	}
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return err
+	// }
 
 	// 使用 Upsert 操作避免重复键错误
-	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+	result := r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "did"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
 		DoNothing: true,
 	}).Create(&entities)
@@ -424,13 +413,13 @@ func (r *accountRepository) SaveIncrementDepartmentUserRelations(ctx context.Con
 		return nil
 	}
 
-	db, err := r.data.GetSyncDB()
-	if err != nil {
-		return err
-	}
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return err
+	// }
 
 	// 使用 Upsert 操作避免重复键错误
-	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+	result := r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "did"}, {Name: "uid"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
 		DoNothing: true,
 	}).Create(&entities)
@@ -466,12 +455,12 @@ func (r *accountRepository) BatchSaveUsers(ctx context.Context, users []*models.
 		r.log.Log(log.LevelInfo, "msg", "BatchSaveUsers", "context deadline", "deadline", deadline, "time_until_deadline", time.Until(deadline))
 	}
 
-	db, err := r.data.GetSyncDB()
-	if err != nil {
-		return 0, err
-	}
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return 0, err
+	// }
 
-	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+	result := r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "uid"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
 		DoNothing: true,
 	}).Create(users)
@@ -514,13 +503,13 @@ func (r *accountRepository) BatchSaveDepts(ctx context.Context, depts []*models.
 		r.log.Log(log.LevelInfo, "msg", "BatchSaveDepts", "context deadline", "deadline", deadline, "time_until_deadline", time.Until(deadline))
 	}
 
-	db, err := r.data.GetSyncDB()
-	if err != nil {
-		return 0, err
-	}
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return 0, err
+	// }
 
 	// 使用 Upsert 操作避免重复键错误
-	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+	result := r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "did"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
 		DoNothing: true,
 	}).Create(depts)
@@ -565,13 +554,13 @@ func (r *accountRepository) BatchSaveDeptUsers(ctx context.Context, usersdepts [
 		r.log.Log(log.LevelInfo, "msg", "BatchSaveDeptUsers", "context deadline", "deadline", deadline, "time_until_deadline", time.Until(deadline))
 	}
 
-	db, err := r.data.GetSyncDB()
-	if err != nil {
-		return 0, err
-	}
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return 0, err
+	// }
 
 	// 使用 Upsert 操作避免重复键错误
-	result := db.WithContext(ctx).Clauses(clause.OnConflict{
+	result := r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "did"}, {Name: "uid"}, {Name: "task_id"}, {Name: "third_company_id"}, {Name: "platform_id"}},
 		DoNothing: true,
 	}).Create(usersdepts)
@@ -612,11 +601,11 @@ func (r *accountRepository) CreateTask(ctx context.Context, taskName string) (in
 		ActualTime:    0,
 	}
 
-	db, err := r.data.GetMainDB()
-	if err != nil {
-		return 0, err
-	}
-	result := db.WithContext(ctx).Where("title=?", taskName).FirstOrCreate(task)
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return 0, err
+	// }
+	result := r.db.WithContext(ctx).Where("title=?", taskName).FirstOrCreate(task)
 
 	if result.Error != nil {
 		// 处理其他错误
@@ -636,11 +625,11 @@ func (r *accountRepository) UpdateTask(ctx context.Context, taskName, status str
 	// pending/in_progress/completed/cancelled
 
 	var task models.Task
-	db, err := r.data.GetMainDB()
-	if err != nil {
-		return err
-	}
-	if err := db.Model(&models.Task{}).WithContext(ctx).Where("title=?", taskName).Find(&task).Error; err != nil {
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return err
+	// }
+	if err := r.db.Model(&models.Task{}).WithContext(ctx).Where("title=?", taskName).Find(&task).Error; err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			r.log.Log(log.LevelError, "msg", "UpdateTask", "查询超时")
 		}
@@ -654,7 +643,7 @@ func (r *accountRepository) UpdateTask(ctx context.Context, taskName, status str
 		task.CompletedAt = now
 	}
 
-	result := db.WithContext(ctx).Updates(task)
+	result := r.db.WithContext(ctx).Updates(task)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
@@ -672,11 +661,11 @@ func (r *accountRepository) GetTask(ctx context.Context, taskName string) (*mode
 
 	r.log.Log(log.LevelInfo, "msg", "GetTask", "name", taskName)
 	task := &models.Task{}
-	db, err := r.data.GetMainDB()
-	if err != nil {
-		return nil, err
-	}
-	result := db.WithContext(ctx).Where("title=?", taskName).Find(task)
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	result := r.db.WithContext(ctx).Where("title=?", taskName).Find(task)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -697,16 +686,16 @@ func (r *accountRepository) BatchGetDeptUsers(ctx context.Context, taskName, thi
 		totalCount int
 	)
 
-	db, err := r.data.GetSyncDB()
-	if err != nil {
-		return nil, err
-	}
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	for {
 		var pageUsers []*models.TbLasDepartmentUser
 
 		// 优化后的查询条件，按照索引顺序排列
-		query := db.WithContext(ctx).
+		query := r.db.WithContext(ctx).
 			Where("task_id = ?", taskName).
 			Where("third_company_id = ?", thirdCompanyId).
 			Where("platform_id = ?", platformId).
@@ -760,16 +749,16 @@ func (r *accountRepository) BatchGetUsers(ctx context.Context, taskName, thirdCo
 		"phone", "employment_status", "check_type",
 	}
 
-	db, err := r.data.GetSyncDB()
-	if err != nil {
-		return nil, err
-	}
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	for {
 		var pageUsers []*models.TbLasUser
 
 		// 优化后的查询条件，按照索引顺序排列
-		query := db.WithContext(ctx).
+		query := r.db.WithContext(ctx).
 			Select(selectedFields).
 			Where("task_id = ?", taskName).
 			Where("third_company_id = ?", thirdCompanyId).
@@ -818,16 +807,16 @@ func (r *accountRepository) BatchGetDepts(ctx context.Context, taskName, thirdCo
 		totalCount int
 	)
 
-	db, err := r.data.GetSyncDB()
-	if err != nil {
-		return nil, err
-	}
+	// db, err := r.getSyncDB()
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	for {
 		var pageDepts []*models.TbLasDepartment
 
 		// 优化后的查询条件，按照索引顺序排列
-		query := db.WithContext(ctx).
+		query := r.db.WithContext(ctx).
 			Where("task_id = ?", taskName).
 			Where("third_company_id = ?", thirdCompanyId).
 			Where("platform_id = ?", platformId).

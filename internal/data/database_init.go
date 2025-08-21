@@ -170,22 +170,22 @@ func NewDataWithFactory(
 	}
 
 	// 获取主数据库用于 Saga 存储（也可以使用专门的 Saga 数据库）
-	mainDB, err := dbManager.GetDatabase(MainDBType)
-	if err != nil {
-		logger.Log(log.LevelError, "msg", "failed to get main database for saga", "error", err)
-		mainDB = nil
-	}
+	// mainDB, err := dbManager.GetDatabase(MainDBType)
+	// if err != nil {
+	// 	logger.Log(log.LevelError, "msg", "failed to get main database for saga", "error", err)
+	// 	mainDB = nil
+	// }
 
-	var sagaRepo *SagaRepository
-	if mainDB != nil {
-		sagaRepo = NewSagaRepository(mainDB)
-	}
+	// var sagaRepo *mysql.SagaRepository
+	// if mainDB != nil {
+	// 	sagaRepo = mysql.NewSagaRepository(mainDB)
+	// }
 
 	data := &Data{
 		dbManager: dbManager,
 		redis:     redis,
 		logger:    logger,
-		sagaRepo:  sagaRepo,
+		//sagaRepo:  mysql.NewSagaRepository(mainDB),
 	}
 
 	// 返回清理函数

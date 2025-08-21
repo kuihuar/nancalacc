@@ -19,15 +19,25 @@ var ProviderSet = wire.NewSet(
 
 // NewAccountRepository 创建账户Repository
 func NewAccountRepository(data *data.Data, logger log.Logger) contracts.AccountRepository {
-	return mysql.NewAccountRepository(data, logger)
+	syncDB, err := data.GetSyncDB()
+	if err != nil {
+		logger.Log(log.LevelError, "msg", "failed to get sync database", "error", err)
+		return nil
+	}
+	return mysql.NewAccountRepository(syncDB, logger)
 }
 
 // NewTaskRepository 创建任务Repository
 func NewTaskRepository(data *data.Data, logger log.Logger) contracts.TaskRepository {
-	return mysql.NewTaskRepository(data, logger)
+	mainDB, err := data.GetMainDB()
+	if err != nil {
+		logger.Log(log.LevelError, "msg", "failed to get sync database", "error", err)
+		return nil
+	}
+	return mysql.NewTaskRepository(mainDB, logger)
 }
 
-// NewCacheRepository 创建缓存Repository
-func NewCacheRepository(data *data.Data, logger log.Logger) contracts.CacheRepository {
+// NewCacheRepos	itory 创建缓存Repository
+func NewCacheRepository(logger log.Logger) contracts.CacheRepository {
 	return localcache.NewLocalCacheRepository(logger)
 }
