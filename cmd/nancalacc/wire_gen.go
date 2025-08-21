@@ -38,7 +38,11 @@ func wireApp(confServer *conf.Server, confData *conf.Data, openTelemetry *conf.O
 	if err != nil {
 		return nil, nil, err
 	}
-	accountRepository := repository.NewAccountRepository(dataData, logger)
+	syncDB, err := dataData.GetSyncDB()
+	if err != nil {
+		return nil, nil, err
+	}
+	accountRepository := repository.NewAccountRepository(syncDB, logger)
 	dingtalkDingtalk := dingtalk.NewDingTalkRepo(logger)
 	wpsWps := wps.NewWps(logger)
 	cacheRepository := repository.NewCacheRepository(logger)
